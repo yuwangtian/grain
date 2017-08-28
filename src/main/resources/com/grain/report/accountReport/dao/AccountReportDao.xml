@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.accountReport.dao.AccountReportDao">
+    <!-- 查询得分统计信息 -->
+	<select id="getAccountReportList" resultType="AccountReportBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            select total_orders.*,first_create_orders.*,last_create_orders.*, last_end_orders.*,erp_work_shop.*
+            from (
+            SELECT
+            shop_p_id as shop_p_id_0,
+            shop_name as order_shop_name,
+            GROUP_CONCAT(DISTINCT product_name) AS product_name,
+            IF(min(service_state) = 7 and max(service_state) = 7,'已结束',IF(3 >= max(service_state),'未开始','服务中')) AS service_state,
+            count(1) AS sevice_total_count,
+            SUM(IF(order_type=1,1,0)) new_order_count,
+            SUM(IF(order_type=3,1,0)) continue_order_count,
+            SUM(real_pay_money) as real_pay_money,
+            SUM(beable_service_days) as beable_service_days,
+            SUM(sign_service_fee) as sign_service_fee,
+            SUM(sign_period) as sign_period,
+            SUM(serviced_days) as serviced_days
+            FROM erp_work_order
+            WHERE
+            <include refid="localWhere"/>
+            GROUP BY shop_p_id
+            ) total_orders
+
+            left join
+            (
+            SELECT * FROM
+            (
+            select
+            order_id as first_create_order_id,
+            shop_p_id as shop_p_id_1,
+            frist_service_begin_time,
+            create_time,
+            company_id,
+            company_name as order_company_name,
+            group_id,
+            group_name,
+            user_id,
+            user_name
+            from
+            erp_work_order
+            WHERE
+              <include refid="localWhere"/>
+            ORDER BY create_time
+            ) orders
+            GROUP BY
+            shop_p_id_1
+            ) first_create_orders
+
+            on total_orders.shop_p_id_0 = first_create_orders.shop_p_id_1
+            left join
+            (
+            SELECT * FROM
+            (
+            select
+            order_id as last_create_order_id,
+            shop_p_id as shop_p_id_2
+            from
+            erp_work_order
+            WHERE
+              <include refid="localWhere"/>
+            ORDER BY create_time desc
+            ) orders
+            GROUP BY
+            shop_p_id_2
+            ) last_create_orders
+
+            on total_orders.shop_p_id_0 = last_create_orders.shop_p_id_2
+
+            left join
+            (
+            SELECT
+            order_id as last_end_order_id,
+            shop_p_id as shop_p_id_3,
+            IF(min(service_state) = 7 and max(service_state) = 7,real_end_time,null) as real_end_time,
+            IF(min(service_state) = 7 and max(service_state) = 7,end_type,null) as end_type
+            FROM
+            (
+            select
+            order_id,
+            shop_p_id,
+            service_state,
+            real_end_time,
+            end_type
+            from
+            erp_work_order
+            WHERE
+            <include refid="localWhere"/>
+            ORDER BY real_end_time desc
+            ) orders
+            GROUP BY
+            shop_p_id
+            ) last_end_orders
+
+            on total_orders.shop_p_id_0 = last_end_orders.shop_p_id_3
+
+            LEFT JOIN erp_work_shop
+            on total_orders.shop_p_id_0 = erp_work_shop.shop_p_id
+
+            WHERE
+              <include refid="wholeWhere"/>
+
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            select total_orders.*,first_create_orders.*,last_create_orders.*, last_end_orders.*,erp_work_shop.*
+            from (
+            SELECT
+            shop_p_id as shop_p_id_0,
+            shop_name as order_shop_name,
+            GROUP_CONCAT(DISTINCT product_name) AS product_name,
+            IF(min(service_state) = 7 and max(service_state) = 7,'已结束',IF(3 >= max(service_state),'未开始','服务中')) AS service_state,
+            count(1) AS sevice_total_count,
+            SUM(IF(order_type=1,1,0)) new_order_count,
+            SUM(IF(order_type=3,1,0)) continue_order_count,
+            SUM(real_pay_money) as real_pay_money,
+            SUM(beable_service_days) as beable_service_days,
+            SUM(sign_service_fee) as sign_service_fee,
+            SUM(sign_period) as sign_period,
+            SUM(serviced_days) as serviced_days
+            FROM erp_work_order
+            WHERE
+              <include refid="localWhere"/>
+            GROUP BY shop_p_id
+            ) total_orders
+
+            left join
+            (
+            SELECT * FROM
+            (
+            select
+            order_id as first_create_order_id,
+            shop_p_id as shop_p_id_1,
+            frist_service_begin_time,
+            create_time,
+            company_id,
+            company_name as order_company_name,
+            group_id,
+            group_name,
+            user_id,
+            user_name
+            from
+            erp_work_order
+            WHERE
+              <include refid="localWhere"/>
+            ORDER BY create_time
+            ) orders
+            GROUP BY
+            shop_p_id_1
+            ) first_create_orders
+
+            on total_orders.shop_p_id_0 = first_create_orders.shop_p_id_1
+            left join
+            (
+            SELECT * FROM
+            (
+            select
+            order_id as last_create_order_id,
+            shop_p_id as shop_p_id_2
+            from
+            erp_work_order
+            WHERE
+              <include refid="localWhere"/>
+            ORDER BY create_time desc
+            ) orders
+            GROUP BY
+            shop_p_id_2
+            ) last_create_orders
+
+            on total_orders.shop_p_id_0 = last_create_orders.shop_p_id_2
+
+            left join
+            (
+            SELECT
+            order_id as last_end_order_id,
+            shop_p_id as shop_p_id_3,
+            IF(min(service_state) = 7 and max(service_state) = 7,real_end_time,null) as real_end_time,
+            IF(min(service_state) = 7 and max(service_state) = 7,end_type,null) as end_type
+            FROM
+            (
+            select
+            order_id,
+            shop_p_id,
+            service_state,
+            real_end_time,
+            end_type
+            from
+            erp_work_order
+            WHERE
+                <include refid="localWhere"/>
+            ORDER BY real_end_time desc
+            ) orders
+            GROUP BY
+            shop_p_id
+            ) last_end_orders
+
+            on total_orders.shop_p_id_0 = last_end_orders.shop_p_id_3
+
+            LEFT JOIN erp_work_shop
+            on total_orders.shop_p_id_0 = erp_work_shop.shop_p_id
+            WHERE
+              <include refid="wholeWhere"/>
+            LIMIT  ${startRow},${pageSize}
+
+        </if>
+	</select>
+
+    <!-- 查询得分统计记录数 -->
+    <select id="getAccountReportListCount" resultType="Integer">
+        select count(*)
+        from (
+        SELECT
+        shop_p_id as shop_p_id_0,
+        shop_name as order_shop_name,
+        GROUP_CONCAT(DISTINCT product_name) AS product_name,
+        IF(min(service_state) = 7 and max(service_state) = 7,'已结束',IF(3 >= max(service_state),'未开始','服务中')) AS service_state,
+        count(1) AS sevice_total_count,
+        SUM(IF(order_type=1,1,0)) new_order_count,
+        SUM(IF(order_type=3,1,0)) continue_order_count,
+        SUM(real_pay_money) as real_pay_money,
+        SUM(beable_service_days) as beable_service_days
+        FROM erp_work_order
+        WHERE
+        <include refid="localWhere"/>
+        GROUP BY shop_p_id
+        ) total_orders
+
+        left join
+        (
+        SELECT * FROM
+        (
+        select
+        order_id as first_create_order_id,
+        shop_p_id as shop_p_id_1,
+        frist_service_begin_time,
+        create_time,
+        company_id,
+        company_name as order_company_name,
+        group_id,
+        group_name,
+        user_id,
+        user_name
+        from
+        erp_work_order
+        WHERE
+        <include refid="localWhere"/>
+        ORDER BY create_time
+        ) orders
+        GROUP BY
+        shop_p_id_1
+        ) first_create_orders
+
+        on total_orders.shop_p_id_0 = first_create_orders.shop_p_id_1
+        left join
+        (
+        SELECT * FROM
+        (
+        select
+        order_id as last_create_order_id,
+        shop_p_id as shop_p_id_2
+        from
+        erp_work_order
+        WHERE
+        <include refid="localWhere"/>
+        ORDER BY create_time desc
+        ) orders
+        GROUP BY
+        shop_p_id_2
+        ) last_create_orders
+
+        on total_orders.shop_p_id_0 = last_create_orders.shop_p_id_2
+
+        left join
+        (
+        SELECT
+        order_id as last_end_order_id,
+        shop_p_id as shop_p_id_3,
+        IF(min(service_state) = 7 and max(service_state) = 7,real_end_time,null) as real_end_time,
+        IF(min(service_state) = 7 and max(service_state) = 7,end_type,null) as end_type
+        FROM
+        (
+        select
+        order_id,
+        shop_p_id,
+        service_state,
+        real_end_time,
+        end_type
+        from
+        erp_work_order
+        WHERE
+        <include refid="localWhere"/>
+        ORDER BY real_end_time desc
+        ) orders
+        GROUP BY
+        shop_p_id
+        ) last_end_orders
+
+        on total_orders.shop_p_id_0 = last_end_orders.shop_p_id_3
+
+        LEFT JOIN erp_work_shop
+        on total_orders.shop_p_id_0 = erp_work_shop.shop_p_id
+        WHERE
+          <include refid="wholeWhere"/>
+
+    </select>
+
+    <sql id="localWhere">
+            1=1
+            AND inner_flag = 0
+            AND valid_flag = 1
+            AND del_flag = 0
+            AND order_approve_state = 2
+            AND ((product_id = 6202 and main_order_id is not null) or product_id != 6202)
+            AND product_id != 6193
+            AND product_id != 6203
+            AND shop_p_id != -1
+            <if test="product_id!=null">
+                AND product_id=#{product_id}
+            </if>
+            <if test="shop_id != null and shop_id !='' ">
+                AND shop_name like '%${shop_id}%'
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (service_group_id in ${serviceGroupStr} or service_small_group_id in ${serviceGroupStr} or concat(',',service_am_names,',') like '%,${login_user_name},%' or concat(',',service_ae_names,',') like '%,${login_user_name},%')
+            </if>
+    </sql>
+
+    <sql id="wholeWhere">
+        1=1
+        <if test="shop_classfy != null and shop_classfy != ''">
+            AND shop_classfy = #{shop_classfy}
+        </if>
+        <if test="service_state != null and service_state != ''">
+            AND service_state = #{service_state}
+        </if>
+        <if test="company_id != null">
+            AND company_id=#{company_id}
+        </if>
+        <if test="group_id != null">
+            AND group_id=#{group_id}
+        </if>
+        <if test="shop_source != null">
+            AND shop_source=#{shop_source}
+        </if>
+        <if test="shop_rank != null">
+            AND shop_rank=#{shop_rank}
+        </if>
+        <if test="manager_phone != null and manager_phone != ''">
+            AND manager_phone=#{manager_phone}
+        </if>
+        <if test="manager_qq != null and manager_qq != '' ">
+            AND manager_qq=#{manager_qq}
+        </if>
+        <if test="manager_name != null and manager_name != ''">
+            AND manager_name like '%${manager_name}%'
+        </if>
+        <if test="first_create_start_date != null and first_create_start_date != ''">
+            AND first_create_orders.create_time >= #{first_create_start_date}
+        </if>
+        <if test="first_create_end_date != null and first_create_end_date != ''">
+            AND #{first_create_end_date} >= first_create_orders.create_time
+        </if>
+
+        <if test="last_end_start_date != null and last_end_start_date != ''">
+            AND last_end_orders.real_end_time >= #{last_end_start_date}
+        </if>
+        <if test="last_end_end_date != null and last_end_end_date != ''">
+            AND #{last_end_end_date} >= last_end_orders.real_end_time
+        </if>
+    </sql>
+    <select id="getAccountReportDetil" resultType="WorkOrderBo">
+        <if test="1 > pageSize">
+            SELECT
+              *
+            FROM
+              erp_work_order
+            WHERE
+                <include refid="localWhere"/>
+                AND
+                <include refid="detailWhere"/>
+            ORDER BY product_id,order_type,create_time
+        </if>
+        <if test=" pageSize >= 1 ">
+            SELECT
+            *
+            FROM
+            erp_work_order
+            WHERE
+                <include refid="localWhere"/>
+                AND
+                <include refid="detailWhere"/>
+            ORDER BY product_id,order_type,create_time
+            LIMIT  #{startRow},#{pageSize}
+        </if>
+
+    </select>
+
+    <select id="getAccountReportDetailCount" resultType="Integer">
+            SELECT
+                count(*)
+            FROM
+                erp_work_order
+            WHERE
+                <include refid="localWhere"/>
+                AND
+                <include refid="detailWhere"/>
+    </select>
+
+    <sql id="detailWhere">
+        1=1
+        <if test="shop_p_id != null">
+            AND shop_p_id=#{shop_p_id}
+        </if>
+        <if test="company_id != null">
+            AND company_id=#{company_id}
+        </if>
+        <if test="group_id != null">
+            AND group_id=#{group_id}
+        </if>
+        <if test="service_company_id != null">
+            AND service_company_id=#{service_company_id}
+        </if>
+        <if test="service_group_id != null">
+            AND service_group_id=#{service_group_id}
+        </if>
+        <if test="order_type != null">
+            AND order_type=#{order_type}
+        </if>
+        <if test="order_source != null">
+            AND order_source=#{order_source}
+        </if>
+        <if test="curr_pro_code != null and curr_pro_code !=''">
+            AND curr_pro_code=#{curr_pro_code}
+        </if>
+        <if test="approve_state != null">
+            AND approve_state=#{approve_state}
+        </if>
+        <if test="service_state != null and service_state !=''">
+            AND service_state=#{service_state}
+        </if>
+        <if test="first_create_start_date != null and first_create_start_date !=''">
+            AND create_time >= #{first_create_start_date}
+        </if>
+        <if test="first_create_end_date != null and first_create_end_date !=''">
+            AND #{first_create_end_date} >= create_time
+        </if>
+
+    </sql>
+    <select id="findOrderIdByShopId" parameterType="WorkOrderBo" resultType="WorkOrderBo">
+        SELECT order_id FROM erp_work_order
+        WHERE shop_p_id=#{shop_p_id} AND valid_flag = 1 AND del_flag = 0
+    </select>
+</mapper>

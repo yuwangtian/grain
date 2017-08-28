@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.order.dao.AccountDao">
+	
+	<!-- 保存子账户信息 -->
+	<insert id="saveAccountInfo" parameterType="ShopAccountBo"
+		useGeneratedKeys="true" keyProperty="id">
+		
+		insert into erp_work_order_shop_account (
+		
+		order_id, nick, main_nick, password,
+		
+		grants_state, work_state,del_flag,
+		
+		create_user_id, create_time, last_edited_time, last_edited_user_id
+		
+		) values(
+		
+		#{order_id}, #{nick}, #{main_nick}, #{password},
+		
+		#{grants_state}, #{work_state},#{del_flag},
+		
+		#{create_user_id}, #{create_time}, #{last_edited_time}, #{last_edited_user_id}
+		
+		)
+	</insert>
+	
+	<select id="getListShopAccountBosPage" resultType="ShopAccountBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_order_shop_account 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_work_order_shop_account 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountListShopAccountBos" resultType="Integer">
+           SELECT count(*) FROM erp_work_order_shop_account 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	
+	
+	
+	<update id="delete">
+		
+		update erp_work_order_shop_account set
+		
+		last_edited_time = #{last_edited_time},
+		
+		last_edited_user_id = #{last_edited_user_id},
+		
+		del_flag = #{del_flag}
+		
+		where
+		
+		id=#{id}
+	</update>
+
+    <select id="getShopAccountListByOrderId" resultType="ShopAccountBo">
+        SELECT * FROM erp_work_order_shop_account
+        WHERE order_id = #{orderId} and del_flag = 0
+    </select>
+
+    <select id="getShopAccountListByShopId" resultType="ShopAccountBo">
+        SELECT * FROM erp_work_order_shop_account
+        WHERE main_nick = #{shopId} and del_flag = 0
+    </select>
+
+</mapper>

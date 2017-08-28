@@ -1,0 +1,597 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.OrderSearchDao">
+
+    <!--根据enname查询productId-->
+    <select id="getProCodeById" resultType="String" parameterType="java.lang.Integer">
+        SELECT
+        en_code
+        FROM
+        erp_product
+        WHERE
+        product_id=#{product_id}
+
+    </select>
+    <!--  查询并设置记录总数  -->
+    <select id="getList" resultType="WorkOrderBo" parameterType="OrderOperateQueryBo">
+
+
+        <if test=" pageSize >= 1 ">
+            select a.*,b.accountDays from
+
+
+
+            ( SELECT
+            *
+            FROM
+            erp_work_order
+            WHERE 1=1 and del_flag = 0 and valid_flag = 1
+
+            <if test="queryMode == 'ORDER'">
+                and erp_work_order.main_order_id is NULL
+
+            </if>
+            <if test="queryMode == 'SUBORDER'">
+                and erp_work_order.main_order_id is not NULL
+            </if>
+
+            <if test="order_id != null and order_id != ''">
+                and order_id like '%${order_id}%'
+            </if>
+            <if test="product_id != null and product_id != ''">
+                and product_id=${product_id}
+            </if>
+            <if test="companyId != null and companyId != ''">
+                and erp_work_order.company_id = ${companyId}
+            </if>
+            <if test="serviceCompanyId != null and serviceCompanyId != ''">
+                and erp_work_order.service_company_id = ${serviceCompanyId}
+            </if>
+            <if test="serviceDeptId!=null and serviceDeptId!=''">
+                and erp_work_order.service_group_id=${serviceDeptId}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                and erp_work_order.create_time >= '${start_date}'
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                and '${end_date}' >= erp_work_order.create_time
+            </if>
+            <if test="deptId!=null and deptId!=''">
+                and group_id=${deptId}
+            </if>
+            <if test="orderManSel!=null and orderManSel!=''">
+                and user_name like '%${orderManSel}%'
+            </if>
+            <if test="shopIdSel!=null and shopIdSel!=''">
+                and erp_work_order.shop_name like '%${shopIdSel}%'
+            </if>
+            <if test="inner_flag!=null and inner_flag!=''">
+                <if test="inner_flag == -1">
+                    and erp_work_order.inner_flag=0
+                </if>
+                <if test="inner_flag != -1">
+                    and erp_work_order.inner_flag=${inner_flag}
+                </if>
+                -- and erp_work_order.inner_flag=${inner_flag}
+            </if>
+            <if test="orderStateSel!=null ">
+                and erp_work_order.service_state = ${orderStateSel}
+            </if>
+            <if test="processCodeSel!=null and processCodeSel!=''">
+                and erp_work_order.curr_pro_code like '%${processCodeSel}'
+            </if>
+            <if test="approve_state!=null">
+                and erp_work_order.approve_state = ${approve_state}
+            </if>
+            <if test="serviceGroupSel!=null and serviceGroupSel!=''">
+              <!--   and erp_work_order.service_small_group_name = #{serviceGroupSel} -->
+              and erp_work_order.service_small_group_id = #{serviceGroupSel}
+            </if>
+            <if test="plan_end_time!=null and plan_end_time!=''">
+                and plan_end_time LIKE '%${plan_end_time}%'
+            </if>
+            <if test="exist_xudan_flag !=null and exist_xudan_flag!=''">
+
+                <if test="exist_xudan_flag == -1 ">
+                    and (exist_xudan_flag = 0 or exist_xudan_flag is null)
+                </if>
+                <if test="exist_xudan_flag != -1 and exist_xudan_flag != 0 ">
+                    and exist_xudan_flag=#{exist_xudan_flag}
+                </if>
+            </if>
+            <if test="orderTypeSel!=null and orderTypeSel!=''">
+                and erp_work_order.order_type=${orderTypeSel}
+            </if>
+            and (
+            1=2
+            <if test="login_user_name!=null and login_user_name!=''">
+                or concat(',',service_am_names,',') like '%,${login_user_name},%' or concat(',',service_ae_names,',')
+                like '%,${login_user_name},%'
+            </if>
+            <if test="orderGroupStr!=null and orderGroupStr!=''">
+                or erp_work_order.group_id in ${orderGroupStr}
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                or erp_work_order.service_group_id in ${serviceGroupStr} or erp_work_order.service_small_group_id in
+                ${serviceGroupStr}
+            </if>
+            )
+            and del_flag = 0
+            and valid_flag = 1
+            <if test="export_flag!=1">
+                order by erp_work_order.create_time desc
+                limit #{startRow},#{pageSize}
+            </if>
+            ) a
+            LEFT JOIN
+
+            (select shop_name,sum(serviced_days) as accountDays from erp_work_order
+            where 1=1
+            <if test="product_id != null and product_id != ''">
+                and product_id=${product_id}
+            </if>
+            GROUP BY shop_name) b
+
+            on a.shop_name = b.shop_name
+
+
+        </if>
+    </select>
+
+
+    <select id="getTotalCount" resultType="Integer" parameterType="OrderOperateQueryBo">
+
+
+
+        select count(*) from
+
+
+        ( SELECT
+        *
+        FROM
+        erp_work_order
+        WHERE 1=1 and del_flag = 0 and valid_flag = 1
+
+        <if test="queryMode == 'ORDER'">
+            and erp_work_order.main_order_id is NULL
+
+        </if>
+        <if test="queryMode == 'SUBORDER'">
+            and erp_work_order.main_order_id is not NULL
+        </if>
+
+        <if test="order_id != null and order_id != ''">
+            and order_id like '%${order_id}%'
+        </if>
+        <if test="product_id != null and product_id != ''">
+            and product_id=${product_id}
+        </if>
+        <if test="companyId != null and companyId != ''">
+            and erp_work_order.company_id = ${companyId}
+        </if>
+        <if test="serviceCompanyId != null and serviceCompanyId != ''">
+            and erp_work_order.service_company_id = ${serviceCompanyId}
+        </if>
+        <if test="serviceDeptId!=null and serviceDeptId!=''">
+            and erp_work_order.service_group_id=${serviceDeptId}
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            and erp_work_order.create_time >= '${start_date}'
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            and '${end_date}' >= erp_work_order.create_time
+        </if>
+        <if test="deptId!=null and deptId!=''">
+            and group_id=${deptId}
+        </if>
+        <if test="orderManSel!=null and orderManSel!=''">
+            and user_name like '%${orderManSel}%'
+        </if>
+        <if test="shopIdSel!=null and shopIdSel!=''">
+            and erp_work_order.shop_name like '%${shopIdSel}%'
+        </if>
+        <if test="inner_flag!=null and inner_flag!=''">
+            <if test="inner_flag == -1">
+                and erp_work_order.inner_flag=0
+            </if>
+            <if test="inner_flag != -1">
+                and erp_work_order.inner_flag=${inner_flag}
+            </if>
+            -- and erp_work_order.inner_flag=${inner_flag}
+        </if>
+        <if test="orderStateSel!=null ">
+            and erp_work_order.service_state = ${orderStateSel}
+        </if>
+        <if test="processCodeSel!=null and processCodeSel!=''">
+            and erp_work_order.curr_pro_code like '%${processCodeSel}'
+        </if>
+        <if test="approve_state!=null">
+            and erp_work_order.approve_state = ${approve_state}
+        </if>
+        <if test="serviceGroupSel!=null and serviceGroupSel!=''">
+            and erp_work_order.service_small_group_name = #{serviceGroupSel}
+        </if>
+        <if test="plan_end_time!=null and plan_end_time!=''">
+            and plan_end_time LIKE '%${plan_end_time}%'
+        </if>
+        <if test="exist_xudan_flag !=null and exist_xudan_flag!=''">
+
+            <if test="exist_xudan_flag == -1 ">
+                and (exist_xudan_flag = 0 or exist_xudan_flag is null)
+            </if>
+            <if test="exist_xudan_flag != -1 and exist_xudan_flag != 0 ">
+                and exist_xudan_flag=#{exist_xudan_flag}
+            </if>
+        </if>
+        <if test="orderTypeSel!=null and orderTypeSel!=''">
+            and erp_work_order.order_type=${orderTypeSel}
+        </if>
+        and (
+        1=2
+        <if test="login_user_name!=null and login_user_name!=''">
+            or concat(',',service_am_names,',') like '%,${login_user_name},%' or concat(',',service_ae_names,',')
+            like '%,${login_user_name},%'
+        </if>
+        <if test="orderGroupStr!=null and orderGroupStr!=''">
+            or erp_work_order.group_id in ${orderGroupStr}
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            or erp_work_order.service_group_id in ${serviceGroupStr} or erp_work_order.service_small_group_id in
+            ${serviceGroupStr}
+        </if>
+        )
+        and del_flag = 0
+        and valid_flag = 1
+
+        ) a
+        LEFT JOIN
+
+        (select shop_name,sum(serviced_days) as accountDays from erp_work_order
+        where  1=1
+        <if test="product_id != null and product_id != ''">
+            and product_id=${product_id}
+        </if>
+        GROUP BY shop_name) b
+
+        on a.shop_name = b.shop_name
+    </select>
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getAssignListByGroup" resultType="String" parameterType="OrderOperateQueryBo">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner_dic_group_id = #{service_small_group_id}
+        <if test="startDateSel!=null and startDateSel!=''">
+            and erp_workorder_assign_current.create_time >= '${startDateSel}'
+        </if>
+    </select>
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getAssignListByAssigner" resultType="String">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner = #{user_id}
+
+    </select>
+
+
+    <select id="getSubTaskList" resultType="OrderTaskBo" parameterType="OrderOperateQueryBo">
+        /*不分页*/
+        <if test=" 1 > pageSize ">
+            SELECT *
+            FROM
+            erp_work_order_task
+            LEFT JOIN erp_work_order ON erp_work_order.product_id = #{product_id}
+            WHERE
+            erp_work_order_task.order_id = erp_work_order.order_id
+        </if>
+        /*分页*/
+        <if test=" pageSize >= 1 ">
+            SELECT *
+            FROM
+            erp_work_order_task
+            LEFT JOIN erp_work_order ON erp_work_order.product_id = #{product_id}
+            WHERE
+            erp_work_order_task.order_id = erp_work_order.order_id
+            limit #{startRow},#{pageSize}
+        </if>
+    </select>
+    <select id="getSubTaskListCount" resultType="Integer" parameterType="OrderOperateQueryBo">
+        SELECT
+        count(*)
+        FROM
+        erp_work_order_task
+        LEFT JOIN erp_work_order ON erp_work_order.product_id = #{product_id}
+        WHERE
+        erp_work_order_task.order_id = erp_work_order.order_id
+    </select>
+
+    <!--<insert id="savePauseProcess" parameterType="OrderOperateBo">
+        INSERT INTO
+        erp_workorder_operate(order_id, inst_process_id, opt_type, opt_time, acture_time,opt_user_id,group_id,reason,remark,company_id,serviced_money,serviced_days,rest_servcie_money,rest_service_days,approve_state,approve_agree_time)
+        VALUES
+        (#{order_id}, #{inst_process_id}, #{opt_type},#{opt_time},  #{acture_time},#{opt_user_id},#{group_id},#{pause_reason},#{pause_remark},#{company_id},#{serviced_money},#{serviced_days},#{rest_servcie_money},#{rest_service_days},#{approve_state},#{approve_agree_time})
+    </insert>-->
+
+
+    <select id="getPauseOrder" parameterType="Integer" resultType="OrderOperateBo">
+        select * from erp_workorder_operate where opt_type = #{opt_type}
+    </select>
+
+    <select id="getUserNameById" parameterType="Integer" resultType="java.lang.String">
+        select login_name from base_user where user_id = #{userId}
+    </select>
+    <select id="getWorkOrderBoById" parameterType="OrderOperateBo" resultType="WorkOrderBo">
+        select * from erp_work_order where order_id = #{order_id}
+    </select>
+    <insert id="saveOperateData" parameterType="OrderOperateBo">
+
+        INSERT INTO
+
+        erp_workorder_operate(
+                order_id,inst_process_id,opt_time,schedule_time,
+
+                acture_time,pause_time,pause_last_days,opt_user_id,
+
+                direct_group_id,group_id,reason,remark,active_flag,
+
+                serviced_days,serviced_money,rest_service_days,
+
+                rest_servcie_money,approve_state,approve_agree_time,
+
+                create_time,create_user_id,last_edited_user_id,last_edited_time,
+
+                valid_flag,del_flag,company_id,opt_type,opt_user_name,group_name,pro_code,pro_short_name
+        )
+        VALUES
+        (
+                #{order_id}, #{inst_process_id}, #{opt_time},#{schedule_time},
+                #{acture_time},#{pause_time},#{pause_last_days},#{opt_user_id},
+                #{direct_group_id},#{group_id}, #{reason},#{remark},#{active_flag},
+                #{serviced_days},#{serviced_money},#{rest_service_days},
+                #{rest_servcie_money},#{approve_state},#{approve_agree_time},
+                #{create_time},#{create_user_id},#{last_edited_user_id},#{last_edited_time},
+                #{valid_flag},#{del_flag}, #{company_id},#{opt_type},#{opt_user_name},#{group_name},#{pro_code},#{pro_short_name}
+        )
+    </insert>
+
+    <insert id="saveOperateLog" parameterType="orderOperateLogBo">
+        INSERT INTO
+        erp_workorder_operate_log (
+        order_id, operate_time, operate_user_id, operate_user_name,operate_dic_group_id,
+
+        operate_dic_group_name,operate_group_id,operate_group_name,operate_company_id,operate_company_name,operate_reason,operate_type,content,
+
+        serviced_days,serviced_money,rest_service_days,rest_servcie_money,
+        service_group_id,service_group_name,service_company_id,service_company_name,plan_end_time,business_id)
+        VALUES
+        (#{order_id}, #{operate_time}, #{operate_user_id},#{operate_user_name},#{operate_dic_group_id},
+         #{operate_dic_group_name},#{operate_group_id},#{operate_group_name},#{operate_company_id},#{operate_company_name},#{operate_reason},
+         #{operate_type},
+         #{content},
+         #{serviced_days},#{serviced_money},#{rest_service_days},#{rest_servcie_money},
+         #{service_group_id},#{service_group_name},
+         #{service_company_id},#{service_company_name},#{plan_end_time},#{business_id})
+    </insert>
+    <update id="updateWorkOrder" parameterType="WorkOrderBo">
+        update
+        erp_work_order
+        set
+        service_state=#{service_state},
+        CURR_PRO_CODE=#{curr_pro_code},
+        CURR_PRO_SHORT_NAME=#{curr_pro_short_name},
+        APPROVE_STATE=#{approve_state},
+        frist_service_begin_time=#{frist_service_begin_time},
+        last_start_time=#{last_start_time},
+        last_edited_time=#{last_edited_time},
+        last_edited_user_id=#{last_edited_user_id},
+        approve_agree_time=#{approve_agree_time},
+        approve_state=#{approve_state},
+        curr_pro_code=#{curr_pro_code},
+        curr_pro_short_name=#{curr_pro_short_name},
+        inst_process_id=#{instProcessId},
+        last_suspend_time=#{last_suspend_time}
+        where order_id=#{order_id}
+    </update>
+
+    <update id="updateWorkOrderForBroken" parameterType="WorkOrderBo">
+        update
+        erp_work_order
+        set
+        <if test="start_end_process_flag ! =null and start_end_process_flag != ''">
+            start_end_process_flag=#{start_end_process_flag}
+        </if>
+        <if test="service_state ! =null and service_state != ''">
+            service_state=#{service_state}
+        </if>
+        <if test="end_type !=null and end_type != ''">
+            end_type=#{end_type}
+        </if>
+
+        where order_id=#{order_id}
+    </update>
+
+    <insert id="saveDormantProcess" parameterType="OrderOperateBo">
+        INSERT INTO
+        erp_workorder_operate(order_id, inst_process_id, opt_type, opt_time, acture_time,opt_user_id,group_id,reason,remark,company_id,serviced_money,serviced_days,rest_servcie_money,rest_service_days,approve_state,approve_agree_time)
+        VALUES
+        (#{order_id}, #{inst_process_id}, #{opt_type},#{opt_time}, #{acture_time},#{opt_user_id},#{group_id},#{pause_reason},#{pause_remark},#{company_id},#{serviced_money},#{serviced_days},#{rest_servcie_money},#{rest_service_days},#{approve_state},#{approve_agree_time})
+    </insert>
+
+    <!-- 根据流程实例ID得到存回暂停信息 -->
+    <select id="getOrderPauseByInstProcessId" resultType="OrderOperateBo">
+        select * from erp_workorder_operate
+        where
+        inst_process_id = #{inst_process_id}
+    </select>
+
+    <!-- 更新 暂停approve信息-->
+    <update id="updateForApprove" parameterType="OrderOperateBo">
+        update erp_workorder_operate set
+
+            approve_state = #{approve_state},
+            approve_agree_time = #{approve_agree_time},
+            last_edited_user_id = #{last_edited_user_id},
+            last_edited_time = #{last_edited_time}
+        where order_operate_id = #{order_operate_id}
+    </update>
+
+    <!-- 更新 workorder信息 when 暂停是否通过approve-->
+    <update id="updateOrderForApprove" parameterType="WorkOrderBo">
+        update erp_work_order set
+
+        approve_state = #{approve_state},
+        approve_agree_time = #{approve_agree_time},
+        curr_pro_code = #{curr_pro_code},
+        curr_pro_short_name = #{curr_pro_short_name},
+        last_edited_user_id = #{last_edited_user_id},
+        last_edited_time = #{last_edited_time},
+        service_state = #{service_state},
+        last_start_time = #{last_start_time}
+
+
+        <!--service_state = #{service_state}-->
+        where order_id = #{order_id}
+    </update>
+
+
+    <!--重新提交审批时初始化pause窗口-->
+    <select id="getWinDataForPause" resultType="OrderOperateBo" parameterType="java.lang.String">
+        SELECT * FROM erp_workorder_operate
+        WHERE
+        inst_process_id = #{inst_process_id}
+    </select>
+    <!--重新提交审批时初始化pause窗口-->
+
+    <!--流程被驳回后重新提交 更新操作表-->
+    <update id="updateOrderOperateByInstId" parameterType="OrderOperateBo">
+        update erp_workorder_operate set
+
+        approve_state = #{approve_state},
+        active_flag = #{active_flag},
+        reason = #{reason},
+        remark = #{remark},
+        acture_time = #{acture_time},
+        pro_code = #{pro_code},
+        pro_short_name = #{pro_short_name},
+        last_edited_user_id = #{last_edited_user_id},
+        last_edited_time = #{last_edited_time}
+
+        <!--service_state = #{service_state}-->
+        where inst_process_id = #{inst_process_id}
+    </update>
+    <!--流程被驳回后重新提交 更新操作表-->
+
+
+    <!--保存工单服务账户日信息表-->
+    <select id="getExtractDataList" resultType="WorkOrderBo">
+        SELECT * FROM erp_work_order
+        WHERE
+        service_state = 4 OR
+        5 OR
+        6 OR
+        8
+    </select>
+    <insert id="saveWorkDayOptInfo" parameterType="WorkDayOptInfoBo">
+        INSERT INTO
+        erp_work_day_opt_info(
+        product_id,order_id, shop_id, service_day, service_month,
+        order_state, customer_price_per_day, serivce_user_type,
+        service_user_type_name, service_user_id, service_user_name,
+        service_dic_group_id, servcie_dic_group_name, service_group_id,
+        service_group_name, service_company_id, service_compan_name,
+        serviced_days, serviced_money, rest_servcie_money,
+        rest_service_days, create_time
+        )
+        VALUES(
+        #{product_id},#{order_id}, #{shop_id},#{service_day}, #{service_month},
+        #{order_state},#{customer_price_per_day},#{serivce_user_type},
+        #{service_user_type_name},#{service_user_id},#{service_user_name},
+        #{service_dic_group_id},#{servcie_dic_group_name},#{service_group_id},
+        #{service_group_name},#{service_company_id},#{service_compan_name},
+        #{serviced_days},#{serviced_money},#{rest_servcie_money},
+        #{rest_service_days},#{create_time}
+        )
+    </insert>
+    <!-- 根据ID得到操作信息 -->
+    <select id="getOrderOperateById" resultType="OrderOperateBo">
+        select * from erp_workorder_operate
+        where
+        order_operate_id = #{orderOperateId}
+    </select>
+    <!-- 根据ID得到子账户信息 -->
+    <select id="getSubAccountData" resultType="ShopAccountBo">
+        select * from erp_work_order_shop_account
+        where
+        order_id = #{order_id}
+    </select>
+
+    <select id="getSearchProByGroupIds" resultType="ProductBo" >
+        select DISTINCT(ep.product_id),ep.* from erp_product ep left join
+        erp_group_pro_rel egpr on ep.product_id=egpr.product_id
+        where
+            egpr.group_id in
+        <foreach item="item" index="index" collection="groupIds"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>
+    </select>
+
+    <select id="getTrainingListById" resultType="TrainingBo" parameterType="OrderOperateQueryBo">
+       select * from erp_training where training_id in
+        <foreach item="item" index="index" collection="trainIds"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>
+    </select>
+
+    <select id="searchOrder" resultType="WorkOrderBo">
+        SELECT
+        *
+        FROM
+        erp_work_order
+        WHERE del_flag = 0 and valid_flag = 1
+        and ( order_id = #{param1} or shop_name = #{param1} )
+        order by erp_work_order.create_time desc
+    </select>
+
+    <select id="getAssignListByOrderId" resultType="OrderAssignCurrentBo">
+        SELECT
+        a.*, u.name assigner_name
+        FROM
+        erp_workorder_assign_current a
+        left join base_user u
+        on a.assigner = u.user_id
+        WHERE
+        order_id = #{param1}
+        and parent_id is null
+    </select>
+
+
+    <select id="getAssignListByAssignId" resultType="OrderAssignCurrentBo">
+        SELECT
+        a.*, u.name assigner_name
+        FROM
+        erp_workorder_assign_current a
+        left join base_user u
+        on a.assigner = u.user_id
+        WHERE
+        parent_id = #{param1}
+    </select>
+
+    <select id="getSearchAllPro" resultType="ProductBo">
+       select * from erp_product where valid_flag = 1 and del_flag = 0
+
+    </select>
+
+    <select id="getProByLoginUserForOpt" resultType="ProductBo">
+       select * from erp_product where valid_flag = 1 and del_flag = 0 and product_id =#{1}
+    </select>
+</mapper>

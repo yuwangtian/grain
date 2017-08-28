@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkOrderDutyDao">
+
+    <!-- 保存退款责任划分信息 -->
+    <insert id="saveWorkOrderDutyBoList" parameterType="java.util.List">
+        insert into erp_work_order_duty
+        (order_id	,
+			inst_process_id	,
+			user_id	,
+			user_name	,
+			user_type	,
+			assign_name_title	,
+			company_id	,
+			company_name	,
+			group_id	,
+			group_name	,
+			dic_group_id	,
+			dic_group_name	,
+			duty_ratio	,
+			real_re_money	,
+			create_time	
+
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator="," >
+            (#{item.order_id}	,
+				#{item.inst_process_id}	,
+				#{item.user_id}	,
+				#{item.user_name}	,
+				#{item.user_type}	,
+				#{item.assign_name_title}	,
+				#{item.company_id}	,
+				#{item.company_name}	,
+				#{item.group_id}	,
+				#{item.group_name}	,
+				#{item.dic_group_id}	,
+				#{item.dic_group_name}	,
+				#{item.duty_ratio}	,
+				#{item.real_re_money}	,
+				sysdate()	
+            )
+        </foreach>
+    </insert>
+
+
+	<!-- 根据流程实例ID获取回款撞单信息 -->
+	<select id="getCollisionByInstProcessId" resultType="WorkOrderDutyBo">
+		SELECT
+			order_id,
+			inst_process_id,
+			user_id,
+			user_name,
+			dic_group_id,
+			dic_group_name,
+			group_id,
+			group_name,
+			company_id,
+			company_name,
+			duty_ratio,
+			real_re_money
+		FROM
+			erp_work_order_duty
+		WHERE order_id = #{orderId}
+			AND	inst_process_id = #{instProcessId}	
+	</select>
+	
+	<!-- 根据流程实例ID和订单号删除回款-撞单信息 -->
+	<delete id="delCollisionByOrderIdAndInstProId">
+        DELETE FROM erp_work_order_duty
+        WHERE order_id = #{orderId}
+        	AND inst_process_id = #{instProcessId}
+    </delete>
+
+    <!-- 根据订单ID和流程实例id得到销服人员信息 -->
+    <select id="getOrderXiaofurenByOrderIdAndInstProcessId" resultType="WorkOrderDutyBo">
+        SELECT 
+        	assign_name_title,
+			user_id,
+			user_name,
+			user_type,
+			dic_group_id,
+			dic_group_name,
+			group_id,
+			group_name,
+			company_id,
+			company_name,
+			real_re_money
+		FROM (
+			SELECT
+				'下单人员' assign_name_title,
+				re_user_id user_id,
+				re_user_name user_name,
+				1 user_type,
+				direct_group_id dic_group_id,
+				direct_group_name dic_group_name,
+				group_id,
+				group_name,
+				company_id,
+				company_name,
+				real_re_money
+			FROM
+				erp_work_order_re_money
+			WHERE
+				inst_process_id = #{instProcessId}
+			AND order_id = #{orderId}
+			AND collision_flag in(2,3,4) 
+			AND re_flag = 12
+			UNION
+			SELECT
+				curr.assign_name_title,
+				u.user_id,
+				u. NAME user_name,
+				2 user_type,
+				u.dic_group_id dic_group_id,
+				g1. NAME dic_group_name,
+				u.group_id,
+				g. NAME group_name,
+				g.main_company_id company_id,
+				c. NAME company_name,
+				0 real_re_money
+			FROM
+				erp_workorder_assign_current curr
+			LEFT JOIN base_user u ON curr.assigner = u.user_id
+			LEFT JOIN base_group g ON g.group_id = u.group_id
+			LEFT JOIN base_group g1 ON g1.group_id = u.dic_group_id
+			LEFT JOIN base_company c ON c.company_id = g.main_company_id
+			WHERE
+				curr.order_id = #{orderId}
+			AND curr.service_user_type != 0
+		) T WHERE 1=1
+		<!-- 服务责任退款 -->
+		<if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 11">
+           and user_type = 2
+        </if>
+        <!-- 销售责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 13">
+           and user_type = 1
+        </if>
+        <!-- 销服责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 14">
+           and user_type in(1,2) 
+        </if>
+    </select>
+    
+    <!-- 根据订单ID和流程实例id得到保存撞单记录之前就保存的记录信息 -->
+    <select id="getOrderXiadanrenByOrderIdAndInstProcessId" resultType="WorkOrderDutyBo">
+			SELECT
+				'下单人员' assign_name_title,
+				re_user_id user_id,
+				re_user_name user_name,
+				1 user_type,
+				direct_group_id dic_group_id,
+				direct_group_name dic_group_name,
+				group_id,
+				group_name,
+				company_id,
+				company_name,
+				real_re_money
+			FROM
+				erp_work_order_re_money
+			WHERE
+				order_id = #{orderId}
+			AND (collision_flag in(0,1,4) or collision_flag is null)
+			AND re_flag = 11 and re_type = 2
+    </select>
+
+	<!-- 财务退款审批的获取冲减销售信息列表 -->
+    <select id="seachOrderReduceXiaoshouList" resultType="WorkOrderDutyBo">
+        select * from erp_work_order_reduce
+        where
+        order_id = #{orderId}
+        and inst_process_id = #{instProcessId}
+        <!-- 服务责任退款 -->
+		<if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 11">
+           and user_type = 2
+        </if>
+        <!-- 销售责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 13">
+           and user_type = 1
+        </if>
+        <!-- 销服责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 14">
+           and user_type in(1,2) 
+        </if>
+    </select>
+    <!-- 财务退款审批的获取责任划分信息列表 -->
+    <select id="seachOrderDutyListByDutyTable" resultType="WorkOrderDutyBo">
+        select * from erp_work_order_duty
+        where
+        order_id = #{orderId}
+        and inst_process_id = #{instProcessId}
+        <!-- 服务责任退款 -->
+		<if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 11">
+           and user_type = 2
+        </if>
+        <!-- 销售责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 13">
+           and user_type = 1
+        </if>
+        <!-- 销服责任退款 -->
+        <if test="tuikuan_reason !=null and tuikuan_reason !='' and tuikuan_reason == 14">
+           and user_type in(1,2) 
+        </if>
+    </select>
+    
+    <!-- 保存退款销售冲减信息 -->
+    <insert id="saveWorkOrderReduceBoList" parameterType="java.util.List">
+        insert into erp_work_order_reduce
+        (order_id	,
+			inst_process_id	,
+			user_id	,
+			user_name	,
+			user_type	,
+			assign_name_title	,
+			company_id	,
+			company_name	,
+			group_id	,
+			group_name	,
+			dic_group_id	,
+			dic_group_name	,
+			collision_money	,
+			create_time	
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator="," >
+            (#{item.order_id}	,
+				#{item.inst_process_id}	,
+				#{item.user_id}	,
+				#{item.user_name}	,
+				#{item.user_type}	,
+				#{item.assign_name_title}	,
+				#{item.company_id}	,
+				#{item.company_name}	,
+				#{item.group_id}	,
+				#{item.group_name}	,
+				#{item.dic_group_id}	,
+				#{item.dic_group_name}	,
+				#{item.collision_money}	,
+				sysdate()	
+            )
+        </foreach>
+    </insert>
+    <!-- 删除销售冲减信息 -->
+    <delete id="delReduceListByOrderIdAndInstProId">
+        delete from erp_work_order_reduce
+        where
+        order_id = #{orderId}
+        and inst_process_id = #{instProcessId}
+    </delete>
+</mapper>
+

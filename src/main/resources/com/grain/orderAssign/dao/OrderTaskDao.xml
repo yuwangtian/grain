@@ -1,0 +1,499 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderAssign.dao.OrderTaskDao">
+
+    <!-- Get order task by assign current id -->
+    <select id="getOrderTaskByAssignId" resultType="OrderTaskBo">
+        SELECT
+        *
+        FROM
+        erp_work_order_task
+        WHERE
+        assign_current_id = #{assignCurrentId}
+    </select>
+
+    <!-- Get order task list by order id -->
+    <select id="getOrderTaskListByOrderId" resultType="OrderTaskBo">
+        SELECT
+        T.*,
+        G.name AS service_dic_group_name,
+        U.name AS service_user_name
+        FROM
+        erp_work_order_task T
+        LEFT JOIN base_group G on T.service_dic_group_id = G.group_id
+        LEFT JOIN base_user U on T.service_user_id = U.user_id
+        WHERE
+        order_id = #{orderId} and T.valid_flag=1 and T.del_flag=0
+    </select>
+
+    <!-- 保存 订单task数据(ued,摄影)-->
+    <insert id="saveOrderTask" parameterType="OrderTaskBo"
+            useGeneratedKeys="true" keyProperty="order_task_id">
+        insert into erp_work_order_task (
+        assign_current_id, order_id, progress_state, assign_time, remark,
+        service_dic_group_id, service_group_id, service_user_id, service_user_title,
+        assign_type, decoration_properties, decoration_content, difficulty_degree,
+        shots_num, revised_standard, photo_num, standard_labor_time, plan_begin_time,
+        plan_accomplish_time, real_begin_time, real_accomplish_time, real_used_time,
+        create_time, create_user_id, last_edited_user_id, last_edited_time,order_number
+        )values(
+        #{assign_current_id}, #{order_id}, #{progress_state}, #{assign_time}, #{remark},
+        #{service_dic_group_id}, #{service_group_id}, #{service_user_id}, #{service_user_title},
+        #{assign_type}, #{decoration_properties}, #{decoration_content}, #{difficulty_degree},
+        #{shots_num}, #{revised_standard}, #{photo_num}, #{standard_labor_time}, #{plan_begin_time},
+        #{plan_accomplish_time}, #{real_begin_time}, #{real_accomplish_time}, #{real_used_time},
+        #{create_time}, #{create_user_id}, #{last_edited_user_id}, #{last_edited_time},#{order_number}
+        )
+    </insert>
+
+    <!-- 删除order task数据 by assign id-->
+    <delete id="delOrderTaskByAssignId" >
+        delete from  erp_work_order_task
+        where
+        assign_current_id = #{assignCurrentId}
+    </delete>
+
+    <delete id="delOrderTaskByAssignIdList" >
+        delete from  erp_work_order_task
+        where
+        assign_current_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+    <update id="updateOrderTaskByService" parameterType="OrderTaskBo">
+        update erp_work_order_task set
+        progress_state=#{progress_state},
+        real_begin_time=#{real_begin_time},
+        real_accomplish_time=#{real_accomplish_time},
+        real_used_time=#{real_used_time},
+        last_edited_user_id=#{last_edited_user_id}, last_edited_time=#{last_edited_time}
+        <if test="remark!=null and remark!=''">
+            ,remark=concat(now(),':',#{remark},'<![CDATA[<br>]]>',remark)
+        </if>
+        where
+        order_task_id=#{order_task_id}
+    </update>
+    <!-- 查询未完成的任务数add by jijun 20170401 -->
+    <select id="getCountOfUnfinishedByOrderId" parameterType="OrderTaskBo" resultType="int">
+    	select count(0) from erp_work_order_task order_task 
+    	where order_task.order_id = #{order_id} and order_task.progress_state <![CDATA[<>]]> 2
+    </select>
+
+    <update id="updateOrderTask" parameterType="OrderTaskBo">
+        update erp_work_order_task set
+        progress_state=#{progress_state}, remark=#{remark}, decoration_properties=#{decoration_properties},
+        decoration_content=#{decoration_content}, difficulty_degree=#{difficulty_degree},
+        shots_num=#{shots_num}, revised_standard=#{revised_standard}, photo_num=#{photo_num},
+        standard_labor_time=#{standard_labor_time}, plan_begin_time=#{plan_begin_time},
+        plan_accomplish_time=#{plan_accomplish_time}, real_begin_time=#{real_begin_time},
+        real_accomplish_time=#{real_accomplish_time}, real_used_time=#{real_used_time},
+        last_edited_user_id=#{last_edited_user_id}, last_edited_time=#{last_edited_time}
+        where
+        order_task_id=#{order_task_id}
+    </update>
+    <!--  查询并设置记录总数  -->
+    <select id="getList" resultType="OrderTaskBo" parameterType="OrderOperateQueryBo">
+        SELECT
+        a.shop_name,
+        a.order_title,
+        a.inner_flag,
+        a.order_type,
+        a.company_name,
+        a.group_name,
+        a.user_name,
+        a.create_time,
+        a.service_small_group_name,
+        a.urgent_order_flag AS urgent_task_flag,
+        c.name AS service_dic_group_name,
+        d.name AS service_user_name,
+        b.*,
+        e.en_code
+        FROM
+        erp_work_order a,
+        erp_work_order_task b,
+        base_group c,
+        base_user d,
+        erp_product e
+        WHERE 1=1
+        and a.order_id=b.order_id
+        and a.product_id=e.product_id
+        and b.service_dic_group_id = c.group_id
+        and b.service_user_id = d.user_id
+
+        <if test="product_en_code!=null and product_en_code!=''">
+            and e.en_code='${product_en_code}'
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and d.login_name='${service_user_name}'
+        </if>
+        <if test="startDateSel!=null and startDateSel!=''">
+            and a.create_time >= '${startDateSel}'
+        </if>
+        <if test="endDateSel!=null and endDateSel!=''">
+            and '${endDateSel}' >= a.create_time
+        </if>
+        <if test="order_type!=null and order_type!=''">
+            and a.order_type=${order_type}
+        </if>
+        <if test="decorateSel!=null and decorateSel!=''">
+            and decoration_properties = ${decorateSel}
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            and a.order_id like '%${order_id}%'
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            and a.shop_name like '%${shop_name}%'
+        </if>
+        <if test="assign_type!=null and assign_type!=''">
+            and b.assign_type = '${assign_type}'
+        </if>
+        <if test="orderCompanySel!=null and orderCompanySel!=''">
+            and a.company_id = '${orderCompanySel}'
+        </if>
+        <if test="orderDeptSel!=null and orderDeptSel!=''">
+            and a.group_id = '${orderDeptSel}'
+        </if>
+
+        <if test="inner_flag!=null">
+            <if test="inner_flag == -1">
+                and a.inner_flag=0
+            </if>
+            <if test="inner_flag != -1">
+                and a.inner_flag='${inner_flag}'
+            </if>
+
+        </if>
+        <if test="progress_state!=null and progress_state!=''">
+            and b.progress_state = ${progress_state}
+        </if>
+        <if test="title!=null and title!=''">
+            and a.order_title like '%${title}%'
+        </if>
+        <if test="name!=null and name!=''">
+            and a.user_name like '%${name}%'
+        </if>
+        order by a.create_time
+        <if test="mySort!=null and mySort!=''">
+        ${mySort},
+        </if>
+        a.urgent_order_flag desc
+        limit #{startRow},#{pageSize}
+    </select>
+
+
+    <select id="getTotalCount" resultType="Integer" parameterType="OrderOperateQueryBo">
+        SELECT
+        COUNT(*)
+        FROM
+        erp_work_order a,
+        erp_work_order_task b,
+        base_group c,
+        base_user d,
+        erp_product e
+        WHERE 1=1
+        and a.order_id=b.order_id
+        and b.service_dic_group_id = c.group_id
+        and b.service_user_id = d.user_id
+        and a.product_id=e.product_id
+
+        <if test="product_en_code!=null and product_en_code!=''">
+            and e.en_code='${product_en_code}'
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and d.login_name='${service_user_name}'
+        </if>
+        <if test="startDateSel!=null and startDateSel!=''">
+            and a.create_time >= '${startDateSel}'
+        </if>
+        <if test="endDateSel!=null and endDateSel!=''">
+            and '${endDateSel}' >= a.create_time
+        </if>
+        <if test="order_type!=null and order_type!=''">
+            and a.order_type=${order_type}
+        </if>
+        <if test="decorateSel!=null and decorateSel!=''">
+            and decoration_properties = ${decorateSel}
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            and a.order_id like '%${order_id}%'
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            and a.shop_name like '%${shop_name}%'
+        </if>
+        <if test="assign_type!=null and assign_type!=''">
+            and b.assign_type = '${assign_type}'
+        </if>
+        <if test="orderCompanySel!=null and orderCompanySel!=''">
+            and a.company_id = '${orderCompanySel}'
+        </if>
+        <if test="orderDeptSel!=null and orderDeptSel!=''">
+            and a.group_id = '${orderDeptSel}'
+        </if>
+
+        <if test="inner_flag!=null">
+            <if test="inner_flag == -1">
+                and a.inner_flag=0
+            </if>
+            <if test="inner_flag != -1">
+                and a.inner_flag='${inner_flag}'
+            </if>
+
+        </if>
+        <if test="progress_state!=null and progress_state!=''">
+            and b.progress_state = ${progress_state}
+        </if>
+        <if test="title!=null and title!=''">
+            and a.order_title like '%${title}%'
+        </if>
+        <if test="name!=null and name!=''">
+            and a.user_name like '%${name}%'
+        </if>
+
+    </select>
+
+    <update id="pauseUedOrdinaryTask" parameterType="OrderTaskBo">
+        UPDATE erp_work_order_task e
+        SET e.progress_state = #{progress_state},e.reason =#{reason}
+        WHERE
+            e.order_task_id IN (
+                SELECT
+                    c.*
+                FROM
+                    (
+                        SELECT DISTINCT
+                            (b.order_task_id) AS taskId
+                        FROM
+                            erp_work_order a,
+                            erp_work_order_task b
+                        WHERE
+                            a.order_id = b.order_id
+                        AND a.urgent_order_flag = 0
+                        AND b.service_user_id = #{service_user_id}
+                        AND b.progress_state IN (1)
+                        AND b.valid_flag = 1
+                        AND b.del_flag = 0
+                    ) c
+            )
+    </update>
+
+
+
+    <select id="getOrdinaryTask" parameterType="OrderTaskBo" resultType="OrderTaskBo">
+        SELECT
+        b.*
+        FROM
+        erp_work_order a,
+        erp_work_order_task b
+        WHERE
+        a.order_id = b.order_id
+        AND a.urgent_order_flag = 0
+        AND b.service_user_id =#{service_user_id}
+        AND b.progress_state IN (1)
+        AND b.valid_flag = 1
+        AND b.del_flag = 0
+    </select>
+
+    <select id="checkUrgentTask" parameterType="OrderTaskBo" resultType="OrderTaskBo">
+       SELECT
+        a.*
+        FROM
+        erp_work_order_task a,
+        erp_work_order b
+        WHERE
+        a.order_id = b.order_id
+        AND urgent_order_flag = #{urgent_task_flag}
+        AND progress_state != #{progress_state}
+        AND service_user_id = #{service_user_id}
+        AND a.valid_flag = 1
+        AND a.del_flag = 0
+    </select>
+
+    <select id="getCurrentDaily" parameterType="OrderTaskDailyBo" resultType="OrderTaskDailyBo">
+        select * from erp_work_order_task_daily
+        where
+        service_user_id = #{service_user_id}
+        <if test="daily_time_flag==null">
+            and daily_time like #{daily_time}
+        </if>
+        and  order_task_id = #{order_task_id}
+    </select>
+
+    <update id="updateUedDaily" parameterType="OrderTaskDailyBo">
+        update
+         erp_work_order_task_daily
+        set
+         daily_done_accomplish_hours =  daily_done_accomplish_hours - daily_today_accomplish_hours +  #{daily_today_accomplish_hours},
+         daily_today_accomplish_hours = #{daily_today_accomplish_hours},
+         last_edited_time = #{last_edited_time},
+         remark = #{remark}
+        where
+        service_user_id = #{service_user_id}
+        and daily_time like #{daily_time}
+        and  order_task_id = #{order_task_id}
+    </update>
+
+    <insert id="saveUedDaily" parameterType="OrderTaskDailyBo">
+        insert into erp_work_order_task_daily (
+        order_task_id, order_id, daily_today_accomplish_hours, daily_time, all_accomplish_hours,
+        doing_hours, last_edited_time, remark, create_time,service_user_id,daily_done_accomplish_hours
+        )values(
+        #{order_task_id}, #{order_id}, #{daily_today_accomplish_hours}, #{daily_time}, #{all_accomplish_hours},
+        #{doing_hours}, #{last_edited_time}, #{remark}, #{create_time},#{service_user_id},#{daily_done_accomplish_hours}
+        )
+    </insert>
+
+    <select id="gotoUedDailyDetail" parameterType="OrderTaskDailyBo" resultType="OrderTaskDailyBo">
+        select b.order_task_id,c.name as service_dic_group_name,d.name as service_user_name,e.group_name as group_name,
+        e.user_name as user_name,e.shop_name as shop_name,
+        e.order_id as order_id,b.decoration_properties as decoration_properties,
+        b.decoration_content as decoration_content,e.create_time as create_time,
+        b.assign_time as assign_time,b.standard_labor_time as standard_labor_time,
+        IFNULL(a.daily_done_accomplish_hours,0) as daily_done_accomplish_hours,
+        <![CDATA[if(b.standard_labor_time - IFNULL(a.daily_done_accomplish_hours,0)<0,0,b.standard_labor_time - IFNULL(a.daily_done_accomplish_hours,0))]]> as doing_hours,
+        a.daily_time as daily_time,IFNULL(a.daily_today_accomplish_hours,0) as daily_today_accomplish_hours,
+        b.standard_labor_time as standard_labor_time,b.plan_begin_time as plan_begin_time,b.plan_accomplish_time as plan_accomplish_time
+        from erp_work_order_task_daily a right join erp_work_order_task b on b.order_task_id=a.order_task_id
+        ,base_group c,base_user d,erp_work_order e
+        where  c.group_id = b.service_dic_group_id and d.user_id = b.service_user_id and b.order_id = e.order_id  and b.progress_state != 4 and b.standard_labor_time > 0
+        and b.assign_current_id > 1
+        <if test="service_user_id!=null and service_user_id!=''">
+            and b.service_user_id = #{service_user_id}
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and d.name LIKE '%${service_user_name}%'
+        </if>
+        <if test="service_dic_group_id!=null and service_dic_group_id!=''">
+            and b.service_dic_group_id = #{service_dic_group_id}
+        </if>
+        <if test="service_group_id!=null and service_group_id!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="search_daily_time!=null and search_daily_time!=''">
+            and <![CDATA[(b.real_accomplish_time  like '${search_daily_time}%' or b.real_accomplish_time is null)]]>
+            and <![CDATA[(a.daily_time like '${search_daily_time}%' or a.daily_time is null)]]>
+        </if>
+
+       <if test="companyId!=null and companyId!=''">
+            and e.company_id =#{companyId}
+        </if>
+        <if test="deptId!=null and deptId!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            and e.shop_name like '%${shop_name}%'
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            and b.order_id like '${order_id}%'
+        </if>
+        order by b.order_task_id,a.daily_time
+        <if test=" pageSize >= 1 ">
+        limit #{startRow},#{pageSize}
+        </if>
+    </select>
+
+    <select id="getUedDailyDetailHead" parameterType="OrderTaskDailyBo" resultType="OrderTaskDailyBo">
+         select   b.order_task_id,c.name as service_dic_group_name,d.name as service_user_name,e.group_name as
+        group_name,e.user_name as
+        user_name,e.shop_name as shop_name,
+        e.order_id as order_id,b.decoration_properties as decoration_properties,b.decoration_content as
+        decoration_content,e.create_time as create_time,
+        b.assign_time as assign_time,b.standard_labor_time as standard_labor_time
+        from erp_work_order_task_daily a right join erp_work_order_task b on b.order_task_id = a.order_task_id
+        , base_user d
+        ,base_group c,erp_work_order e
+        where d.user_id = b.service_user_id and c.group_id = b.service_dic_group_id  and b.order_id = e.order_id and b.progress_state != 4
+        <if test="service_user_id!=null and service_user_id!=''">
+            and b.service_user_id = #{service_user_id}
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and d.name LIKE '%${service_user_name}%'
+        </if>
+        <if test="service_dic_group_id!=null and service_dic_group_id!=''">
+            and b.service_dic_group_id = #{service_dic_group_id}
+        </if>
+        <if test="service_group_id!=null and service_group_id!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="search_daily_time!=null and search_daily_time!=''">
+            and b.real_accomplish_time  like '${search_daily_time}%'
+            and <![CDATA[（a.daily_time like '${search_daily_time}%' or a.daily_time is null）]]>
+        </if>
+
+        <!-- <if test="companyId!=null and companyId!=''">
+             and .companyId =#{companyId}
+         </if>-->
+        <if test="deptId!=null and deptId!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            and b.shop_name like '%${shop_name}%'
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            and b.order_id like '%${order_id}%'
+        </if>
+        order by b.order_task_id
+    </select>
+
+    <update id="updateTaskProgressStateById" parameterType="OrderTaskBo">
+        update erp_work_order_task set
+        progress_state=#{progress_state}
+        where
+        order_task_id=#{order_task_id}
+    </update>
+
+    <!-- Get not finished order task count by order id -->
+    <select id="getNotFinishCount" resultType="java.lang.Integer">
+        SELECT
+        sum(case progress_state
+        when -1 then 0
+        else 1 end )
+        -sum(case progress_state
+        when 2 then 1
+        else 0 end)
+        FROM
+        erp_work_order_task
+        WHERE
+        order_id = #{order_id}
+    </select>
+
+    <!-- 查询ued日报记录总数 - add by qiaojingjun 20160721 -->
+    <select id="getTotalCountOfUEDDailyReport" resultType="java.lang.Integer">
+        select count(1)
+        from erp_work_order_task_daily a right join erp_work_order_task b on b.order_task_id=a.order_task_id
+        ,base_group c,base_user d,erp_work_order e
+        where  c.group_id = b.service_dic_group_id and d.user_id = b.service_user_id and b.order_id = e.order_id  and b.progress_state != 4 and b.standard_labor_time > 0
+        and b.assign_current_id > 1
+        <if test="service_user_id!=null and service_user_id!=''">
+            and b.service_user_id = #{service_user_id}
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and d.name LIKE '%${service_user_name}%'
+        </if>
+        <if test="service_dic_group_id!=null and service_dic_group_id!=''">
+            and b.service_dic_group_id = #{service_dic_group_id}
+        </if>
+        <if test="service_group_id!=null and service_group_id!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="search_daily_time!=null and search_daily_time!=''">
+            and <![CDATA[(b.real_accomplish_time  like '${search_daily_time}%' or b.real_accomplish_time is null)]]>
+            and <![CDATA[(a.daily_time like '${search_daily_time}%' or a.daily_time is null)]]>
+        </if>
+
+        <if test="companyId!=null and companyId!=''">
+             and e.company_id =#{companyId}
+         </if>
+        <if test="deptId!=null and deptId!=''">
+            and b.service_group_id = #{service_group_id}
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            and e.shop_name like '%${shop_name}%'
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            and b.order_id like '${order_id}%'
+        </if>
+    </select>
+</mapper>

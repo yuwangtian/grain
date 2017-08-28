@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.UEDScoreReport.dao.UEDScoreReportDao">
+    <!-- 查询得分统计信息 -->
+	<select id="getUEDScoreList" resultType="UEDScoreReportBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT
+            erp_work_order_score.*,
+            finish_time_score + customer_satisfy_score + document_score + detail_score AS total_score,
+            erp_work_order.company_name,
+            erp_work_order.group_name,
+            erp_work_order.shop_name,
+            erp_work_order.order_title,
+            erp_work_order.service_ae_names
+            FROM
+            erp_work_order_score
+            LEFT JOIN erp_work_order ON erp_work_order_score.order_id = erp_work_order.order_id
+            WHERE 1=1
+            <if test="shop_id!=null and shop_id!=''">
+                AND erp_work_order.shop_name LIKE '%${shop_id}%'
+            </if>
+            <if test="order_id!=null and order_id!=''">
+                AND erp_work_order_score.order_id LIKE '%${order_id}%'
+            </if>
+            <if test="order_title!=null and order_title!=''">
+                AND erp_work_order.order_title LIKE '%${order_title}%'
+            </if>
+            <if test="company_id!=null ">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="service_small_group_id!=null">
+                AND erp_work_order.service_small_group_id = #{service_small_group_id}
+            </if>
+            <if test="service_ae_names!=null and service_ae_names!=''">
+                AND erp_work_order.service_ae_names LIKE '%${service_ae_names}%'
+            </if>
+
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_score.create_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_score.create_time
+            </if>
+
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order.service_group_id in ${serviceGroupStr} or erp_work_order.service_small_group_id in ${serviceGroupStr} or concat(',',erp_work_order.service_ae_names,',') like '%,${login_user_name},%')
+            </if>
+            ORDER BY erp_work_order_score.create_time desc
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            SELECT
+            erp_work_order_score.*,
+            finish_time_score + customer_satisfy_score + document_score + detail_score AS total_score,
+            erp_work_order.company_name,
+            erp_work_order.group_name,
+            erp_work_order.shop_name,
+            erp_work_order.order_title,
+            erp_work_order.service_ae_names
+            FROM
+            erp_work_order_score
+            LEFT JOIN erp_work_order ON erp_work_order_score.order_id = erp_work_order.order_id
+            WHERE 1=1
+            <if test="shop_id!=null and shop_id!=''">
+                AND erp_work_order.shop_name LIKE '%${shop_id}%'
+            </if>
+            <if test="order_id!=null and order_id!=''">
+                AND erp_work_order_score.order_id LIKE '%${order_id}%'
+            </if>
+            <if test="order_title!=null and order_title!=''">
+                AND erp_work_order.order_title LIKE '%${order_title}%'
+            </if>
+            <if test="company_id!=null ">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="service_small_group_id!=null">
+                AND erp_work_order.service_small_group_id = #{service_small_group_id}
+            </if>
+            <if test="service_ae_names!=null and service_ae_names!=''">
+                AND erp_work_order.service_ae_names LIKE '%${service_ae_names}%'
+            </if>
+
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_score.create_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_score.create_time
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order.service_group_id in ${serviceGroupStr} or erp_work_order.service_small_group_id in ${serviceGroupStr} or concat(',',erp_work_order.service_ae_names,',') like '%,${login_user_name},%')
+            </if>
+            ORDER BY erp_work_order_score.create_time desc
+            LIMIT  ${startRow},${pageSize}
+        </if>
+	</select>
+
+    <!-- 查询得分统计记录数 -->
+    <select id="getUEDScoreListCount" resultType="Integer">
+        SELECT
+            count(*)
+        FROM
+            erp_work_order_score
+        LEFT JOIN erp_work_order ON erp_work_order_score.order_id = erp_work_order.order_id
+        WHERE 1=1
+        <if test="shop_id!=null and shop_id!=''">
+            AND erp_work_order.shop_name LIKE '%${shop_id}%'
+        </if>
+        <if test="order_id!=null and order_id!=''">
+            AND erp_work_order_score.order_id LIKE '%${order_id}%'
+        </if>
+        <if test="order_title!=null and order_title!=''">
+            AND erp_work_order.order_title LIKE '%${order_title}%'
+        </if>
+        <if test="company_id!=null ">
+            AND erp_work_order.company_id = #{company_id}
+        </if>
+        <if test="group_id!=null and group_id!=''">
+            AND erp_work_order.group_id in (${group_id})
+        </if>
+        <if test="service_small_group_id!=null">
+            AND erp_work_order.service_small_group_id = #{service_small_group_id}
+        </if>
+        <if test="service_ae_names!=null and service_ae_names!=''">
+            AND erp_work_order.service_ae_names LIKE '%${service_ae_names}%'
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            AND erp_work_order_score.create_time >= #{start_date}
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            AND #{end_date} >= erp_work_order_score.create_time
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            AND (erp_work_order.service_group_id in ${serviceGroupStr} or erp_work_order.service_small_group_id in ${serviceGroupStr} or concat(',',erp_work_order.service_ae_names,',') like '%,${login_user_name},%')
+        </if>
+    </select>
+
+</mapper>

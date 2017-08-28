@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+<!--暂停定时-->
+    <!--<bean id="pauseOrderProcess" class="com.grain.orderoperate.task.PauseOrderProcess"/>-->
+	   <!--<task:scheduled-tasks>-->
+        <!--<task:scheduled ref="pauseOrderProcess" method="pauseOrderTask" cron="${SynchrodataTask.pauseOrder.cron}" />-->
+    <!--</task:scheduled-tasks>-->
+
+   <!--&lt;!&ndash;&lt;!&ndash; 保存服务日信息表定时任务&ndash;&gt;&ndash;&gt;-->
+    <!--<bean id="timingExtractData" class="com.grain.orderoperate.task.TimingExtractData"/>-->
+	   <!--<task:scheduled-tasks>-->
+        <!--<task:scheduled ref="timingExtractData" method="extractDataTask" cron="${SynchrodataTask.extractDataTask.cron}" />-->
+    <!--</task:scheduled-tasks>-->
+
+</beans>

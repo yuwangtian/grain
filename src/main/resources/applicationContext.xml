@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns="http://www.springframework.org/schema/beans"
+       xsi:schemaLocation="http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+      http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.2.xsd
+      http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.2.xsd"
+>
+    <context:annotation-config />
+    <context:component-scan base-package="com.grain" />
+
+    <context:property-placeholder location="classpath:jdbc.properties,classpath:config.properties"/>
+    <util:properties id="config" location="classpath:config.properties"/>
+
+    <bean id="dataSource" class="org.apache.tomcat.jdbc.pool.DataSource">
+        <property name="driverClassName"><value>${jdbc.driverClassName}</value></property>
+        <property name="url"><value>${jdbc.url}</value></property>
+        <property name="username" ><value>${jdbc.username}</value></property>
+        <property name="password"><value>${jdbc.password}</value></property>
+        <property name="maxActive"><value>100</value></property>
+        <property name="initialSize"><value>10</value></property>
+        <property name="validationQuery"><value>select 1 from dual</value></property>
+        <property name="testOnBorrow"><value>true</value></property>
+        <property name="testOnReturn"><value>true</value></property>
+        <property name="testWhileIdle"><value>true</value></property>
+        <property name="defaultAutoCommit"><value>false</value></property>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage"
+                  value="com.grain.base.bo.*,
+                  com.grain.sysconfig.sys.bo,
+                  com.grain.total.bo,
+                  com.grain.order.bo,
+                  com.grain.order.base.bo,
+                  com.grain.sysconfig.debugInfo.bo,
+                  com.grain.sysconfig.user.bo,
+                  com.grain.sysconfig.property.bo,
+                  com.grain.base.log.bo,
+                  com.grain.sysconfig.role.bo,
+                  com.grain.product.bo,
+                  com.grain.utils.opinion.bo,
+                  com.grain.businessAssign.bo,
+                  com.grain.orderAssign.bo,
+                  com.grain.sysconfig.process.bo,
+                  com.grain.orderoperate.bo,
+                  com.grain.report.workTimeReport.bo,
+                  com.grain.report.UEDScoreReport.bo,
+                  com.grain.report.accountReport.bo,
+                  com.grain.report.workday.bo,
+                  com.grain.training.bo,
+                  com.grain.newztc.bo,
+                  com.grain.sysconfig.notice.bo,
+                  com.grain.report.target.bo,
+                  com.grain.report.orderReport.bo,
+                  com.grain.deposit.bo
+                  "
+                  />
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
+   </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage"
+                  value="com.grain.base.dao.ds1,
+                  com.grain.sysconfig.sys.dao,
+                  com.grain.total.dao,
+                  com.grain.order.dao,
+                  com.grain.order.base.dao,
+                  com.grain.sysconfig.user.dao,
+                  com.grain.base.log.dao,
+                  com.grain.sysconfig.role.dao,
+                  com.grain.sysconfig.property.dao,
+                  com.grain.product.dao,
+                  com.grain.utils.opinion.dao,
+                  com.grain.businessAssign.dao,
+                  com.grain.orderAssign.dao,
+                  com.grain.sysconfig.process.dao,
+                  com.grain.orderoperate.dao,
+                  com.grain.report.workTimeReport.dao,
+                  com.grain.report.UEDScoreReport.dao,
+                  com.grain.report.accountReport.dao,
+                  com.grain.report.workday.dao,
+                  com.grain.training.dao,
+                  com.grain.newztc.dao,
+                  com.grain.sysconfig.notice.dao,
+                  com.grain.report.target.dao,
+                  com.grain.report.orderReport.dao,
+                  com.grain.deposit.dao
+                  "
+                  />
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"/>
+    </bean>
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="100000000"/>
+    </bean>
+    <tx:annotation-driven transaction-manager="transactionManager"/>
+</beans>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderAssign.dao.OrderAssignLogDao">
+
+    <insert id="saveOrderAssignLog" parameterType="OrderAssignLogBo"
+            useGeneratedKeys="true" keyProperty="assign_log_id">
+        insert into erp_workorder_assign_log
+        (
+        order_id,
+        assigning_config_id,
+        current_assign_config_id,
+        assign_user_id,
+        assign_direct_group_id,
+        assign_group_id,
+        assign_company_id,
+        assign_time,
+        assign_task_to,
+        create_time,
+        create_user_id,
+        valid_flag,
+        invalid_type
+        )
+        values
+        (
+        #{order_id},
+        #{assigning_config_id},
+        #{current_assign_config_id},
+        #{assign_user_id},
+        #{assign_direct_group_id},
+        #{assign_group_id},
+        #{assign_company_id},
+        #{assign_time},
+        #{assign_task_to},
+        #{create_time},
+        #{create_user_id},
+        #{valid_flag},
+        #{invalid_type}
+        )
+    </insert>
+
+</mapper>
+
+

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.sys.dao.ArchDictionaryDao">
+     <select id="getList"  resultType="ArchDictionary">
+     	
+        SELECT *
+        
+        FROM  base_dictionary a
+        
+        WHERE 1=1 
+        
+        and valid_flag = 1 
+        
+        and del_flag =0
+        
+         <if test="en_name!=null and en_name.trim()!=''">
+            and en_name = #{en_name}
+        </if>
+         order by sort_num
+    </select>
+    
+    <!-- 获取全部省份 -->
+    <select id="getProvinces"  resultType="ProvinceDictionary">
+        SELECT *  FROM  erp_province 
+    </select>
+    
+    <!-- 根据省份获取市 -->
+    <select id="getCitys" parameterType="Integer" resultType="CityDictionary">
+        SELECT *  FROM  erp_city 
+           WHERE 1=1
+	       <if test="province_id != null and province_id != '' ">
+	       and  province_id = #{province_id}
+	       </if>
+    </select>
+    <!-- 根据en_name和code_value获取字典数据-->
+    <select id="getdicByEnnameAndCodeVale" parameterType="ArchDictionary" resultType="ArchDictionary">
+      select * from base_dictionary
+      where en_name=#{en_name} and code_value=#{code_value}
+    </select>
+
+    <!-- 根据id省份 -->
+    <select id="getProvinceById" parameterType="Integer"  resultType="ProvinceDictionary">
+        SELECT *  FROM  erp_province WHERE province_id = #{param1}
+    </select>
+
+    <!-- 根据id获取市 -->
+    <select id="getCityById" parameterType="Integer" resultType="CityDictionary">
+        SELECT *  FROM  erp_city WHERE city_id = #{param1}
+    </select>
+
+    <!-- 订单公司个性化配置（包括商务分配）  配置数据 -->
+    <select id="getListCompanyConfig" resultType="WorkorderCompanyConfig">
+            SELECT * FROM erp_workorder_company_config ewcc
+            WHERE
+            ewcc.from_company_id=#{param1}
+            and ewcc.pro_en_code=#{param2}
+            and ewcc.type=#{param3}
+            order by ewcc.sort_num
+    </select>
+
+</mapper>

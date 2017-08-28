@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.mappers.ds1.TbfwOrderDDLYMapper">
+   	<insert id="insert">
+        INSERT INTO de_tbfw_order_ddlyConfig
+        (id,
+         ddlyType)
+        VALUES
+            (#{id},
+             #{ddlyType});
+    </insert>
+     <select id="getddLyList"  resultType="TbfwOrderDDLY">
+        SELECT
+            id,
+            ddlyType
+        FROM de_tbfw_order_ddlyConfig
+        order by ddlyType
+    </select>
+    <update id="update">
+     UPDATE  de_tbfw_order_ddlyConfig
+      SET
+      ddlyType =  #{ddlyType}
+      WHERE id = #{id};
+    </update>
+</mapper>

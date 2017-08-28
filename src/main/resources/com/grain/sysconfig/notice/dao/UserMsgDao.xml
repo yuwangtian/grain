@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.notice.dao.UserMsgDao">
+
+    <!-- 查询用户没有读取的消息列表 -->
+    <select id="getUserUnreadMsgList" resultType="UserMsgBo">
+        SELECT
+        *
+        FROM
+        erp_user_msg_queue
+        WHERE
+        to_user_id = #{param1}
+        ORDER BY create_time asc
+        limit 0,1
+    </select>
+
+    <select id="getOrderggMsgList" resultType="UserMsgBo">
+         SELECT
+        *
+        FROM
+        erp_user_msg_queue
+        WHERE
+        msg_type = 11
+        ORDER BY create_time desc LIMIT 1
+    </select>
+
+    <!-- 删除用户已经读完的消息列表 -->
+    <delete id="deleteUserReadMsgList">
+        delete from erp_user_msg_queue
+        WHERE
+        msg_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 添加 -->
+    <insert id="saveUserMsg" parameterType="UserMsgBo">
+        INSERT INTO erp_user_msg_queue (
+        msg_content,
+        msg_type,
+        order_id,
+        business_id,
+        to_user_id,
+        create_time
+        )
+        VALUES (
+        #{msg_content},
+        #{msg_type},
+        #{order_id},
+        #{business_id},
+        #{to_user_id},
+        #{create_time}
+        );
+    </insert>
+
+
+    <!-- 删除十天以上的公告信息 -->
+    <delete id="executeDelUserMsgQueue">
+        DELETE from erp_user_msg_queue where msg_type = #{1} and  CURDATE() > DATE_ADD(create_time,INTERVAL 9 day)
+    </delete>
+
+    <delete id="delPlanProcessUserMsg">
+        DELETE from erp_user_msg_queue where msg_type = #{param1} and business_id = #{param2}
+    </delete>
+
+</mapper>

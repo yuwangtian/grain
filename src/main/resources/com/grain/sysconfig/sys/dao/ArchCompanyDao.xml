@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.sys.dao.ArchCompanyDao">
+     <select id="getList"  resultType="ArchCompany">
+        SELECT
+            *
+        FROM base_company where del_flag = '0' and valid_flag = '1'
+        order by  sort_num
+    </select>
+    
+    
+    <select id="pageList" resultType="ArchCompany">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM base_company 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM base_company 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCount" resultType="Integer">
+           SELECT count(*) FROM base_company 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+    
+    <insert id="insert" parameterType="ArchCompany"
+		useGeneratedKeys="true" keyProperty="company_id">
+		insert into base_company 
+			(name,type,parent_id,sort_num,
+	         create_time,create_user_id,last_edited_user_id,
+	         last_edited_time,valid_flag,del_flag)
+		values
+			(#{name},#{type},#{parent_id},#{sort_num}
+			,#{create_time},#{create_user_id},#{last_edited_user_id},
+			#{last_edited_time},#{valid_flag},#{del_flag})
+	</insert>
+	
+	<delete id="delete" parameterType="ArchCompany">
+	    update base_company set del_flag = '1' where company_id = #{company_id}
+	</delete>
+	
+	<update id="update">
+	    update base_company set
+	    name = #{name},
+	    type = #{type},
+	    sort_num = #{sort_num} where
+	    company_id = #{company_id}
+	</update>
+
+    <select id="getCompanyById" resultType="ArchCompany">
+        SELECT *
+        from base_company
+        WHERE
+        company_id=#{companyId}
+    </select>
+
+</mapper>

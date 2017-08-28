@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkOrderScoreDao">
+
+    <!-- 保存定单打分结果信息 -->
+    <insert id="saveOrderScore" parameterType="WorkOrderScoreBo"
+            useGeneratedKeys="true" keyProperty="score_id">
+        insert into erp_work_order_score
+        (order_id, finish_time_score, customer_satisfy_score, document_score, personnel_coordination_score, detail_score,
+        create_time, create_user_id, last_edited_user_id, last_edited_time,finish_time_score_note,customer_satisfy_score_note,
+        document_score_note, detail_score_note)
+        values
+        ( #{order_id}, #{finish_time_score}, #{customer_satisfy_score}, #{document_score},#{personnel_coordination_score}, #{detail_score},
+        #{create_time}, #{create_user_id}, #{last_edited_user_id}, #{last_edited_time}, #{finish_time_score_note}, #{customer_satisfy_score_note},
+        #{document_score_note}, #{detail_score_note} )
+    </insert>
+
+    <!-- 更新定单打分结果信息 -->
+    <update id="updateOrderScore" parameterType="WorkOrderScoreBo">
+        update erp_work_order_score
+
+        SET last_edited_user_id = #{last_edited_user_id}
+        , last_edited_time = #{last_edited_time}
+
+        <if test="re_flag!=null">
+            , finish_time_score = #{finish_time_score}
+        </if>
+        <if test="re_type!=null">
+            , customer_satisfy_score = #{customer_satisfy_score}
+        </if>
+        <if test="merge_flag!=null">
+            , document_score = #{document_score}
+        </if>
+        <if test="rest_days_before!=null">
+            , personnel_coordination_score = #{personnel_coordination_score}
+        </if>
+        <if test="reduce_flag!=null">
+            , detail_score = #{detail_score}
+        </if>
+        where order_score_id = #{order_score_id}
+    </update>
+
+    <!-- 根据定单id得到打分结果信息 -->
+    <select id="getScoreByOrderId" resultType="WorkOrderScoreBo">
+        select * from erp_work_order_score
+        where
+        order_id = #{orderId}
+        limit 0, 1
+    </select>
+
+</mapper>
+

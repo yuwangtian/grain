@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.process.dao.OpinionDao">
+
+	<!-- 获取审批意见列表 -->
+	<select id="getList" resultType="OpinionBo">
+	<!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM base_flow_opinion 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM base_flow_opinion 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCount" resultType="Integer">
+           SELECT count(*) FROM base_flow_opinion 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	<!-- 插入审批意见 -->
+    <insert id="insert" parameterType="OpinionBo"
+		useGeneratedKeys="true" keyProperty="opinion_id">
+		insert into base_flow_opinion (
+		
+		    opinion_id,inst_task_id,inst_process_id,content,
+			
+			task_user,
+			
+	        create_time,create_user_id,last_edited_user_id,
+	         
+	        last_edited_time,shenpi_value,en_name
+	        
+	        )values(
+	        
+	        #{opinion_id},#{inst_task_id},#{inst_process_id},#{content},
+	        
+			#{task_user},
+			
+			#{create_time},#{create_user_id},#{last_edited_user_id},
+			
+			#{last_edited_time},#{shenpi_value},#{en_name}
+			
+			)
+	</insert>
+	
+	<!-- 更新审批意见 -->
+	<update id="update" parameterType="OpinionBo">
+		
+		 update base_flow_opinion set
+		 
+		 inst_task_id = #{inst_task_id},
+		 
+		 inst_process_id = #{inst_process_id},
+		 
+		 task_user = #{task_user},
+		 
+		 content = #{content},
+		 
+		 last_edited_user_id = #{last_edited_user_id},
+		 
+		 last_edited_time =  #{last_edited_time}
+		 
+		 where
+		 
+		 opinion_id = #{opinion_id}
+		 
+	</update>
+</mapper>

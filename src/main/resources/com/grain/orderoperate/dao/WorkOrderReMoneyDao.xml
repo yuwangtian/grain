@@ -1,0 +1,801 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkOrderReMoneyDao">
+
+ 	<!--//TP青岛更改 曹群星 2017-02-09 ADD START-->
+ 	<!-- 该订单号是否可以进行定金转新单 -->
+ 	<select id="checkDepositToNewOrderAble" resultType="Integer">
+		SELECT
+			COUNT(1) AS cnt
+		FROM
+			erp_work_order_re_money
+		WHERE
+			deposit_id = #{param1}
+ 	</select>
+ 	
+ 	<!-- 获取当前订单号的定金金额 -->
+    <select id="getDepositMoneyByOrderNo" resultType="Float">
+        SELECT
+			IFNULL(SUM(real_re_money),0) AS real_re_money
+		FROM
+			erp_work_order_re_money
+		WHERE
+			order_id = #{param1}
+			AND re_type = 4
+    </select>
+    
+    <!-- 获取当前订单号的回款金额-->
+    <select id="getReMoneyByOrderNo" resultType="Float">
+        SELECT IFNULL(SUM(real_re_money),0) AS m FROM erp_work_order_re_money 
+        WHERE order_id=#{param1} 
+        AND re_flag=11 
+        AND re_type IN(5,6)
+    </select>
+    
+    <!-- 获取当前订单号，下单时填写的账号信息 -->
+     <select id="getReMoneyCustomerByOrderNo" resultType="WorkOrderReMoneyBo">
+     SELECT customer_account,customer_name FROM erp_work_order_re_money 
+	     WHERE order_id=#{param1}
+	     AND re_type=2 
+	     AND re_flag=11
+	     LIMIT 1
+     </select>
+ 	<!--//TP青岛更改 曹群星 2017-02-09 ADD END-->
+ 
+    
+    <!-- 保存回退款信息 -->
+    <insert id="saveOrderReMoney" parameterType="WorkOrderReMoneyBo"
+            useGeneratedKeys="true" keyProperty="re_money_id">
+        insert into erp_work_order_re_money
+        (order_id, re_user_id, re_user_name, direct_group_id, direct_group_name, group_id, group_name, re_flag,
+        re_type, company_id, company_name, re_time, opt_time, plan_re_money, real_re_money, money_in_month,
+        rest_days_after, rest_money_after, rest_money_before, reason, merge_flag,
+        rest_days_before, our_account, customer_account, customer_name,
+        re_all_flag, inst_process_id, remark, approve_state,
+        approve_agree_time, detainment_mark, pro_code, pro_short_name,
+        target_service_days, target_order_id, target_shop_id, target_product_id, target_service_company_id,
+        target_service_company_name, target_service_group_id, target_service_group_name, order_state_before,
+        order_state_after, real_money_before, real_money_after, real_days_before, real_days_after, frozen_days, frozen_money,
+        create_time, create_user_id, last_edited_user_id, last_edited_time ,
+        service_group_id,
+        service_group_name,
+        service_company_id,
+        service_company_name,
+        reduce_flag,
+        reduce_yeji_group_id,
+        reduce_yeji_group_name,
+        reduce_yeji_small_group_id,
+        reduce_yeji_small_group_name,
+        reduce_yeji_am_names,
+        reduce_yeji_ae_names,
+        reduce_yeji__small_group_leader_names,
+        reduce_yeji_money,
+        reduce_yeji_reason,
+        reduce_yeji_xiadanren_name,
+        recent_sem_cost_money,recent_sem_deal_money,recent_shop_cost_money,order_info_at_that_time,collision_flag,deposit_id,final_payment_predict_time
+        <!-- TP青岛更改 曹群星 2017-02-28 ADD START -->
+        ,service_cycle_deal,service_cycle_cost,reason_type,zhuandan_type,huikuan_to_company_id
+        <!-- TP青岛更改 曹群星 2017-02-28 ADD END -->
+        )
+        values
+        ( #{order_id}, #{re_user_id}, #{re_user_name}, #{direct_group_id},#{direct_group_name}, #{group_id}, #{group_name}, #{re_flag},
+        #{re_type}, #{company_id}, #{company_name}, #{re_time}, #{opt_time}, #{plan_re_money}, #{real_re_money}, #{money_in_month},
+        #{rest_days_after}, #{rest_money_after}, #{rest_money_before}, #{reason}, #{merge_flag},
+        #{rest_days_before}, #{our_account}, #{customer_account}, #{customer_name},
+        #{re_all_flag}, #{inst_process_id}, #{remark}, #{approve_state},
+        #{approve_agree_time}, #{detainment_mark}, #{pro_code}, #{pro_short_name},
+        #{target_service_days}, #{target_order_id}, #{target_shop_id}, #{target_product_id}, #{target_service_company_id},
+        #{target_service_company_name}, #{target_service_group_id}, #{target_service_group_name}, #{order_state_before},
+        #{order_state_after}, #{real_money_before}, #{real_money_after}, #{real_days_before}, #{real_days_after}, #{frozen_days}, #{frozen_money},
+        #{create_time}, #{create_user_id}, #{last_edited_user_id}, #{last_edited_time} ,
+         #{service_group_id},
+         #{service_group_name},
+         #{service_company_id},
+         #{service_company_name},
+         #{reduce_flag},
+         #{reduce_yeji_group_id},
+         #{reduce_yeji_group_name},
+         #{reduce_yeji_small_group_id},
+         #{reduce_yeji_small_group_name},
+         #{reduce_yeji_am_names},
+         #{reduce_yeji_ae_names},
+         #{reduce_yeji__small_group_leader_names},
+         #{reduce_yeji_money},
+         #{reduce_yeji_reason},
+         #{reduce_yeji_xiadanren_name},
+         #{recent_sem_cost_money},#{recent_sem_deal_money},#{recent_shop_cost_money},#{order_info_at_that_time},#{collision_flag},#{deposit_id},#{final_payment_predict_time}
+         <!-- TP青岛更改 曹群星 2017-02-28 ADD START -->
+         ,#{service_cycle_deal},#{service_cycle_cost},#{reason_type},#{zhuandan_type},#{huikuan_to_company_id}
+         <!-- TP青岛更改 曹群星 2017-02-28 ADD END -->
+        )
+    </insert>
+
+    <!-- 下新单时 更新回退款信息 -->
+    <update id="updateOrderReMoneyForXiaDan" parameterType="WorkOrderReMoneyBo">
+    	  update erp_work_order_re_money set
+    	  
+    	  last_edited_user_id = #{last_edited_user_id},
+    	  
+    	  last_edited_time = #{last_edited_time},
+    	  
+    	  re_flag = #{re_flag},
+    	  
+    	  approve_state = #{approve_state},
+    	  
+    	  re_user_id = #{re_user_id},
+    	  
+    	  re_user_name = #{re_user_name},
+    	  
+    	  opt_time = #{opt_time},
+    	  
+    	  direct_group_id = #{direct_group_id},
+    	  
+    	  direct_group_name = #{direct_group_name},
+    	  
+    	  group_id = #{group_id},
+    	  
+    	  group_name = #{group_name},
+    	  
+    	  company_id = #{company_id},
+    	  
+    	  company_name = #{company_name},
+    	  
+    	  re_type = #{re_type},
+    	  
+    	  remark = #{remark},
+    	  
+    	  re_time = #{re_time},
+    	  
+    	  re_all_flag = #{re_all_flag},
+    	  
+    	  real_re_money = #{real_re_money},
+    	  
+    	  real_days_before = #{real_days_before},
+    	  
+    	  customer_name = #{customer_name},
+    	  
+    	  customer_account = #{customer_account},
+    	  
+    	  our_account = #{our_account} ,
+    	  collision_flag = #{collision_flag},
+    	 final_payment_predict_time = #{final_payment_predict_time}
+    	 <!-- TP青岛更改 曹群星 2017-02-28 ADD START -->
+    	 ,service_cycle_deal=#{service_cycle_deal}
+    	 ,service_cycle_cost=#{service_cycle_cost}
+    	 ,reason_type=#{reason_type}
+    	 ,zhuandan_type=#{zhuandan_type}
+    	 ,huikuan_to_company_id=#{huikuan_to_company_id}
+    	 <!-- TP青岛更改 曹群星 2017-02-28 ADD END -->
+    	  where  
+    	  
+    	  re_money_id = #{re_money_id} 
+    	  
+    </update>
+
+    <!-- 保存回退款信息 -->
+    <update id="updateOrderReMoney" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money
+
+        SET last_edited_user_id = #{last_edited_user_id}
+        , last_edited_time = #{last_edited_time}
+        , approve_agree_time = #{approve_agree_time}
+
+        , recent_sem_cost_money = #{recent_sem_cost_money}
+        , recent_sem_deal_money = #{recent_sem_deal_money}
+        , recent_shop_cost_money = #{recent_shop_cost_money}
+        <if test="re_flag!=null">
+            , re_flag = #{re_flag}
+        </if>
+        <if test="re_type!=null">
+            , re_type = #{re_type}
+        </if>
+        <if test="re_time!=null and re_time!=''">
+            , re_time = #{re_time}
+        </if>
+        <if test="opt_time!=null and opt_time!=''">
+            , opt_time = #{opt_time}
+        </if>
+        <if test="plan_re_money!=null and plan_re_money!=''">
+            , plan_re_money = #{plan_re_money}
+        </if>
+        <if test="real_re_money!=null and real_re_money!=''">
+            , real_re_money = #{real_re_money}
+        </if>
+        <if test="money_in_month!=null and money_in_month!=''">
+            , money_in_month = #{money_in_month}
+        </if>
+        <if test="rest_days_after!=null">
+            , rest_days_after = #{rest_days_after}
+        </if>
+        <if test="rest_money_after!=null and rest_money_after!=''">
+            , rest_money_after = #{rest_money_after}
+        </if>
+        <if test="rest_money_before!=null and rest_money_before!=''">
+            , rest_money_before = #{rest_money_before}
+        </if>
+        <if test="reason!=null and reason!=''">
+            , reason = #{reason}
+        </if>
+        <if test="merge_flag!=null">
+            , merge_flag = #{merge_flag}
+        </if>
+        <if test="rest_days_before!=null">
+            , rest_days_before = #{rest_days_before}
+        </if>
+        <if test="our_account!=null and our_account!=''">
+            , our_account = #{our_account}
+        </if>
+        <if test="customer_account!=null and customer_account!=''">
+            , customer_account = #{customer_account}
+        </if>
+        <if test="customer_name!=null and customer_name!=''">
+            , customer_name = #{customer_name}
+        </if>
+        <if test="reduce_flag!=null">
+            , reduce_flag = #{reduce_flag}
+        </if>
+        <if test="re_all_flag!=null">
+            , re_all_flag = #{re_all_flag}
+        </if>
+        <if test="remark!=null and remark!=''">
+            , remark = #{remark}
+        </if>
+        <if test="approve_state!=null">
+            , approve_state = #{approve_state}
+        </if>
+        <if test="detainment_mark!=null and detainment_mark!=''">
+            , detainment_mark = #{detainment_mark}
+        </if>
+        <if test="target_service_days!=null">
+            , target_service_days = #{target_service_days}
+        </if>
+        <if test="target_order_id!=null and target_order_id!=''">
+            , target_order_id = #{target_order_id}
+        </if>
+        <if test="target_shop_id!=null and target_shop_id!=''">
+            , target_shop_id = #{target_shop_id}
+        </if>
+        <if test="target_product_id!=null">
+            , target_product_id = #{target_product_id}
+        </if>
+        <if test="target_service_company_id!=null">
+            , target_service_company_id = #{target_service_company_id}
+        </if>
+        <if test="target_service_company_name!=null and target_service_company_name!=''">
+            , target_service_company_name = #{target_service_company_name}
+        </if>
+        <if test="target_service_group_id!=null">
+            , target_service_group_id = #{target_service_group_id}
+        </if>
+        <if test="target_service_group_name!=null and target_service_group_name!=''">
+            , target_service_group_name = #{target_service_group_name}
+        </if>
+        <if test="order_state_before!=null">
+            , order_state_before = #{order_state_before}
+        </if>
+        <if test="order_state_after!=null">
+            , order_state_after = #{order_state_after}
+        </if>
+        <if test="real_money_before!=null and real_money_before!=''">
+            , real_money_before = #{real_money_before}
+        </if>
+        <if test="real_money_after!=null and real_money_after!=''">
+            , real_money_after = #{real_money_after}
+        </if>
+        <if test="real_days_before!=null">
+            , real_days_before = #{real_days_before}
+        </if>
+        <if test="real_days_after!=null">
+            , real_days_after = #{real_days_after}
+        </if>
+        <if test="frozen_days!=null">
+            , frozen_days = #{frozen_days}
+        </if>
+        <if test="frozen_money!=null and frozen_money!=''">
+            , frozen_money = #{frozen_money}
+        </if>
+        , order_info_at_that_time = #{order_info_at_that_time}
+        <!-- TP青岛更改 曹群星 2017-04-20 ADD START -->
+		<if test="huikuan_to_company_id>0">
+		,huikuan_to_company_id=#{huikuan_to_company_id}
+		</if>
+		<if test="service_cycle_deal>0">
+		,service_cycle_deal=#{service_cycle_deal}
+		</if>
+		<if test="service_cycle_cost>0">
+		,service_cycle_cost=#{service_cycle_cost}
+		</if>
+		<if test="reason_type>0">
+		,reason_type=#{reason_type}
+		</if>
+		<if test="zhuandan_type>0">
+		,zhuandan_type=#{zhuandan_type}
+		</if>
+		<!-- TP青岛更改 曹群星 2017-04-20 ADD END -->
+
+        <!--<if test="reduce_flag!=null and reduce_flag!=''">-->
+            <!--, reduce_flag = #{reduce_flag}-->
+        <!--</if>-->
+        <!--<if test="reduce_yeji_group_id!=null and reduce_yeji_group_id!=''">-->
+            <!--, reduce_yeji_group_id = #{reduce_yeji_group_id}-->
+        <!--</if>-->
+        <!--<if test="reduce_yeji_group_name!=null and reduce_yeji_group_name!=''">-->
+            <!--, reduce_yeji_group_name = #{reduce_yeji_group_name}-->
+        <!--</if>-->
+        <!--<if test="reduce_yeji_xiadanren_name!=null and reduce_yeji_xiadanren_name!=''">-->
+            <!--, reduce_yeji_xiadanren_name = #{reduce_yeji_xiadanren_name}-->
+        <!--</if>-->
+        <!--<if test="reduce_yeji_money!=null and reduce_yeji_money!=''">-->
+            <!--, reduce_yeji_money = #{reduce_yeji_money}-->
+        <!--</if>-->
+        <!--<if test="reduce_yeji_reason!=null and reduce_yeji_reason!=''">-->
+            <!--, reduce_yeji_reason = #{reduce_yeji_reason}-->
+        <!--</if>-->
+
+
+        where re_money_id = #{re_money_id}
+    </update>
+
+
+    <!-- 新单提交审批成功   则回写流程实例Id -->
+    <update id="SetInstProcessIdForReMoney" parameterType="WorkOrderReMoneyBo">
+    	
+        update erp_work_order_re_money SET 
+        
+        last_edited_user_id = #{last_edited_user_id}
+        
+        , last_edited_time = #{last_edited_time}
+        
+        , inst_process_id = #{inst_process_id}
+        
+        where 
+         
+        order_id = #{order_id} 
+        
+        
+    </update>
+
+
+    <!-- 财务审批节点  修改财务信息:回款日期 -->
+    <update id="updateOrderReMoneyForCaiWu" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money SET
+        last_edited_user_id = #{last_edited_user_id}
+        , last_edited_time = #{last_edited_time}
+        <if test="re_time!=null and re_time!=''">
+            , re_time = #{re_time}
+        </if>
+        <if test="customer_name !=  null and customer_name != ''">
+            ,customer_name=#{customer_name}
+        </if>
+        <if test="customer_account != null and customer_account != ''">
+            ,customer_account=#{customer_account}
+        </if>
+        where
+        order_id = #{order_id}
+        and
+        inst_process_id = #{inst_process_id}
+    </update>
+
+    <!-- 根据流程实例ID得到存回退款信息 -->
+    <select id="getOrderReMoneyByInstProcessId" resultType="WorkOrderReMoneyBo">
+        select * from erp_work_order_re_money
+        where
+        inst_process_id = #{instProcessId} and ( collision_flag is null or collision_flag = 1 or collision_flag = 0 )
+    </select>
+
+    <!-- 根据ID得到存回退款信息 -->
+    <select id="getOrderReMoneyById" resultType="WorkOrderReMoneyBo">
+        select * from erp_work_order_re_money
+        where
+        re_money_id = #{reMoneyId}
+    </select>
+
+    <!-- 根据order ID得到存回退款list -->
+    <select id="getFrozenReMoneyListByOrderId" resultType="WorkOrderReMoneyBo" parameterType="String">
+        select * from erp_work_order_re_money
+        where
+        approve_state = 1
+        and
+        order_id = #{orderId}
+    </select>
+
+    <!-- 根据order ID最近的的转单或者退款服务转提成记录，审批通过的，之前状态不是投放的 -->
+    <select id="getLatestReMoneyForRestServiceMoney" resultType="WorkOrderReMoneyBo" parameterType="String">
+        select * from erp_work_order_re_money
+        where
+        approve_state = 2 and order_state_before != 4
+        and re_all_flag != 1 and (rest_days_after is null or rest_days_after != 0)
+        and re_flag in (12, 13, 14)
+        and
+        order_id = #{orderId}
+        order by opt_time desc
+        limit 0, 1
+    </select>
+
+    <update id="updateForReMoneyApprove" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money set
+        approve_agree_time = #{approve_agree_time},
+        approve_state = #{approve_state},
+        valid_flag = #{valid_flag}
+        where re_money_id = #{re_money_id}
+    </update>
+
+
+    <!--//add by yuchen 2015-11-6 begin 冲减业绩-->
+    <update id="updateOrderReMoneyForReduce" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money set
+          reduce_flag= #{reduce_flag},
+          <!-- 初始化销服责任划分信息列表TP青岛更改 游胜振 2017-01-18 ADD START -->
+          is_reduce= #{is_reduce},
+          <!-- 初始化销服责任划分信息列表TP青岛更改 游胜振 2017-01-18 ADD END -->
+          reduce_yeji_group_id= #{reduce_yeji_group_id},
+          reduce_yeji_group_name= #{reduce_yeji_group_name},
+          reduce_yeji_xiadanren_name= #{reduce_yeji_xiadanren_name},
+          reduce_yeji_money= #{reduce_yeji_money},
+          reduce_yeji_reason= #{reduce_yeji_reason}
+        where inst_process_id = #{inst_process_id} and (collision_flag != 2 or collision_flag is null)
+    </update>
+    <!--//add by yuchen 2015-11-6 end 冲减业绩-->
+
+
+    <update id="updateTargetOrderId" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money
+        set
+        target_order_id = #{target_order_id}
+        where re_money_id = #{re_money_id}
+    </update>
+
+    <update id="updateOrderState" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+        service_state = #{service_state},
+        approve_state = #{approve_state}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderForTuiKuanApprove" parameterType="WorkOrderBo">
+        update erp_work_order set
+        real_pay_money = #{real_pay_money},
+        beable_service_days = #{beable_service_days}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderForZhuanDanApprove" parameterType="WorkOrderBo">
+        update erp_work_order set
+        real_pay_money = #{real_pay_money},
+        beable_service_days = #{beable_service_days}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderForZhuanTiChengApprove" parameterType="WorkOrderBo">
+        update erp_work_order set
+        real_pay_money = #{real_pay_money},
+        beable_service_days = #{beable_service_days}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderForStartProcess" parameterType="WorkOrderBo">
+        update erp_work_order set
+        approve_state = #{approve_state},
+        curr_pro_code = #{curr_pro_code},
+        curr_pro_short_name = #{curr_pro_short_name}
+        where order_id = #{order_id}
+    </update>
+
+    <delete id="delReMoneyList">
+        delete from erp_work_order_re_money
+        where
+        re_money_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="delReMoneyByOrderId">
+        update erp_work_order_re_money
+        set del_flag = 1
+        where
+        order_id = #{orderId}
+    </update>
+
+    <delete id="physicalDelReMoneyByOrderId" >
+        delete from erp_work_order_re_money
+        where
+        order_id = #{orderId}
+    </delete>
+
+    <select id="getReMoneyListByOrderId" resultType="WorkOrderReMoneyBo">
+        select * from erp_work_order_re_money
+        where
+        order_id = #{orderId}
+        order by create_time desc
+    </select>
+
+    <!-- 根据product_id与shop_id得到定单列表-->
+    <select id="getOrderByProductAndShop" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        product_id = #{0}
+        and shop_name = #{1}
+        <if test="param1 == '6202'">
+        and (ISNULL(main_order_id) OR  main_order_id='') 
+        </if> 
+        <if test="param3 != null and param3 != '' " >
+            and (service_company_id in (${param3}))
+        </if>
+        and (order_approve_state = 2)
+        and (service_state != '7' and service_state != 1)
+        and (del_flag = 0)
+    </select>
+
+    <select id="getAttachedFileListByBusinessId" resultType="FlowAttachmentBo">
+        SELECT * FROM base_flow_attachment
+        where business_id =  #{businessId}
+    </select>
+
+    <select id="getAttachedFileListByInstProcessId" resultType="FlowAttachmentBo">
+        SELECT * FROM base_flow_attachment
+        where inst_process_id =  #{instProcessId}
+    </select>
+
+    <update id="updateAttachmentBusinessIdAndInstProcessId">
+        update base_flow_attachment
+        set business_id = #{param2}, inst_process_id =  #{param3}
+        where business_id =  #{param1}
+    </update>
+
+    <update id="updateReTypeByInstProcessId">
+        update erp_work_order_re_money
+        set re_type = #{param2}
+        where inst_process_id =  #{param1}
+    </update>
+
+    <update id="updateReTimeByInstProcessId">
+        update erp_work_order_re_money
+        set re_time = #{param2}
+        where inst_process_id =  #{param1}
+    </update>
+
+    <update id="updateMergeFlagByInstProcessId">
+        update erp_work_order_re_money
+        set merge_flag = #{param2}
+        where inst_process_id =  #{param1}
+    </update>
+
+    <select id="getListOrderReMoney" resultType="WorkOrderReMoneyBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_order_re_money
+            <if test="tableAlias!=null and tableAlias!=''">
+                ${tableAlias}
+            </if>
+            WHERE 1=1  <![CDATA[ and (${tableAlias}.collision_flag = 1 or ${tableAlias}.collision_flag = 4 or ${tableAlias}.collision_flag = 0 or ${tableAlias}.collision_flag is null)]]>
+            <if test="filtersql!=null and filtersql!=''">
+                ${filtersql}
+            </if>
+            <if test="ordersql!=null and ordersql!=''">
+                ${ordersql}
+            </if>
+        </if>
+        <!--  分页查询   查询记录  -->
+        SELECT * FROM erp_work_order_re_money
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+      WHERE 1=1 <![CDATA[ and (${tableAlias}.collision_flag = 1 or ${tableAlias}.collision_flag = 4 or ${tableAlias}.collision_flag = 0 or ${tableAlias}.collision_flag is null)]]>
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+        <if test="ordersql!=null and ordersql!=''">
+            ${ordersql}
+        </if>
+        LIMIT #{startResult},#{pageSize}
+    </select>
+    <!--  查询并设置记录总数  -->
+    <select id="getTotalCountOrderReMoney" resultType="Integer">
+        SELECT count(*) FROM erp_work_order_re_money
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        WHERE 1=1 <![CDATA[ and (${tableAlias}.collision_flag = 1 or ${tableAlias}.collision_flag = 0 or ${tableAlias}.collision_flag is null)]]>
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+    </select>
+    <select id="findByOrderId" resultType="WorkOrderReMoneyBo" parameterType="String">
+          select * from erp_work_order_re_money
+        where
+        valid_flag=1
+        and
+        del_flag=0
+        and
+        order_id = #{orderId}
+        order by create_time
+    </select>
+
+    <!-- 保存撞单信息 -->
+    <insert id="saveWorkOrderReMoneyBoList" parameterType="java.util.List">
+        insert into erp_work_order_re_money
+        (order_id, re_user_id, re_user_name, direct_group_id, direct_group_name, group_id, group_name, re_flag,
+        re_type, company_id, company_name, re_time, opt_time, real_re_money,
+        create_time, create_user_id, last_edited_user_id, last_edited_time,inst_process_id,re_all_flag,
+        target_service_days,customer_name,customer_account,our_account,real_days_before,collision_flag,
+        reduce_flag,
+        reduce_yeji_group_id,
+        reduce_yeji_group_name,
+        reduce_yeji_small_group_id,
+        reduce_yeji_small_group_name,
+        reduce_yeji_am_names,
+        reduce_yeji_ae_names,
+        reduce_yeji__small_group_leader_names,
+        reduce_yeji_money,
+        reduce_yeji_reason,
+        reduce_yeji_xiadanren_name
+        <!-- TP青岛更改 曹群星 2017-02-13 ADD START -->
+        ,
+        real_re_money_rate
+        <!-- TP青岛更改 曹群星 2017-02-13 ADD END -->
+        )
+        values
+        <foreach collection="list" item="item" index="index" separator="," >
+            ( #{item.order_id},    #{item.re_user_id},     #{item.re_user_name},        #{item.direct_group_id},      #{item.direct_group_name}, #{item.group_id}, #{item.group_name}, #{item.re_flag},
+            #{item.re_type},     #{item.company_id},     #{item.company_name},        #{item.re_time},              #{item.opt_time},          #{item.real_re_money},
+            #{item.create_time}, #{item.create_user_id}, #{item.last_edited_user_id}, #{item.last_edited_time}, #{item.inst_process_id}
+            ,#{item.re_all_flag},#{item.target_service_days},#{item.customer_name},#{item.customer_account},#{item.our_account},#{item.real_days_before}
+            ,#{item.collision_flag},
+            #{item.reduce_flag},
+            #{item.reduce_yeji_group_id},
+            #{item.reduce_yeji_group_name},
+            #{item.reduce_yeji_small_group_id},
+            #{item.reduce_yeji_small_group_name},
+            #{item.reduce_yeji_am_names},
+            #{item.reduce_yeji_ae_names},
+            #{item.reduce_yeji__small_group_leader_names},
+            #{item.reduce_yeji_money},
+            #{item.reduce_yeji_reason},
+            #{item.reduce_yeji_xiadanren_name}
+            <!-- TP青岛更改 曹群星 2017-02-13 ADD START -->
+            ,
+            #{item.real_re_money_rate}
+            <!-- TP青岛更改 曹群星 2017-02-13 ADD END -->
+            )
+        </foreach>
+    </insert>
+
+    <!--查询撞单信息 -add by qiaojingjun 20160613-->
+    <select id="seachOrderCollision" resultType="WorkOrderReMoneyBo" parameterType="java.util.Map">
+        select * from erp_work_order_re_money
+        where
+        re_type in (1,2) and re_flag = 11 and valid_flag = 1 and del_flag = 0
+        <if test="order_id!=null and order_id!=''">
+           and order_id = #{order_id}
+        </if>
+        and collision_flag in
+        <foreach item="item" index="index" collection="collision_flags"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        order by create_time
+    </select>
+
+    <!--删除已有的撞单信息 -add by qiaojingjun 20160613-->
+    <delete id="deleteExistingCollisions" parameterType="String">
+        delete from erp_work_order_re_money
+        where order_id = #{order_id} and collision_flag = 2
+    </delete>
+
+    <!--查询撞单信息 -add by qiaojingjun 20160623-->
+    <select id="seachOrderCollisionDrawback" resultType="WorkOrderReMoneyBo" parameterType="String">
+        select * from erp_work_order_re_money
+        where
+        <!--TP青岛更改 游胜振 2017-01-17 AND START-->
+        inst_process_id = #{instProcessId} AND
+        <!--TP青岛更改 游胜振 2017-01-17 AND END-->
+        order_id = #{orderId} and collision_flag = 2 and re_flag = 12
+        order by create_time
+    </select>
+
+    <!--add by qiaojingjun 2016-06-23  冲减业绩 撞单 退款-->
+    <update id="updateOrderReMoneyForCollisionReduce" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money set
+        reduce_flag= #{reduce_flag},
+        reduce_yeji_group_id= #{reduce_yeji_group_id},
+        reduce_yeji_group_name= #{reduce_yeji_group_name},
+        reduce_yeji_xiadanren_name= #{reduce_yeji_xiadanren_name},
+        reduce_yeji_money= #{reduce_yeji_money},
+        reduce_yeji_reason= #{reduce_yeji_reason}
+        where re_money_id = #{re_money_id}
+    </update>
+
+    <!--查询撞单信息 -add by qiaojingjun 20160624-->
+    <select id="seachOrderCollisionZhuanTiCheng" resultType="WorkOrderReMoneyBo" parameterType="String">
+        select * from erp_work_order_re_money
+        where
+        order_id = #{orderId} and collision_flag = 2 and re_flag = 13
+        order by create_time
+    </select>
+
+    <!--查询回款信息-新单服务费 -add by qiaojingjun 20160624-->
+    <select id="getReMoneyData" resultType="WorkOrderReMoneyBo" parameterType="String">
+        select * from erp_work_order_re_money
+        where
+        order_id = #{orderId} and (collision_flag = 1 or collision_flag is null or collision_flag = 0 or collision_flag = 4) and re_flag = 11 and re_type = 2
+        order by create_time desc
+    </select>
+    <!--补录撞单信息时，更新原回款记录的撞单标志 - add by qiaojingjun 20160708 -->
+    <update id="updateReMoneyCollisionFlag" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money
+        set collision_flag = #{collision_flag} , last_edited_time = NOW()
+        where re_money_id = #{re_money_id}
+    </update>
+
+    <!--启动流程时，设置补录撞单信息流程实例ID - add by qiaojingjun 20160711 -->
+    <update id="SetInstProcessIdForRepairCollision" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money
+        set inst_process_id = #{inst_process_id} , last_edited_user_id = #{last_edited_user_id} , last_edited_time = #{last_edited_time}
+        ,approve_state = #{approve_state}
+        where order_id = #{order_id} and collision_flag = 3 and valid_flag = 1 and del_flag = 0
+    </update>
+
+    <!--补录撞单信息保存时，如果re_money_id不为空，则执行update操作 - add by qiaojingjun 20160712 -->
+    <update id="updateRepairCollision" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money
+        set real_re_money = #{real_re_money} 
+        <!-- TP青岛更改 曹群星 2017-02-13 ADD START -->
+        , real_re_money_rate = #{real_re_money_rate} 
+        <!-- TP青岛更改 曹群星 2017-02-13 ADD END -->
+        ,reduce_yeji_money = #{reduce_yeji_money} , last_edited_time = NOW()
+        ,last_edited_user_id = #{last_edited_user_id}
+        where re_money_id = #{re_money_id}
+    </update>
+
+    <!--删除已有的非更新的补录撞单信息 -add by qiaojingjun 20160712-->
+    <delete id="deleteExistingRepairCollisions" parameterType="java.util.Map">
+        delete from erp_work_order_re_money
+        where order_id = #{order_id} and collision_flag = #{collision_flag} and re_flag = #{re_flag} and re_type = #{re_type}
+        and re_money_id not in
+        <foreach item="item" index="index" collection="re_money_ids"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!--根据流程实例ID获取补录撞单信息 -add by qiaojingjun 20160712-->
+    <select id="getRepairReMoneyByInstProcessId" resultType="WorkOrderReMoneyBo">
+        select * from erp_work_order_re_money
+        where
+        inst_process_id = #{instProcessId} and ( collision_flag = 3  )
+    </select>
+
+    <!--废除补录撞单流程时，清除原回款记录的撞单标志 - add by qiaojingjun 20160714 -->
+    <update id="clearCollisionFlag" parameterType="java.util.Map">
+        update erp_work_order_re_money
+        set collision_flag = null ,last_edited_time = NOW()
+        where order_id = #{order_id} and re_flag = 11 and re_type = 2 and (collision_flag = 1 or collision_flag = 4)
+    </update>
+
+    <!--废除补录撞单流程时，设置对应的撞单数据记录为无效状态 - add by qiaojingjun 20160714 -->
+    <update id="inValidCollisionData" parameterType="String">
+        update erp_work_order_re_money
+        set valid_flag = 0 ,del_flag = 1
+        where inst_process_id = #{inst_process_id}
+    </update>
+
+    <!--获取退款、服务费转提成 - 冲减业绩数据  - add by qiaojingjun 20160715-->
+    <select id="queryReduceYeJiMoneyInfo" resultType="WorkOrderReMoneyBo">
+        select * from erp_work_order_re_money
+        where
+        order_id = #{order_id} and ( collision_flag is null or collision_flag = 1 or collision_flag = 4 )<!--只处理退款前没有发生撞单数据的情况-->
+        and (re_flag = 12 or re_flag =13) and approve_state= 2 and valid_flag = 1 and del_flag = 0
+        and reduce_yeji_money > 0
+    </select>
+
+    <!--修改补录撞单信息操作时，删除原冲减业绩数据 - add by qiaojingjun 20160715-->
+    <delete id="delReduceYeJiForCollision" >
+        delete from erp_work_order_re_money
+        WHERE order_id = #{order_id} and (re_flag = 12 or re_flag = 13) and collision_flag = 3 and del_flag = 0 and valid_flag = 1
+    </delete>
+</mapper>
+

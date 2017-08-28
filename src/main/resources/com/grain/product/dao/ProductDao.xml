@@ -1,0 +1,809 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.product.dao.ProductDao">
+    <resultMap id="productsResultMap" type="com.grain.product.bo.ProductBo">
+		<!--TP青岛更改 曹群星 2017-01-17 ADD START-->
+        <id property="shortName" column="shortName" />
+        <id property="property" column="property" />
+		<!--TP青岛更改 曹群星 2017-01-17 ADD END-->
+        <id property="product_id" column="product_id" />
+        <result property="en_code" column="en_code" />
+        <result property="name" column="name" />
+        <result property="period_flag" column="period_flag" />
+        <result property="valid_flag" column="valid_flag" />
+        <result property="product_number" column="product_number" />
+        <collection property="archGroupList" resultMap="groupProRelsList" column="product_id" javaType="ArrayList" />
+    </resultMap>
+     
+    <resultMap id="groupProRelsList" type="com.grain.sysconfig.sys.bo.GroupBo">
+        <id property="group_id" column="group_id" />
+        <result property="name" column="deptName" />
+        <result property="group_id" column="group_id" />
+        <result property="companyName" column="companyName" />
+        <result property="main_company_id" column="main_company_id" />
+    </resultMap>
+    
+	<select id="getList" resultMap="productsResultMap">
+
+           <!--  分页查询   查询记录  -->
+           SELECT Z.*,C.name as deptName,C.group_id,C.main_company_id,D.name as companyName  FROM erp_product 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+
+            left join erp_group_pro_rel B on Z.product_id = B.product_id
+        left join base_group C on  C.group_id = B.group_id
+        left join base_company D on C.main_company_id = D.company_id
+        where 1 = 1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCount" resultType="Integer">
+           SELECT count(distinct Z.product_id) FROM erp_product 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+
+            left join erp_group_pro_rel B on Z.product_id = B.product_id
+        left join base_group C on  C.group_id = B.group_id
+        left join base_company D on C.main_company_id = D.company_id
+        where 1 = 1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+
+    <insert id="insert" parameterType="ProductBo"
+		useGeneratedKeys="true">
+		insert into erp_product (
+		     en_code, name, period_flag, sort_num, product_number,
+		     
+	         create_time, create_user_id, last_edited_user_id, 
+	         
+	         last_edited_time, valid_flag, del_flag
+	         
+	         )values(
+	         
+	         #{en_code}, #{name}, #{period_flag}, #{sort_num}, #{product_number},
+	         
+			 #{create_time}, #{create_user_id}, #{last_edited_user_id},
+			 
+			 #{last_edited_time}, #{valid_flag}, #{del_flag}
+			 
+			 )
+			 
+	    <selectKey resultType="java.lang.Integer"  order="AFTER" keyProperty="product_id"> 
+		SELECT LAST_INSERT_ID() 
+		</selectKey> 
+	</insert>
+	
+	
+	<insert id="insertGroupProRels" parameterType="GroupProRelBo"
+		useGeneratedKeys="true" keyProperty="id">
+		insert into erp_group_pro_rel 
+			(group_id,product_id)
+		values
+			(#{group_id},#{product_id})
+	</insert>
+	
+	
+	<select id="sechGroupRelsByProid" parameterType="Integer" resultType="GroupProRelBo">
+          SELECT * FROM  erp_group_pro_rel WHERE product_id  = #{id} 
+	</select>
+	
+	<update id="update" parameterType="ProductBo">
+		 update erp_product set
+		 name = #{name},
+		 product_number = #{product_number},
+		 en_code = #{en_code},
+		 period_flag = #{period_flag},
+		 last_edited_user_id = #{last_edited_user_id},
+		 last_edited_time =  #{last_edited_time}
+		 where
+		 product_id = #{product_id}
+	</update>
+	<!-- 逻辑删除产品 -->
+	<delete id="delete" parameterType="ProductBo">
+	    update erp_product set 
+	    del_flag = '1',
+	    last_edited_user_id = #{last_edited_user_id},
+		last_edited_time =  #{last_edited_time}
+	    where 
+	    product_id = #{product_id}
+	</delete>
+	<!-- 启用或者禁用产品 startOrStopPro-->
+	<delete id="startOrStopPro" parameterType="ProductBo">
+	    update erp_product set 
+	    valid_flag = #{valid_flag},
+	    last_edited_user_id = #{last_edited_user_id},
+		last_edited_time =  #{last_edited_time}
+	    where 
+	    product_id = #{product_id}
+	</delete>
+	
+	<delete id="delGroupProRels" parameterType="Integer">
+	    delete FROM erp_group_pro_rel where product_id = #{productId}
+	</delete>
+	
+	
+	
+	
+	<select id="listProductSunItems" resultType="ProductSunItemBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM   erp_product_sub_item 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM  erp_product_sub_item 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getListProductSunItemsTotalCount" resultType="Integer">
+           SELECT count(*) FROM erp_product_sub_item 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	
+	
+	
+	
+	 <insert id="saveProductSunItem" parameterType="ProductSunItemBo" 
+		useGeneratedKeys="true" keyProperty="product_sub_item_id">
+		insert into erp_product_sub_item 
+			(product_id,type,name,en_name,parent_id,
+			company_id,
+	         create_time,create_user_id,last_edited_user_id,
+	         last_edited_time,valid_flag,del_flag,sort_num)
+		values
+			(#{product_id},#{type},#{name},#{en_name},#{parent_id},
+			#{company_id},
+			#{create_time},#{create_user_id},#{last_edited_user_id},
+			#{last_edited_time},#{valid_flag},#{del_flag},#{sort_num})
+	</insert>
+	
+	
+	
+	<update id="editProductSunItem" parameterType="ProductSunItemBo">
+		 update erp_product_sub_item set
+		 name = #{name},
+		 en_name = #{en_name},
+		 type = #{type},
+		 last_edited_user_id = #{last_edited_user_id},
+		 last_edited_time =  #{last_edited_time}
+		 where
+		 product_sub_item_id = #{product_sub_item_id}
+	</update>
+	
+	<delete id="delProductSunItem" parameterType="ProductSunItemBo">
+	    update erp_product_sub_item set 
+	    valid_flag = #{valid_flag},
+	    last_edited_user_id = #{last_edited_user_id},
+		last_edited_time =  #{last_edited_time}
+	    where 
+	    product_sub_item_id = #{product_sub_item_id}
+	</delete>
+
+    <delete id="delProductSunItemByproAndType" parameterType="ProductSunItemBo">
+	    delete from erp_product_sub_item  
+	    where 
+	    product_id = #{product_id} and type = #{type} and company_id = #{company_id}
+	    and en_name like '%${en_name}%'
+	</delete>
+	
+	
+	<select id="listOptsByType" resultType="WorkDefOptBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_def_opt 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_work_def_opt 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountlistOptsByType" resultType="Integer">
+           SELECT count(*) FROM erp_work_def_opt 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	
+	
+	
+	
+	
+	<select id="listPagePageAreas" resultType="PageAreaBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_page_area 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_page_area 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountlistPagePageAreas" resultType="Integer">
+           SELECT count(*) FROM erp_page_area 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	
+	
+	<select id="listPropertys" resultType="PagePropertyBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_page_property 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_page_property 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountPerty" resultType="Integer">
+           SELECT count(*) FROM erp_page_property 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+
+    <insert id="savepageProperty" parameterType="ProductPageAreaBo"
+		useGeneratedKeys="true" keyProperty="id">
+		insert into erp_product_page_area 
+			(page_area_id,page_property_id,product_sub_item_id,view_type,require_flag,
+	         create_user_id,create_time,lock_flag)
+		values
+			(#{page_area_id},#{page_property_id},#{product_sub_item_id},#{view_type},#{require_flag},
+			#{create_user_id},#{create_time},#{lock_flag})
+	</insert>
+	
+	<select id="listProductPageAreasbySubItem" parameterType="ProductPageAreaBo" resultType="ProductPageAreaBo">
+          select page_area_id from erp_product_page_area where product_sub_item_id = #{product_sub_item_id} 
+          GROUP BY page_area_id
+	</select>
+	
+	<select id="listProductPageAreasbySubItem_" parameterType="ProductPageAreaBo" resultType="ProductPageAreaBo">
+		SELECT * FROM erp_product_page_area WHERE product_sub_item_id = #{product_sub_item_id} and 1=1
+	        <if test="page_area_id!=null and page_area_id!=''">
+	        #{page_area_ids}
+	        </if>
+	</select>
+
+  <!--  * edited by yuchen begin 2016-8-29
+    *
+    * 根据流程驳回的情况，决定【下单修改】页面属性的是否可写
+    *
+    * 1.判断当前节点是否为申请节点？如果不是，不走本逻辑
+    * 2.判断当前节点是否被驳回过来的？如果不是，不走本逻辑
+    *
+    * 3.获取流程上个环节信息（谁驳回的？）
+    * 4.获取已经审批过的流程环节信息（哪些已经审批过的？）
+    * 5.计算出页面只读的属性=【已审批-刚驳回】
+    *
+    * edited by yuchen end 2016-8-29-->
+
+    <select id="getPropertiesWithLockMessages"  parameterType="PageViewProcessBo"  resultType="ProductPageAreaBo">
+           select s.*
+             from
+            (
+            SELECT
+                eppa.id,
+                eppa.page_area_id,
+                eppa.page_property_id,
+                eppa.product_sub_item_id,
+                2 AS view_type,/*-- 已审批的锁定属性为只读*/
+                eppa.lock_flag,
+                eppa.require_flag,
+                eppa.create_user_id,
+                eppa.create_time
+            FROM
+                erp_product_page_area eppa
+            LEFT JOIN erp_product_sub_item epsi ON eppa.product_sub_item_id = epsi.product_sub_item_id
+            WHERE
+                epsi.en_name in
+        <foreach item="item" index="index" collection="yiShenPiTaskEnNames"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>/*--已审批的节点 不包括驳回的节点*/
+            AND company_id = '${companyId}'
+            AND product_id ='${productId}'
+            and eppa.lock_flag=1
+            <!-- TP青岛更改 曹群星 2017-05-12 DEL START -->
+           <!--  and eppa.page_property_id not in(
+                select eppaa.page_property_id from erp_product_page_area eppaa
+                LEFT JOIN erp_product_sub_item epsii on  eppaa.product_sub_item_id = epsii.product_sub_item_id
+                where epsii.en_name='${boHuiTaskEnName}'
+                and eppaa.lock_flag=1
+            ) -->
+            <!-- TP青岛更改 曹群星 2017-05-12 DEL END -->
+            group by page_property_id
+
+            UNION
+
+            SELECT
+                eppa.id,
+                eppa.page_area_id,
+                eppa.page_property_id,
+                eppa.product_sub_item_id,
+                eppa.view_type,/*-- 已审批的锁定属性为只读*/
+                eppa.lock_flag,
+                eppa.require_flag,
+                eppa.create_user_id,
+                eppa.create_time
+            FROM
+                erp_product_page_area eppa
+            LEFT JOIN erp_product_sub_item epsi ON eppa.product_sub_item_id = epsi.product_sub_item_id
+            WHERE
+                epsi.en_name ='${dangQianTaskEnName}'/*--  当前节点*/
+            AND company_id = '${companyId}'
+            AND product_id ='${productId}'
+            and eppa.lock_flag=0
+            group by page_property_id
+            )s
+            group by s.page_property_id
+
+    </select>
+
+
+    <!--
+        操作申请页面
+        * edited by yuchen begin 2016-8-29
+        *
+        * 根据流程驳回的情况，决定【下单修改】页面属性的是否可写
+        *
+        * 1.判断当前节点是否为申请节点？如果不是，不走本逻辑
+        * 2.判断当前节点是否被驳回过来的？如果不是，不走本逻辑
+        *
+        * 3.获取流程上个环节信息（谁驳回的？）
+        * 4.获取已经审批过的流程环节信息（哪些已经审批过的？）
+        * 5.计算出页面只读的属性=【已审批-刚驳回】
+        *
+        * edited by yuchen end 2016-8-29-->
+    <select id="getPropertiesWithLockMessagesForOperation"  parameterType="PageViewProcessBo"  resultType="ProductPageAreaBo">
+        SELECT
+        s.*
+        FROM
+        (
+        SELECT
+        eppa.id,
+        eppa.page_area_id,
+        eppa.page_property_id,
+        eppa.product_sub_item_id,
+        2 AS view_type,
+        /*-- 已审批的锁定属性为只读*/
+        eppa.lock_flag,
+        eppa.require_flag,
+        eppa.create_user_id,
+        epp.en_name_opt,
+        eppa.create_time
+        FROM
+        erp_product_page_area eppa
+        LEFT JOIN erp_product_sub_item epsi ON eppa.product_sub_item_id = epsi.product_sub_item_id
+        LEFT JOIN erp_page_property epp ON epp.page_property_id = eppa.page_property_id
+        WHERE
+        epsi.en_name in
+        <foreach item="item" index="index" collection="yiShenPiTaskEnNames"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>/*--已审批的节点 不包括驳回的节点*/
+            AND company_id = '${companyId}'
+            AND product_id ='${productId}'
+        AND eppa.lock_flag = 1
+        <!-- TP青岛更改 曹群星 2017-05-12 DEL START -->
+        <!-- and eppa.page_property_id not in(
+             select eppaa.page_property_id from erp_product_page_area eppaa
+             LEFT JOIN erp_product_sub_item epsii on  eppaa.product_sub_item_id = epsii.product_sub_item_id
+             where epsii.en_name='${boHuiTaskEnName}'
+             and eppaa.lock_flag=1
+        ) -->
+        <!-- TP青岛更改 曹群星 2017-05-12 DEL END -->
+        and epp.en_name_opt is not null
+        and epp.en_name_opt!= ''
+        GROUP BY
+        page_property_id
+        UNION
+        SELECT
+        eppa.id,
+        eppa.page_area_id,
+        eppa.page_property_id,
+        eppa.product_sub_item_id,
+        eppa.view_type,
+        /*-- 已审批的锁定属性为只读*/
+        eppa.lock_flag,
+        eppa.require_flag,
+        eppa.create_user_id,
+        epp.en_name_opt,
+        eppa.create_time
+        FROM
+        erp_product_page_area eppa
+        LEFT JOIN erp_product_sub_item epsi ON eppa.product_sub_item_id = epsi.product_sub_item_id
+        LEFT JOIN erp_page_property epp ON epp.page_property_id = eppa.page_property_id
+        WHERE
+            epsi.en_name ='${dangQianTaskEnName}'/*--  当前节点*/
+            AND company_id = '${companyId}'
+            AND product_id ='${productId}'
+        AND eppa.lock_flag = 0
+        and epp.en_name_opt is not null
+        and epp.en_name_opt!= ''
+        GROUP BY
+        page_property_id
+        ) s
+        GROUP BY
+        s.page_property_id
+
+    </select>
+
+
+
+	<select id="listProductPageAreas" resultType="ProductPageAreaBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_product_page_area 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_product_page_area 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountlistProductPageAreas" resultType="Integer">
+           SELECT count(*) FROM erp_product_page_area 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+	       </if>
+	</select>
+	
+	
+	
+	
+	<delete id="delProductPageAreasbySubItem"  parameterType="ProductPageAreaBo">
+	    DELETE 
+		FROM
+		  erp_product_page_area 
+		WHERE product_sub_item_id = #{product_sub_item_id} 
+	</delete>
+<!--    * 删除某一个二级块中的信息
+    *
+    * 例如 UED 产品下  下单功能的  培训块-->
+    <delete id="delProductPageAreasbySubItemIdAndArea"  parameterType="ProductPageAreaBo">
+        DELETE
+        FROM
+        erp_product_page_area
+        WHERE product_sub_item_id = #{product_sub_item_id}
+        and page_area_id = #{page_area_id}
+    </delete>
+
+    <select id="getProductByGroupId" resultType="ProductBo">
+        select * from erp_product where product_id in (select product_id from erp_group_pro_rel where group_id =#{groupId})
+    </select>
+
+    <select id="getProductById" resultType="ProductBo">
+        select * from erp_product where product_id = #{groupId} limit 0,1
+    </select>
+
+    <update id="updateActivitys" parameterType="WorkDefOptBo">
+      update erp_work_def_opt set name=#{name},type=#{type},role_name=#{role_name},sort_num=#{sort_num},task_user_type=#{task_user_type},task_type=#{task_type},edit_url=#{edit_url} where en_name = #{en_name}
+
+    </update>
+    <select id="selectActivitys" parameterType="WorkDefOptBo" resultType="Integer">
+        select count(*) from erp_work_def_opt where en_name = #{en_name}
+    </select>
+    <insert id="saveActivitys" parameterType="WorkDefOptBo">
+
+
+        insert into erp_work_def_opt(
+        
+		    name, en_name, type,  parent_id, 
+		    
+		    xiadan_flag, sort_num, valid_flag,role_name,task_user_type,task_type,edit_url
+		    
+		    ) values (
+		    
+		    #{name}, #{en_name}, #{type}, #{parent_id},
+		    
+		    2, #{sort_num}, #{valid_flag},#{role_name},#{task_user_type},#{task_type},#{edit_url}
+
+        )
+
+    </insert>
+    <select id="selectParentId" parameterType="WorkDefOptBo" resultType="Integer">
+        select work_def_opt_id from erp_work_def_opt where en_name = #{en_name}
+    </select>
+    <select id="findNoteEnnamesByPid" parameterType="Integer" resultType="WorkDefOptBo">
+        select * from erp_work_def_opt where parent_id = #{parentId}
+    </select>
+    <update id="updateNoteState" parameterType="WorkDefOptBo">
+        update erp_work_def_opt set valid_flag=#{valid_flag} where en_name = #{en_name}
+    </update>
+    
+    <!-- 更新一条属性装配数据 -->
+    <update id="updateProductPageArea" parameterType="ProductPageAreaBo">
+		 update erp_product_page_area 
+		 
+		 set
+		 
+		 view_type = #{view_type},
+		 
+		 require_flag = #{require_flag},
+		 
+		 create_user_id = #{create_user_id},
+		 lock_flag = #{lock_flag},
+		 create_time = #{create_time}
+		 
+		 where
+		 
+		 id = #{id} 
+	</update>
+    
+    <!-- 增加一条属性装配数据 -->
+     <insert id="addProductPageArea" parameterType="ProductPageAreaBo" 
+		useGeneratedKeys="true" keyProperty="id">
+     	
+		     insert into erp_product_page_area (
+		
+		     page_area_id, page_property_id, product_sub_item_id , view_type, 
+			
+			 require_flag, create_user_id, create_time,lock_flag
+	         
+	         )values(
+	         
+	         #{page_area_id}, #{page_property_id}, #{product_sub_item_id}, #{view_type},	         
+			
+			 #{require_flag}, #{create_user_id}, #{create_time},#{lock_flag}
+			 
+			 )
+	 </insert>
+
+    <select id="getGroupsByPro"  resultType="ArchGroup">
+        SELECT
+            b.group_id AS group_id,
+            b.main_company_id AS main_company_id,
+           concat(b. NAME,'(',c.`name`,')') AS group_company_name,
+           b.name AS name,
+           c.name AS companyName
+        FROM
+            erp_group_pro_rel a,
+            base_group b,
+            base_company c
+        WHERE
+	    <!-- 删除或者无效的group不获取 add by jijun 20170424 -->
+	    b.valid_flag = 1
+	    AND b.del_flag != 1
+		<!-- end by jijun -->
+	    AND a.group_id = b.group_id
+        AND b.main_company_id = c.company_id
+        AND product_id = #{param1};
+    </select>
+
+    <!--保存合同模板定义信息 - add by qiaojingjun 20160823-->
+    <insert id="saveContractTemplate">
+        INSERT INTO erp_contract_template_config (contract_template_id,Template_name, Product_id,
+         Input_definition, Create_time, Modify_time,
+          Del_time, creator, Editor, Deleter, Note, template_file_path)
+        VALUES ( #{contract_template_id},#{template_name}, #{product_id},
+         #{input_definition},  #{create_time}, #{modify_time},
+          #{del_time}, #{creator}, #{editor}, #{deleter}, #{note},#{template_file_path})
+    </insert>
+
+    <!--查询合同模板列表 - add by qiaojingjun 20160824-->
+    <select id="getContractTemplate" resultMap="contractTemplateMap">
+        select zz.*,b.ct_detail_id,b.key,b.label,b.options,b.input_type,c.name as product_name
+        from erp_product c,(select * from erp_contract_template_config z
+
+        where 1=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+        <if test=" pageSize > 0 ">
+            LIMIT #{startResult},#{pageSize}
+        </if>
+        ) zz
+        left join erp_contract_template_config_detail b
+        on b.contract_template_id = zz.contract_template_id
+        where 1=1 and zz.product_id = c.product_id
+    </select>
+
+    <!--查询合同模板数量 - add by qiaojingjun 20160824-->
+    <select id="getContractTemplateCount" resultType="Integer">
+        select count(1)
+        from erp_contract_template_config z
+        where 1=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+    </select>
+
+    <!--保存合同模板详情 - add by qiaojingjun 20160826-->
+    <insert id="saveContractTemplateOptions">
+        INSERT INTO erp_contract_template_config_detail ( contract_template_id,`key`, input_type, label, `options`)
+        VALUES 
+        <foreach collection="array"  item="item" index="index" separator=",">
+            ( #{item.contract_template_id},#{item.key}, #{item.input_type}, #{item.label}, #{item.options})
+        </foreach>
+    </insert>
+
+    <resultMap id="contractTemplateMap" type="com.grain.product.bo.ContractTemplateBo">
+        <id property="contract_template_id" column="contract_template_id" />
+        <result property="product_id" column="product_id" />
+        <result property="product_name" column="product_name" />
+        <result property="template_name" column="template_name" />
+        <result property="input_definition" column="input_definition" />
+        <result property="status" column="status" />
+        <result property="modify_time" column="modify_time" />
+        <result property="create_time" column="create_time" />
+        <result property="del_time" column="del_time" />
+        <result property="del_flag" column="del_flag" />
+        <result property="creator" column="creator" />
+        <result property="editor" column="editor" />
+        <result property="note" column="note" />
+        <result property="deleter" column="deleter" />
+        <result property="template_file_path" column="template_file_path" />
+        <collection property="contractTemplateOptionList"
+                    resultMap="contractTemplateOptionList" javaType="List" ofType="ContractTemplateOptionBo" />
+    </resultMap>
+
+    <resultMap id="contractTemplateOptionList" type="com.grain.product.bo.ContractTemplateOptionBo">
+        <id property="ct_detail_id" column="ct_detail_id" />
+        <result property="key" column="key" />
+        <result property="label" column="label" />
+        <result property="input_type" column="input_type" />
+        <result property="options" column="options" />
+    </resultMap>
+
+    <!--更新合同模板详情 - add by qiaojingjun 20160831-->
+    <update id="updateContractTemplateDetail" parameterType="java.util.List">
+        <foreach collection="list" open="" close="" item="item" index="index" separator=";">
+            update `erp_contract_template_config_detail`
+            <set>
+                `label` = '${item.label}', `input_type` = ${item.input_type}, `options` = '${item.options}'
+            </set>
+            where `ct_detail_id` = ${item.ct_detail_id}
+        </foreach>
+    </update>
+
+    <!-- 修改合同模板状态：启用，废弃、删除 - add by qiao jingjun 20160901-->
+    <update id="updateContractTemplateStatus" parameterType="ContractTemplateBo">
+      update erp_contract_template_config
+      set
+      <if test = "status !=null and status != ''">
+          status = #{status},modify_time = now(),editor = #{editor}
+      </if>
+        <if test = "del_flag !=null and del_flag != ''">
+            del_flag = #{del_flag},del_time = now(),deleter = #{deleter}
+        </if>
+      where contract_template_id = #{contract_template_id}
+    </update>
+
+	<!-- 根据en_code获取product对象，add by jijun 20170508 -->   
+    <select id="getProductByEnCode" parameterType="ProductBo" resultType="ProductBo">
+    	select * from erp_product where del_flag = 0 and en_code = #{en_code}
+    </select>
+    
+</mapper>

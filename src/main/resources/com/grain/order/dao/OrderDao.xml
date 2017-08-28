@@ -1,0 +1,1085 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.grain.order.dao.OrderDao">
+
+    <!--//TP青岛更改 曹群星 2017-01-17 ADD START-->
+    <!-- 当前流程正在办理的任务节点英文名称 -->
+    <select id="getTaskEnNameByProcessId" resultType="String">
+    	SELECT
+			task_def_key
+		FROM
+			act_ru_task_business
+		WHERE
+			inst_process_id = #{param1}
+    </select>
+    <!-- 获取产品、店铺下的定金单 -->
+    <select id="getDepositByProductAndShop" resultType="WorkOrderBo">
+    	SELECT
+			*
+		FROM
+			erp_work_order
+		WHERE
+			product_id = #{param1}
+		AND shop_name = #{param2}
+		AND inner_flag = 5 -- 定金
+		AND approve_state = 2 -- 审批通过
+		AND del_flag IN (0,2) 
+		AND valid_flag IN (1,2)
+    </select>
+    <!-- 获取当天的流水数量-->
+    <select id="getMaxOrderIdByDate" resultType="String">
+    	SELECT
+			order_id
+		FROM
+			erp_work_order
+		WHERE
+			date(`create_time`) = #{param1}
+		ORDER BY
+			create_time DESC
+		LIMIT 1
+    </select>
+    
+    <!-- 获取订单详情-服务概括 -汇总信息-->
+    <select id="getOrderSum" resultType="WorkOrderSumBo">
+       SELECT
+     	sign_period AS total_service_days
+     	-- (IFNULL(beable_service_days,0)+IFNULL(free_service_days,0)) AS total_service_days-- 总服务天数
+		,(IFNULL(beable_service_days,0)+IFNULL(free_service_days,0)-IFNULL(serviced_days,0)) AS rest_service_days -- 剩余服务周期
+		,free_service_days -- 赠送服务天数
+		,sign_service_fee-- 签约服务费
+		,( SELECT IFNULL(SUM(real_re_money),0) 
+				FROM erp_work_order_re_money 
+				WHERE order_id=o.order_id
+				AND re_flag=11 
+				AND re_type IN(1,2,3,4,5,6,0)
+				AND (collision_flag IS NULL OR collision_flag NOT IN (2,3))
+				AND approve_state=2
+		) AS real_re_money -- 已回款金额
+		,ROUND((sign_service_fee/(IFNULL(sign_period,0))*30),2) AS cw_detail_serfee-- 等价月服务费
+		,frist_service_begin_time -- 工单开始日期
+		,plan_end_time-- 工单到期时间
+		,service_state-- 工单状态
+		FROM erp_work_order AS o
+		WHERE order_id=#{param1}
+    </select>
+    
+    <!-- 获取订单详情-服务概括 -table数据-->
+    <select id="getOrderSumList" resultType="WorkOrderSumBo">
+		SELECT 
+		 a.assign_name_title
+		,u.name AS assigner_name
+		,a.create_time
+		,d.name AS group_name
+		,g.name AS dic_group_name
+		FROM erp_workorder_assign_current  a
+		LEFT JOIN base_user u ON a.assigner=u.user_id
+		LEFT JOIN base_group g on u.dic_group_id = g.group_id
+		LEFT JOIN base_group d on u.group_id = d.group_id
+		WHERE a.order_id=#{param1} AND a.parent_id IS NOT NULL
+    </select>
+    
+    <!-- 获取当天的流水数量-->
+    <select id="getOrderFlowCountByDate" resultType="Integer">
+        select COUNT(1) AS cnt from erp_work_order  WHERE date(`create_time`)=#{param1}
+    </select>
+    
+    <!-- 将附件表初始化生成的订单号，修改成新生成的订单号  -->
+    <update id="updateFLowFileOrderNo" >
+		
+	    update base_flow_attachment set 
+	    
+	    business_id =#{param1}
+	    
+	    where 
+	    
+	    business_id = #{param2}
+	    
+	</update>
+    <!--//TP青岛更改 曹群星 2017-01-17 ADD END-->
+
+
+    <select id="getOrderByOrderId" resultType="WorkOrderBo">
+       SELECT workorder.*,product.en_code product_encode FROM erp_work_order workorder 
+       left join erp_product product on workorder.product_id = product.product_id 
+       WHERE workorder.order_id=#{param1}
+    </select>
+
+    <select id="getListNoJoin" resultType="WorkOrderBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_order
+            <if test="tableAlias!=null and tableAlias!=''">
+                ${tableAlias}
+            </if>
+            <!--包含软件运营特殊查询  --> 
+            WHERE 1=1 
+            <!-- TP青岛更改 曹群星 2017-05-13 UPD START -->
+            <if test="del_flag!=-2">
+            	and  del_flag IN (0,2) AND  valid_flag IN (1,2)
+            </if>
+            <!-- del_flag=-2标识 废除订单也可以查看订单详情 -->
+            <if test="del_flag==-2">
+            	and  del_flag IN (0,1,2) AND  valid_flag IN (0,1,2)
+            </if>
+            <!-- TP青岛更改 曹群星 2017-05-13 UPD END -->
+            <if test="filtersql!=null and filtersql!=''">
+                ${filtersql}
+            </if>
+            <if test="ordersql!=null and ordersql!=''">
+                ${ordersql}
+            </if>
+        </if>
+        <!--  分页查询   查询记录  -->
+        SELECT * FROM erp_work_order
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        <!--包含软件运营特殊查询  --> 
+            WHERE 1=1 
+        <!-- TP青岛更改 曹群星 2017-05-13 UPD START -->
+        <if test="del_flag!=-2">
+        	and  del_flag IN (0,2) AND  valid_flag IN (1,2)
+        </if>
+        <!-- del_flag=-2标识 废除订单也可以查看订单详情 -->
+        <if test="del_flag==-2">
+        	and  del_flag IN (0,1,2) AND  valid_flag IN (0,1,2)
+        </if>
+        <!-- TP青岛更改 曹群星 2017-05-13 UPD END -->
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+        <if test="ordersql!=null and ordersql!=''">
+            ${ordersql}
+        </if>
+        LIMIT #{startResult},#{pageSize}
+    </select>
+    <!--  查询并设置记录总数  -->
+    <select id="getTotalCountListNoJoin" resultType="Integer">
+        SELECT count(*) FROM erp_work_order
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        <!--包含软件运营特殊查询  --> 
+            WHERE 1=1 
+        <!-- TP青岛更改 曹群星 2017-05-13 UPD START -->
+        <if test="del_flag!=-2">
+        	and  del_flag IN (0,2) AND  valid_flag IN (1,2)
+        </if>
+        <!-- del_flag=-2标识 废除订单也可以查看订单详情 -->
+        <if test="del_flag==-2">
+        	and  del_flag IN (0,1,2) AND  valid_flag IN (0,1,2)
+        </if>
+        <!-- TP青岛更改 曹群星 2017-05-13 UPD END -->
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+    </select>
+
+
+    <insert id="insert" parameterType="OrderBo"
+            useGeneratedKeys="true" keyProperty="order_id">
+		insert into
+		erp_order(order_name,product_type)
+		values(#{order_name},#{product_type})
+	</insert>
+
+    <update id="update">
+		update erp_order set
+		order_name=#{order_name},product_type=#{product_type} where
+		order_id=#{order_id};
+	</update>
+
+
+    <!-- 保存 订单数据-->
+    <insert id="saveWorkOrder" parameterType="WorkOrderBo">
+
+        insert into erp_work_order(
+
+        user_id, user_name, shop_p_id, shop_name, order_id, product_id, product_name,
+
+        inner_flag, order_source, service_company_id, service_company_name, service_group_id, service_group_name,
+
+        company_id, company_name, direct_group_id, direct_group_name,
+
+        group_id, group_name, remark,
+
+        order_type, approve_state, end_type, main_order_id,
+
+        real_pay_money, beable_service_days,prepay_money,prepay_flag,
+
+        service_content, client_desire, p_goods_deliver_time, pay_on_delivery_flag,
+
+        freight_insurance_flag, performance_software, sum_limited_per_day ,service_platform_flag,
+
+        goods_promotion_num, frist_service_begin_time, plan_end_time,
+
+        sign_time, sign_service_fee, sign_interval, sign_period,
+
+        brokerage_explain, img_standard, expect_finish_time, p_pre_arrive_time,
+
+        p_scene, p_model_flag, p_shoot_num, img_num, post_addres,
+
+        order_title, relation_order_id, relation_shop_id,parent_order_id,opt_parent_id,exist_xudan_flag,
+
+        create_time, create_user_id, actual_partner_compan_id,
+
+        actual_partner_compan_en_name,actual_partner_compan_name,
+
+        service_am_names,service_ae_names,service_assign_time,service_state,service_small_group_id,service_small_group_name,root_order_id,current_assign_state,s_small_group_leader_names,
+
+        last_edited_user_id, last_edited_time, valid_flag, del_flag,yuji_service_satrt_time,yuji_service_end_time,contract_subject,
+        zengzhi_am_user,zengzhi_ae_user,
+
+        training_id,training_person_count,
+
+        sign_free_service_days,
+        free_service_days,
+        free_service_days_flag,
+        contract_begin_time,
+        contract_end_time,
+        <!---   add by yuchen 2015-11-18 begin 增加第一次合同签约金额 -->
+        first_sign_period,
+        first_sign_service_fee,
+        <!---   add by yuchen 2015-11-18 end 增加第一次合同签约金额 -->
+        urgent_order_flag,potential_customer,probation_flag,deposit_id,deposit_money,business_staff,staff_password,
+        shop_source,
+        <!-- 下单页需要部门经理或者vp审批的checkbox add by jijun 20170713 -->
+        xuyue_price_not_less_than_last_huikuan_price,
+        not_go_platform_protocol,
+        contract_special_case_apply,
+        price_less_than_floor_price,
+        good_customers,
+        other_special_bmjl,
+        other_special_vp,
+        <!-- end by jijun 20170713 -->
+        previous_service_state,
+        <!-- 运营产品 服务产品子类 add by caoqunxing 20170408 -->
+        pro_yunying_sub,
+        <!-- 转单参数信息，在转单保存草稿后，在草稿箱中再次提交审批时使用 add by caoqunxing 20170426 -->
+        zhuanDan_reMoneyString,
+        <!-- 应收金额 add by caoqunxing 20170626 -->
+        receivable_money
+        ) values (
+
+        #{user_id}, #{user_name}, #{shop_p_id}, #{shop_name}, #{order_id}, #{product_id}, #{product_name},
+
+        #{inner_flag}, #{order_source}, #{service_company_id}, #{service_company_name}, #{service_group_id},
+        #{service_group_name},
+
+        #{company_id}, #{company_name}, #{direct_group_id}, #{direct_group_name},
+
+        #{group_id}, #{group_name}, #{remark},
+
+        #{order_type}, #{approve_state}, #{end_type}, #{main_order_id},
+
+        #{real_pay_money}, #{beable_service_days}, #{prepay_money}, #{prepay_flag},
+
+        #{service_content}, #{client_desire}, #{p_goods_deliver_time}, #{pay_on_delivery_flag},
+
+        #{freight_insurance_flag}, #{performance_software}, #{sum_limited_per_day} ,#{service_platform_flag},
+
+        #{goods_promotion_num}, #{frist_service_begin_time}, #{plan_end_time},
+
+        #{sign_time}, #{sign_service_fee}, #{sign_interval}, #{sign_period},
+
+        #{brokerage_explain}, #{img_standard}, #{expect_finish_time}, #{p_pre_arrive_time},
+
+        #{p_scene}, #{p_model_flag}, #{p_shoot_num}, #{img_num}, #{post_addres},
+
+        #{order_title}, #{relation_order_id},
+        #{relation_shop_id},#{parent_order_id},#{opt_parent_id},#{exist_xudan_flag},
+
+        #{create_time}, #{create_user_id}, #{actual_partner_compan_id},
+
+        #{actual_partner_compan_en_name},#{actual_partner_compan_name},
+
+        #{service_am_names},#{service_ae_names},#{service_assign_time},#{service_state},#{service_small_group_id},#{service_small_group_name},#{root_order_id},#{current_assign_state},#{s_small_group_leader_names},
+
+        #{last_edited_user_id}, #{last_edited_time}, #{valid_flag}, #{del_flag},#{yuji_service_satrt_time},#{yuji_service_end_time},#{contract_subject},
+        #{zengzhi_am_user},#{zengzhi_ae_user},
+
+        #{training_id},#{training_person_count},
+        #{free_service_days},
+        #{free_service_days},
+        #{free_service_days_flag},
+        #{contract_begin_time},
+        #{contract_end_time},
+
+        <!---   add by yuchen 2015-11-18 begin 增加第一次合同签约金额 -->
+        #{sign_period},
+        #{sign_service_fee},
+        <!---   add by yuchen 2015-11-18 end 增加第一次合同签约金额 -->
+        #{urgent_order_flag},#{potential_customer},#{probation_flag},#{deposit_id},#{deposit_money},#{business_staff},#{staff_password},
+        #{workShopBo.shop_source}
+        <!-- 下单页需要部门经理或者vp审批的checkbox add by jijun 20170713 -->
+        ,#{xuyue_price_not_less_than_last_huikuan_price}
+        ,#{not_go_platform_protocol}
+        ,#{contract_special_case_apply}
+        ,#{price_less_than_floor_price}
+        ,#{good_customers}
+        ,#{other_special_bmjl}
+        ,#{other_special_vp}
+        <!-- end by jijun 20170713 -->
+        ,#{previous_service_state}
+        <!-- 运营产品 服务产品子类 add by caoqunxing 20170408 -->
+        ,#{pro_yunying_sub}
+        <!-- 转单参数信息，在转单保存草稿后，在草稿箱中再次提交审批时使用 add by caoqunxing 20170426 -->
+        ,#{zhuanDan_reMoneyString}
+        <!-- 应收金额 add by caoqunxing 20170626 -->
+        ,#{receivable_money}
+        )
+
+    </insert>
+
+
+    <!-- 修改订单数据-->
+    <update id='updateWorkOrder' parameterType="WorkOrderBo">
+
+        update erp_work_order set
+
+        last_edited_user_id = #{last_edited_user_id},
+
+        last_edited_time = #{last_edited_time},
+
+        <!-- 下单信息块 start-->
+
+        shop_p_id = #{shop_p_id},
+
+        shop_name = #{shop_name},
+
+        inner_flag = #{inner_flag},
+
+        order_source = #{order_source},
+
+        relation_order_id = #{relation_order_id},
+
+        relation_shop_id = #{relation_shop_id},
+
+        service_company_id = #{service_company_id},
+
+        service_company_name = #{service_company_name},
+
+        service_group_id = #{service_group_id},
+
+        service_group_name = #{service_group_name},
+
+        actual_partner_compan_id = #{actual_partner_compan_id},
+
+        actual_partner_compan_en_name = #{actual_partner_compan_en_name},
+
+        actual_partner_compan_name = #{actual_partner_compan_name},
+
+        order_title = #{order_title},
+
+        remark = #{remark},
+        <if test="real_pay_money!=null and real_pay_money!=''">
+        	real_pay_money = #{real_pay_money},
+        </if>
+        <if test="beable_service_days!=null">
+        	beable_service_days = #{beable_service_days},
+        </if>
+        yuji_service_satrt_time=#{yuji_service_satrt_time},
+        yuji_service_end_time=#{yuji_service_end_time},
+        contract_subject=#{contract_subject},
+        zengzhi_ae_user=#{zengzhi_ae_user},
+        zengzhi_am_user=#{zengzhi_am_user},
+        <!-- 下单信息块 end-->
+
+
+        <!-- 服务信息块 start-->
+        service_content = #{service_content},
+
+        client_desire = #{client_desire},
+
+        sum_limited_per_day = #{sum_limited_per_day},
+
+        service_platform_flag = #{service_platform_flag},
+
+        goods_promotion_num = #{goods_promotion_num},
+
+        pay_on_delivery_flag = #{pay_on_delivery_flag},
+
+        freight_insurance_flag = #{freight_insurance_flag},
+
+        performance_software = #{performance_software},
+
+        img_standard = #{img_standard},
+
+        expect_finish_time = #{expect_finish_time},
+
+        p_pre_arrive_time = #{p_pre_arrive_time},
+
+        p_scene = #{p_scene},
+
+        p_model_flag = #{p_model_flag},
+
+        p_shoot_num = #{p_shoot_num},
+
+        img_num = #{img_num},
+
+        post_addres = #{post_addres},
+
+        sign_time = #{sign_time},
+
+        sign_service_fee = #{sign_service_fee},
+
+        sign_interval = #{sign_interval},
+
+        sign_period = #{sign_period},
+
+        brokerage_explain = #{brokerage_explain},
+        <!-- 服务信息块 end -->
+
+        <!-- 内单信息块 start -->
+        frist_service_begin_time = #{frist_service_begin_time},
+        plan_end_time = #{plan_end_time},
+        <!-- 内单信息块 end -->
+
+        training_id = #{training_id},
+
+        training_person_count = #{training_person_count},
+
+        prepay_money = #{prepay_money},
+
+        prepay_flag = #{prepay_flag},
+
+        sign_free_service_days = #{free_service_days},
+        free_service_days = #{free_service_days},
+        free_service_days_flag = #{free_service_days_flag},
+        contract_begin_time = #{contract_begin_time},
+        contract_end_time = #{contract_end_time},
+        <!---   add by yuchen 2015-11-18 begin 增加第一次合同签约金额 -->
+        first_sign_period=#{first_sign_period},
+        first_sign_service_fee=#{first_sign_service_fee}
+        <!---   add by yuchen 2015-11-18 end 增加第一次合同签约金额 -->
+        ,
+        potential_customer=#{potential_customer},
+        probation_flag=#{probation_flag},
+        deposit_id=#{deposit_id},
+        deposit_money=#{deposit_money},
+        business_staff=#{business_staff},
+        staff_password=#{staff_password},
+        shop_source=#{workShopBo.shop_source}
+        <!-- TP青岛更改 曹群星 2017-03-09 ADD START -->
+        <!-- 下单页需要部门经理或者vp审批的checkbox add by jijun 20170713 -->
+        <if test="xuyue_price_not_less_than_last_huikuan_price!=null">
+        	,xuyue_price_not_less_than_last_huikuan_price=#{xuyue_price_not_less_than_last_huikuan_price}        	
+        </if>
+        <if test="not_go_platform_protocol!=null">
+        	,not_go_platform_protocol=#{not_go_platform_protocol}        
+        </if>
+        <if test="contract_special_case_apply!=null">
+        	,contract_special_case_apply=#{contract_special_case_apply}        
+        </if>
+        <if test="price_less_than_floor_price!=null">
+	        ,price_less_than_floor_price=#{price_less_than_floor_price}
+        </if>
+        <if test="good_customers!=null">
+        	,good_customers=#{good_customers}        
+        </if>
+        <if test="other_special_bmjl!=null">
+        	,other_special_bmjl=#{other_special_bmjl}        
+        </if>
+        <if test="other_special_vp!=null">
+	        ,other_special_vp=#{other_special_vp}
+        </if>
+        <!-- end by jijun 20170713 -->
+        <if test="previous_service_state!=null">
+        	,previous_service_state = #{previous_service_state}
+        </if>
+        <!-- end by jijun -->
+		,pro_yunying_sub=#{pro_yunying_sub}
+		<if test="receivable_money!=null and receivable_money!=''">
+        	,receivable_money = #{receivable_money}
+        </if>
+        <!-- TP青岛更改 曹群星 2017-03-09 ADD END -->
+        where
+        order_id = #{order_id}
+    </update>
+
+	<!-- 更新workorder add by jijun 20170426 -->
+	<update id="updateWorkOrder_version2" parameterType="WorkOrderBo">
+		update erp_work_order 
+		<set>
+			last_edited_time = SYSDATE() 
+			<if test="previous_service_state!=null">
+				,previous_service_state = #{previous_service_state}
+			</if>
+			<if test="service_am_names!=null and service_am_names!=''">
+				,service_am_names = #{service_am_names}
+			</if>
+			<if test="approve_state!=null and approve_state!=''">
+				,approve_state = #{approve_state}
+			</if>
+			<if test="service_state!=null and service_state!=''">
+				,service_state = #{service_state}
+			</if>
+		</set>
+		where order_id = #{order_id}
+	</update>
+
+    <update id="delWorkOrder" parameterType="WorkOrderBo">
+		update erp_work_order 
+		<set>
+		 last_edited_user_id = #{last_edited_user_id} 
+		 ,last_edited_time = #{last_edited_time}
+		 ,valid_flag = #{valid_flag}
+		 <if test="del_flag!=null">
+		 ,del_flag = #{del_flag}
+		 </if>
+		 <if test="service_state!=null">
+		 ,service_state = #{service_state}
+		 </if>
+		</set> 		 
+		 where 
+		 order_id = #{order_id}
+	</update>
+
+
+    <!--查询相关的附件信息-->
+    <select id="listFileInfo" resultType="FlowAttachmentBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT * FROM base_flow_attachment
+            <if test="tableAlias!=null and tableAlias!=''">
+                ${tableAlias}
+            </if>
+            WHERE 1=1
+            <if test="filtersql!=null and filtersql!=''">
+                ${filtersql}
+            </if>
+            <if test="ordersql!=null and ordersql!=''">
+                ${ordersql}
+            </if>
+        </if>
+        <!--  分页查询   查询记录  -->
+        SELECT * FROM base_flow_attachment
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        WHERE 1=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+        <if test="ordersql!=null and ordersql!=''">
+            ${ordersql}
+        </if>
+        LIMIT #{startResult},#{pageSize}
+    </select>
+    <!--  查询并设置记录总数  -->
+    <select id="getTotalCountlistFileInfo" resultType="Integer">
+        SELECT count(*) FROM base_flow_attachment
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        WHERE 1=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+    </select>
+
+
+    <!-- 保存 订单数据-->
+    <insert id="saveFLowFileInfo" parameterType="FlowAttachmentBo"
+            useGeneratedKeys="true" keyProperty="attachment_id">
+		
+		insert into base_flow_attachment(
+		
+		att_name, att_type, att_size, att_url,
+		
+		upload_time, upload_user_id, remark,business_type,
+		
+		business_id, file_type,inst_process_id
+		
+		)values(
+		
+		#{att_name}, #{att_type}, #{att_size}, #{att_url},
+		
+		#{upload_time}, #{upload_user_id}, #{remark}, #{business_type},
+		
+		#{business_id}, #{file_type},#{inst_process_id}
+
+		)
+	</insert>
+
+    <!-- 更新 订单附件数据  (流程实例id)-->
+    <update id="updateFLowFileInfo" parameterType="FlowAttachmentBo">
+		
+	    update base_flow_attachment set 
+	    
+	    inst_process_id = #{inst_process_id}
+	    
+	    where 
+	    
+	    business_id = #{business_id}
+	    
+	</update>
+	
+	    <!-- 更新 订单附件数据  (发票附件) inst_process_id 为发票id-->
+    <update id="updateFLowFileInvoiceInfo" parameterType="FlowAttachmentBo">
+	    update base_flow_attachment set 
+	    inst_process_id = #{inst_process_id},
+	    business_id = #{inst_process_id}
+	    where 
+	    business_id = #{business_id} and business_type = #{business_type} 
+	    
+	</update>
+
+    <!-- 删除订单数据 -->
+    <delete id="delFlowFileInfo" parameterType="Integer">
+           delete from  base_flow_attachment 
+	       WHERE attachment_id = #{attachment_id}
+	</delete>
+	<!-- 如果没有发票信息 则删除 相关 附件信息 -->
+	<delete id="delFlowFileInvoiceInfo" parameterType="FlowAttachmentBo">
+           delete from  base_flow_attachment 
+	       WHERE business_id = #{business_id} and business_type = #{business_type}
+	</delete>
+
+    <!--  根据订单编号修改服务公司服务部门 -->
+    <update id="updateCompayAndGroupByOrderId" parameterType="WorkOrderBo">
+		
+	    update erp_work_order set
+        <if test="service_group_id != null and service_group_id != ''">
+            service_group_id  = #{service_group_id}
+        </if>
+        <if test="service_group_name != null and service_group_name != ''">
+            ,service_group_name  = #{service_group_name}
+        </if>
+        <if test="service_company_id != null and service_company_id != ''">
+            ,service_company_id  = #{service_company_id}
+        </if>
+        <if test="service_company_name != null and service_company_name != ''">
+            ,service_company_name  = #{service_company_name}
+        </if>
+        
+	    where
+	    order_id = #{order_id}
+	</update>
+
+    <!-- 判断产品在订单表和订单操表中是否存在 订单状态不为结束  或者 审批状态是审批中的订单 -->
+
+    <select id="findStateForStopPro" resultType="Integer">
+         SELECT COUNT(*) FROM 
+         
+         erp_workorder_operate A,
+         
+         erp_work_order Z 
+         
+         WHERE A.order_id = Z.order_id  
+         
+         AND Z.product_id= #{product_id}
+          
+         AND ( A.approve_state = '1'  OR Z.service_state != '7')
+	</select>
+    <!--通过订单Id查询所有相关联的续约的订单-->
+    <select id="getXuYueOrderListByOrderId" resultType="WorkOrderBo">
+        SELECT
+        ewo.*
+        FROM
+        erp_work_order ewo
+        WHERE
+        ewo.root_order_id = (
+        SELECT
+        ewwo.root_order_id
+        FROM
+        erp_work_order ewwo
+        WHERE
+        ewwo.order_id = #{param1}
+        and ewwo.shop_name=ewo.shop_name
+        and ewwo.product_id=ewo.product_id
+        )
+        <if test="param2 != null and param2 != ''and param2 != '0'">
+            and ewo.order_approve_state=#{param2}
+        </if>
+        and ewo.inner_flag=0
+        and ewo.order_source=9
+        order by ewo.order_approve_agree_time DESC,ewo.create_time DESC;
+    </select>
+
+    <!--通过根订单Id查询所有相关联的订单-->
+    <select id="getOrderListByRootOrderId" resultType="WorkOrderBo">
+        SELECT
+        ewo.*
+        FROM
+        erp_work_order ewo
+        WHERE
+        ewo.root_order_id = #{param1}
+        <if test="param2 != null and param2 != ''and param2 != '0'">
+            and ewo.order_approve_state=#{param2}
+        </if>
+        and ewo.inner_flag=0
+        and ewo.order_source=9
+        order by ewo.order_approve_agree_time ,ewo.create_time DESC;
+    </select>
+
+    <!--更新续约的续约父orderId-->
+    <update id="updateXuYueOrderParentId">
+        update erp_work_order ewo
+        <set>
+            <if test="param2 != null and param2 != ''">
+                ewo.parent_order_id = #{param2}
+            </if>
+        </set>
+        where
+        ewo.order_id = #{param1}
+    </update>
+    <!--修改订单表里的店铺信息-->
+    <update id="updateShopInfo">
+        update erp_work_order set
+        shop_p_id=#{shop_p_id},shop_name=#{shop_name} where
+        order_id=#{order_id};
+    </update>
+    <!--根据父订单id查找外包,转单,续单的订单-->
+    <select id="findSourceOrder" parameterType="Map" resultType="WorkOrderBo">
+        select * from erp_work_order where parent_order_id=#{parent_order_id}
+        and order_source in (7,8,9)
+    </select>
+    <!--根据当前系统时间和订单预计结束时间查找出三天内到期的订单-->
+    <select id="findOrderLessThreeDays" resultType="WorkOrderBo">
+        SELECT a.days,a.* FROM(SELECT order_id,plan_end_time,service_ae_names,service_am_names,s_small_group_leader_names,service_group_id,
+        DATEDIFF(plan_end_time,current_timestamp) as days FROM erp_work_order WHERE valid_flag=1 AND service_state=4)a
+        <![CDATA[WHERE a.days<=3 AND a.days>0]]>
+    </select>
+
+    <!--保存合同信息 - add by qiaojingjun 20160912-->
+    <insert id="saveContractInfo">
+        INSERT INTO `erp_contract` (
+	`Contract_id`,
+	`Order_id`,
+	`Contract_template_id`,
+	`Process_key`,
+	`Process_instance_id`,
+	`Contract_file_path`,
+	`Valid_flag`,
+	`Del_flag`,
+	`Creator`,
+	`Editor`,
+	`Deleter`,
+	`Create_time`,
+	`Del_time`,
+	`Note`
+)
+VALUES
+	(
+    #{contract_id},
+	#{order_id},
+	#{contract_template_id},
+	#{process_key},
+	#{process_instance_id},
+	#{contract_file_path},
+	#{valid_flag},
+	#{del_flag},
+	#{create_user_id},
+	#{editor},
+	#{deleter},
+	#{create_time},
+	#{del_time},
+	#{note}
+	);
+    </insert>
+
+    <!--保存合同明细信息 - add by qiaojingjun 20160912-->
+    <insert id="saveContractDetail">
+        INSERT INTO `erp_contract_detail` (
+	`contract_id`,
+	`key`,
+	`value`
+    )
+    VALUES
+        <foreach collection="list"  item="item" index="index" separator=",">
+            ( #{item.contract_id},#{item.key}, #{item.value})
+        </foreach>
+    </insert>
+    
+    <!--根据公司阶层获取服务占比-->
+    <select id="getServiceRateByProductAndCompanyRank" parameterType="Map" resultType="WorkOrderBo">
+        <!-- <if test="rank == 1">
+	        SELECT
+				service_company_id,
+				service_company_name,
+				serviceCount,
+				totalServiceCount,
+				FORMAT(
+					serviceCount / totalServiceCount * 100,
+					2
+				) service_rate
+			FROM
+				(
+					SELECT
+					count(order_id) serviceCount,
+					service_company_id ,
+					service_company_name ,
+					(
+						SELECT
+							count(order_id)
+						FROM
+							erp_work_order t
+						WHERE
+							t.service_state = 4
+						AND t.valid_flag = 1
+						AND t.del_flag != 1
+						AND t.product_id = #{product_id}
+					) totalServiceCount
+				FROM
+					erp_work_order t
+				WHERE
+					t.service_state = 4
+				AND t.valid_flag = 1
+				AND t.del_flag != 1
+				AND t.service_company_id = #{company_id}
+				AND t.product_id = #{product_id}
+			) t
+        </if>
+        <if test="rank == 2">
+	        SELECT
+				service_company_id,
+				service_group_id,
+				service_group_name,
+				serviceCount,
+				totalServiceCount,
+				FORMAT(
+					serviceCount / totalServiceCount * 100,
+					2
+				)service_rate
+			FROM
+				(
+					SELECT
+					count(order_id) serviceCount,
+					service_company_id ,
+					service_group_id ,
+					service_group_name ,
+					(
+						SELECT
+							count(order_id)
+						FROM
+							erp_work_order t
+						WHERE
+							t.service_state = 4
+						AND t.valid_flag = 1
+						AND t.del_flag != 1
+						AND t.service_company_id = #{company_id}
+						AND t.product_id = #{product_id}
+					) totalServiceCount
+				FROM
+					erp_work_order t
+				WHERE
+					t.service_state = 4
+				AND t.valid_flag = 1
+				AND t.del_flag != 1
+					AND t.service_company_id = #{company_id}
+					AND t.service_group_id = #{group_id}
+					AND t.product_id = #{product_id}
+				) t
+        </if>
+        <if test="rank == 3">
+	        SELECT
+				service_company_id,
+				service_group_id,
+				service_group_name,
+				service_small_group_id,
+				service_small_group_name,
+				serviceCount,
+				totalServiceCount,
+				FORMAT(
+					serviceCount / totalServiceCount * 100,
+					2
+				)service_rate
+			FROM
+				(
+					SELECT
+						count(order_id) serviceCount,
+						service_company_id ,
+						service_group_id ,
+						service_group_name ,
+						service_small_group_id ,
+						service_small_group_name ,
+						(
+							SELECT
+								count(order_id)
+							FROM
+								erp_work_order t
+							WHERE
+								t.service_state = 4
+							AND t.valid_flag = 1
+							AND t.del_flag != 1
+							AND t.service_company_id = #{company_id}
+							AND t.service_group_id = #{group_id}
+							AND t.product_id = #{product_id}
+						) totalServiceCount
+					FROM
+						erp_work_order t
+					WHERE
+						t.service_state = 4
+					AND t.valid_flag = 1
+					AND t.del_flag != 1
+					AND t.service_company_id = #{company_id}
+					AND t.service_group_id = #{group_id}
+					AND t.service_small_group_id = #{small_group_id}
+					AND t.product_id = #{product_id}
+				) t
+        </if> -->
+        SELECT
+			t.service_company_id,
+			t.service_company_name,
+			t.service_group_id,
+			t.service_group_name,
+			t.service_small_group_id,
+			t.service_small_group_name,
+			t.ser_sma_gro_con service_count,
+			t1.ser_sma_gro_sum,
+			/*FORMAT(
+				t.ser_sma_gro_con / t1.ser_sma_gro_sum * 100,
+				2
+			) service_rate,*/
+			t2.people_count,
+			FORMAT(
+				t.ser_sma_gro_con / t2.people_count ,
+				2
+			) service_rate
+		FROM
+			(
+				SELECT
+					service_company_id,
+					service_company_name,
+					service_group_id,
+					service_group_name,
+					service_small_group_id,
+					service_small_group_name,
+					count(service_small_group_id) ser_sma_gro_con
+				FROM
+					erp_work_order t
+				WHERE
+					t.service_state = 4
+				AND t.valid_flag = 1
+				AND t.del_flag != 1
+				AND t.product_id = #{product_id}
+				AND t.service_small_group_id IS NOT NULL
+				GROUP BY
+					service_small_group_id
+				ORDER BY
+					service_small_group_id ASC
+			) t
+		LEFT JOIN (
+			SELECT
+				service_company_id,
+				service_group_id,
+				SUM(ser_sma_gro_con) ser_sma_gro_sum
+			FROM
+				(
+					SELECT
+						service_company_id,
+						service_group_id,
+						count(order_id) ser_sma_gro_con
+					FROM
+						erp_work_order t
+					WHERE
+						t.service_state = 4
+					AND t.valid_flag = 1
+					AND t.del_flag != 1
+					AND t.product_id = #{product_id}
+					AND t.service_small_group_id IS NOT NULL
+					GROUP BY
+						service_small_group_id
+					ORDER BY
+						service_small_group_id ASC
+				) t
+			GROUP BY
+				service_group_id
+		) t1 ON t.service_group_id = t1.service_group_id
+		LEFT JOIN (
+			SELECT
+				COUNT(*) people_count,
+				t.dic_group_id,
+				bg. NAME
+			FROM
+				base_user t
+			LEFT JOIN base_group bg ON t.dic_group_id = bg.group_id
+			WHERE
+				t.valid_flag = 1
+			AND t.del_flag != 1
+			AND t.group_id IS NOT NULL
+			AND t.dic_group_id IS NOT NULL
+			AND t.dic_group_id != t.group_id	
+			GROUP BY
+				t.dic_group_id
+		) t2 ON t.service_small_group_id = t2.dic_group_id
+		WHERE t2.people_count IS NOT NULL 
+		AND t2.people_count > 0
+		GROUP BY
+			service_company_id,service_group_id,service_small_group_id
+
+    </select>
+    
+    <!--根据公司阶层获取Ued工时数-->
+    <select id="getUedServiceRateByProductAndCompanyRank" resultType="WorkOrderBo">
+    	SELECT
+			ot.service_company_id,
+			ot.service_company_name,
+			ot.service_group_id,
+			ot.service_group_name,
+			ot.service_dic_group_id,
+			ot.service_small_group_name,
+			ot.service_count,
+			ot.people_count,
+			FORMAT(
+				ot.service_count / ot.people_count,
+				2
+			) service_rate
+		FROM
+			(
+				SELECT
+					bc.company_id service_company_id,
+					bc.`name` service_company_name,
+					service_group_id,
+					bg1.`name` service_group_name,
+					service_dic_group_id,
+					dic_group_name service_small_group_name,
+					FORMAT(
+						SUM(
+							t.standard_labor_time / (
+								datediff(
+									t.plan_accomplish_time,
+									t.plan_begin_time
+								) + 1
+							)
+						),
+						2
+					) service_count,
+					t2.people_count
+				FROM
+					erp_work_order_task t
+				LEFT JOIN (
+					SELECT
+						COUNT(*) people_count,
+						t.dic_group_id,
+						bg. NAME dic_group_name
+					FROM
+						base_user t
+					LEFT JOIN base_group bg ON t.dic_group_id = bg.group_id
+					AND bg.valid_flag = 1
+					WHERE
+						t.valid_flag = 1
+					AND t.del_flag != 1
+					AND t.group_id IS NOT NULL
+					AND t.dic_group_id IS NOT NULL
+					AND t.dic_group_id != t.group_id
+					GROUP BY
+						t.dic_group_id
+				) t2 ON t.service_dic_group_id = t2.dic_group_id
+				LEFT JOIN base_group bg1 ON t.service_group_id = bg1.group_id
+				LEFT JOIN base_company bc ON bg1.main_company_id = bc.company_id
+				WHERE
+					t.progress_state IN (0, 1)
+				AND plan_accomplish_time BETWEEN SYSDATE()
+				AND date_sub(SYSDATE(), INTERVAL - 7 DAY)
+				AND t.valid_flag = 1
+				AND t.del_flag != 1
+				AND t.assign_type = 1
+				GROUP BY
+					service_dic_group_id
+			) ot
+    </select>
+</mapper>

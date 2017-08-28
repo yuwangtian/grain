@@ -1,0 +1,857 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.workTimeReport.dao.WorkTimeReportDao">
+    <!-- 查询个人工时统计信息 -->
+	<select id="getPersonalWorkTimeReport" resultType="WorkTimeReportBo">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT
+            erp_work_order_task.order_id,
+            erp_work_order_task.service_user_id,
+            erp_work_order_task.service_dic_group_id,
+            base_group.name AS service_dic_group_name,
+            cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+            cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+            cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+            base_user.name AS service_user_name,
+            erp_work_order.product_id,
+            erp_work_order_task.decoration_content,
+            erp_work_order.inner_flag,
+            erp_work_order.company_id,
+            erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_user.name is not null
+            AND erp_work_order_task.service_user_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+
+            GROUP BY
+            erp_work_order_task.service_user_id
+
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            SELECT
+                erp_work_order_task.order_id,
+                erp_work_order_task.service_user_id,
+                erp_work_order_task.service_dic_group_id,
+                base_group.name AS service_dic_group_name,
+                cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+                cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+                cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+                base_user.name AS service_user_name,
+                erp_work_order.product_id,
+                erp_work_order_task.decoration_content,
+                erp_work_order.inner_flag,
+                erp_work_order.company_id,
+                erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_user.name is not null
+            AND erp_work_order_task.service_user_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+            GROUP BY
+              erp_work_order_task.service_user_id
+            LIMIT  ${startRow},${pageSize}
+        </if>
+	</select>
+
+    <!-- 查询个人工时统计记录数 -->
+    <select id="getPersonalWorkTimeReportCount" resultType="Integer">
+        SELECT
+          count(distinct erp_work_order_task.service_user_id)
+        FROM erp_work_order_task
+        LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+        LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+        WHERE
+        1 = 1
+        AND base_user.name is not null
+        AND erp_work_order_task.service_user_id is not null
+        AND erp_work_order_task.service_dic_group_id is not null
+        <if test="user_name!=null and user_name!=''">
+            AND base_user.name LIKE '%${user_name}%'
+        </if>
+        <if test="service_small_group_id!=null and service_small_group_id!=''">
+            AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            AND erp_work_order_task.real_accomplish_time >= #{start_date}
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            AND #{end_date} >= erp_work_order_task.real_accomplish_time
+        </if>
+        <if test="product_id!=null and product_id!=''">
+            AND erp_work_order.product_id = #{product_id}
+        </if>
+        <if test="decoration_properties!=null">
+            AND erp_work_order_task.decoration_properties = #{decoration_properties}
+        </if>
+        <if test="service_content!=null ">
+            AND erp_work_order_task.decoration_content = #{service_content}
+        </if>
+        <if test="inner_flag!=null">
+            AND erp_work_order.inner_flag = #{inner_flag}
+        </if>
+        <if test="company_id!=null and company_id!=''">
+            AND erp_work_order.company_id = #{company_id}
+        </if>
+        <if test="group_id!=null and group_id!=''">
+            AND erp_work_order.group_id in (${group_id})
+        </if>
+        <if test="progress_state == null or progress_state != 0">
+            AND erp_work_order_task.progress_state = 2
+        </if>
+        <if test="progress_state != null and progress_state == 0">
+            AND erp_work_order_task.progress_state in(0,1)
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+        </if>
+    </select>
+
+    <!-- 查询小组工时统计信息 -->
+    <select id="getGroupWorkTimeReport" resultType="WorkTimeReportBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT
+                erp_work_order_task.order_id,
+                erp_work_order_task.service_dic_group_id,
+                cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+                cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+                cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+                base_group.name AS service_dic_group_name,
+                erp_work_order.product_id,
+                erp_work_order_task.decoration_content,
+                erp_work_order.inner_flag,
+                erp_work_order.company_id,
+                erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_group.group_level = 22
+            AND erp_work_order_task.service_user_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+            GROUP BY
+            erp_work_order_task.service_dic_group_id
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            SELECT
+            erp_work_order_task.order_id,
+            erp_work_order_task.service_dic_group_id,
+            cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+            cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+            cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+            base_group. name AS service_dic_group_name,
+            erp_work_order.product_id,
+            erp_work_order_task.decoration_content,
+            erp_work_order.inner_flag,
+            erp_work_order.company_id,
+            erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_group.group_level = 22
+            AND erp_work_order_task.service_user_id is not null
+            AND erp_work_order_task.service_dic_group_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+            GROUP BY
+            erp_work_order_task.service_dic_group_id
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询小组工时统计记录数 -->
+    <select id="getGroupWorkTimeReportCount" resultType="Integer">
+        SELECT count(distinct erp_work_order_task.service_dic_group_id)
+        FROM erp_work_order_task
+        LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+        LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+        LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+        WHERE
+        1 = 1
+        AND base_group.group_level = 22
+        AND erp_work_order_task.service_user_id is not null
+        AND erp_work_order_task.service_dic_group_id is not null
+        <if test="user_name!=null and user_name!=''">
+            AND base_user.name LIKE '%${user_name}%'
+        </if>
+        <if test="service_small_group_id!=null and service_small_group_id!=''">
+            AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            AND erp_work_order_task.real_accomplish_time >= #{start_date}
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            AND #{end_date} >= erp_work_order_task.real_accomplish_time
+        </if>
+        <if test="product_id!=null and product_id!=''">
+            AND erp_work_order.product_id = #{product_id}
+        </if>
+        <if test="decoration_properties!=null">
+            AND erp_work_order_task.decoration_properties = #{decoration_properties}
+        </if>
+        <if test="service_content!=null ">
+            AND erp_work_order_task.decoration_content = #{service_content}
+        </if>
+        <if test="inner_flag!=null">
+            AND erp_work_order.inner_flag = #{inner_flag}
+        </if>
+        <if test="company_id!=null and company_id!=''">
+            AND erp_work_order.company_id = #{company_id}
+        </if>
+        <if test="group_id!=null and group_id!=''">
+            AND erp_work_order.group_id in (${group_id})
+        </if>
+        <if test="progress_state == null or progress_state != 0">
+            AND erp_work_order_task.progress_state = 2
+        </if>
+        <if test="progress_state != null and progress_state == 0">
+            AND erp_work_order_task.progress_state in(0,1)
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+        </if>
+    </select>
+
+    <!-- 查询部门工时统计信息 -->
+    <select id="getDeptWorkTimeReport" resultType="WorkTimeReportBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT
+                erp_work_order_task.order_id,
+                erp_work_order_task.service_group_id,
+                cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+                cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+                cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+                base_group. name AS service_group_name,
+                erp_work_order.product_id,
+                erp_work_order_task.decoration_content,
+                erp_work_order.inner_flag,
+                erp_work_order.company_id,
+                erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_group.group_level = 20
+            AND erp_work_order_task.service_user_id is not null
+            AND erp_work_order_task.service_group_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+            GROUP BY
+            erp_work_order_task.service_group_id
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            SELECT
+                erp_work_order_task.order_id,
+                erp_work_order_task.service_group_id,
+                cast(sum(standard_labor_time) as decimal(20,2)) AS standard_labor_time,
+                cast(sum(real_used_time) as decimal(20,2)) AS real_used_time,
+                cast(sum(real_used_time) / (DATEDIFF(IFNULL(#{end_date},max(real_accomplish_time)), IFNULL(#{start_date},min(real_accomplish_time)))+1) as decimal(20,2)) AS avg_real_used_time,
+                base_group.name AS service_group_name,
+                erp_work_order.product_id,
+                erp_work_order_task.decoration_content,
+                erp_work_order.inner_flag,
+                erp_work_order.company_id,
+                erp_work_order.group_id
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_group.group_level = 20
+            AND erp_work_order_task.service_user_id is not null
+            AND erp_work_order_task.service_group_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+            GROUP BY
+            erp_work_order_task.service_group_id
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询部门工时统计记录数 -->
+    <select id="getDeptWorkTimeReportCount" resultType="Integer">
+        SELECT count(distinct erp_work_order_task.service_group_id)
+
+        FROM erp_work_order_task
+        LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+        LEFT JOIN base_group ON erp_work_order_task.service_group_id = base_group.group_id
+        LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+        WHERE
+        1 = 1
+        AND base_group.group_level = 20
+        AND erp_work_order_task.service_user_id is not null
+        AND erp_work_order_task.service_group_id is not null
+        <if test="user_name!=null and user_name!=''">
+            AND base_user.name LIKE '%${user_name}%'
+        </if>
+        <if test="service_small_group_id!=null and service_small_group_id!=''">
+            AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            AND erp_work_order_task.real_accomplish_time >= #{start_date}
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            AND #{end_date} >= erp_work_order_task.real_accomplish_time
+        </if>
+        <if test="product_id!=null and product_id!=''">
+            AND erp_work_order.product_id = #{product_id}
+        </if>
+        <if test="decoration_properties!=null">
+            AND erp_work_order_task.decoration_properties = #{decoration_properties}
+        </if>
+        <if test="service_content!=null ">
+            AND erp_work_order_task.decoration_content = #{service_content}
+        </if>
+        <if test="inner_flag!=null">
+            AND erp_work_order.inner_flag = #{inner_flag}
+        </if>
+        <if test="company_id!=null and company_id!=''">
+            AND erp_work_order.company_id = #{company_id}
+        </if>
+        <if test="group_id!=null and group_id!=''">
+            AND erp_work_order.group_id in (${group_id})
+        </if>
+        <if test="progress_state == null or progress_state != 0">
+            AND erp_work_order_task.progress_state = 2
+        </if>
+        <if test="progress_state != null and progress_state == 0">
+            AND erp_work_order_task.progress_state in(0,1)
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+        </if>
+    </select>
+
+    <!-- 查询个人工时详细信息 -->
+    <select id="getPersonalWorkTimeDetail" resultType="WorkTimeReportBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT
+            base_user.name AS service_user_name,
+            erp_work_order_task.service_user_id,
+            erp_work_order_task.service_dic_group_id,
+            base_group.name as service_dic_group_name,
+            erp_work_order_task.real_accomplish_time,
+            erp_work_order_task.standard_labor_time,
+            erp_work_order_task.real_used_time,
+            erp_work_order.order_id,
+            erp_work_order.product_id,
+            erp_work_order.shop_name,
+            erp_work_order.inner_flag,
+            erp_work_order.order_type,
+            erp_work_order.service_state,
+            erp_work_order.curr_pro_short_name,
+            erp_work_order.approve_state,
+            erp_work_order.service_small_group_name,
+            erp_work_order.service_am_names,
+            erp_work_order.company_name,
+            erp_work_order.group_name,
+            erp_work_order.user_name,
+            erp_work_order.create_time
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_user.name is not null
+            AND erp_work_order_task.service_user_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="service_user_id!=null and service_user_id !=''">
+                AND erp_work_order_task.service_user_id = #{service_user_id}
+            </if>
+            <if test="service_dic_group_id!=null and service_dic_group_id !=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_dic_group_id}
+            </if>
+            <if test="service_group_id!=null and service_group_id !=''">
+                AND erp_work_order_task.service_group_id = #{service_group_id}
+            </if>
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+
+            <if test="order_id!=null and order_id!=''">
+                AND erp_work_order.order_id like '%${order_id}%'
+            </if>
+            <if test="shop_name!=null and shop_name!=''">
+                AND erp_work_order.shop_name like '%${shop_name}%'
+            </if>
+            <if test="order_type!=null ">
+                AND erp_work_order.order_type = #{order_type}
+            </if>
+            <if test="service_state!=null ">
+                AND erp_work_order.service_state = #{service_state}
+            </if>
+
+            ORDER BY erp_work_order_task.service_dic_group_id,erp_work_order_task.service_user_id,erp_work_order_task.real_accomplish_time desc
+        </if>
+        <!--  分页, 每页记录大于等于于1时表示进行分页 -->
+        <if test=" pageSize >= 1 ">
+            SELECT
+            base_user.name AS service_user_name,
+            erp_work_order_task.service_user_id,
+            erp_work_order_task.service_dic_group_id,
+            base_group.name as service_dic_group_name,
+            erp_work_order_task.real_accomplish_time,
+            erp_work_order_task.standard_labor_time,
+            erp_work_order_task.real_used_time,
+            erp_work_order.order_id,
+            erp_work_order.product_id,
+            erp_work_order.shop_name,
+            erp_work_order.inner_flag,
+            erp_work_order.order_type,
+            erp_work_order.service_state,
+            erp_work_order.curr_pro_short_name,
+            erp_work_order.approve_state,
+            erp_work_order.service_small_group_name,
+            erp_work_order.service_am_names,
+            erp_work_order.company_name,
+            erp_work_order.group_name,
+            erp_work_order.user_name,
+            erp_work_order.create_time
+            FROM erp_work_order_task
+            LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+            LEFT JOIN base_group ON erp_work_order_task.service_dic_group_id = base_group.group_id
+            LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+            WHERE
+            1 = 1
+            AND base_user.name is not null
+            AND erp_work_order_task.service_user_id is not null
+            <if test="user_name!=null and user_name!=''">
+                AND base_user.name LIKE '%${user_name}%'
+            </if>
+            <if test="service_small_group_id!=null and service_small_group_id!=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+            </if>
+            <if test="start_date!=null and start_date!=''">
+                AND erp_work_order_task.real_accomplish_time >= #{start_date}
+            </if>
+            <if test="end_date!=null and end_date!=''">
+                AND #{end_date} >= erp_work_order_task.real_accomplish_time
+            </if>
+            <if test="product_id!=null and product_id!=''">
+                AND erp_work_order.product_id = #{product_id}
+            </if>
+            <if test="decoration_properties!=null">
+                AND erp_work_order_task.decoration_properties = #{decoration_properties}
+            </if>
+            <if test="service_content!=null ">
+                AND erp_work_order_task.decoration_content = #{service_content}
+            </if>
+            <if test="inner_flag!=null">
+                AND erp_work_order.inner_flag = #{inner_flag}
+            </if>
+            <if test="company_id!=null and company_id!=''">
+                AND erp_work_order.company_id = #{company_id}
+            </if>
+            <if test="group_id!=null and group_id!=''">
+                AND erp_work_order.group_id in (${group_id})
+            </if>
+            <if test="service_user_id!=null and service_user_id !=''">
+                AND erp_work_order_task.service_user_id = #{service_user_id}
+            </if>
+            <if test="service_dic_group_id!=null and service_dic_group_id !=''">
+                AND erp_work_order_task.service_dic_group_id = #{service_dic_group_id}
+            </if>
+            <if test="service_group_id!=null and service_group_id !=''">
+                AND erp_work_order_task.service_group_id = #{service_group_id}
+            </if>
+            <if test="progress_state == null or progress_state != 0">
+                AND erp_work_order_task.progress_state = 2
+            </if>
+            <if test="progress_state != null and progress_state == 0">
+                AND erp_work_order_task.progress_state in(0,1)
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+            </if>
+
+            <if test="order_id!=null and order_id!=''">
+                AND erp_work_order.order_id  like '%${order_id}%'
+            </if>
+            <if test="shop_name!=null and shop_name!=''">
+                AND erp_work_order.shop_name like '%${shop_name}%'
+            </if>
+
+            <if test="order_type!=null ">
+                AND erp_work_order.order_type = #{order_type}
+            </if>
+            <if test="service_state!=null ">
+                AND erp_work_order.service_state = #{service_state}
+            </if>
+
+            ORDER BY erp_work_order_task.service_dic_group_id,erp_work_order_task.service_user_id,erp_work_order_task.real_accomplish_time desc
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询个人工时详细信息记录数 -->
+    <select id="getPersonalWorkTimeDetailCount" resultType="Integer">
+        SELECT count(*)
+        FROM erp_work_order_task
+        LEFT JOIN base_user ON erp_work_order_task.service_user_id = base_user.user_id
+        LEFT JOIN erp_work_order ON erp_work_order_task.order_id = erp_work_order.order_id
+        WHERE
+        1 = 1
+        AND base_user.name is not null
+        AND erp_work_order_task.service_user_id is not null
+        <if test="user_name!=null and user_name!=''">
+            AND base_user.name LIKE '%${user_name}%'
+        </if>
+        <if test="service_small_group_id!=null and service_small_group_id!=''">
+            AND erp_work_order_task.service_dic_group_id = #{service_small_group_id}
+        </if>
+        <if test="start_date!=null and start_date!=''">
+            AND erp_work_order_task.real_accomplish_time >= #{start_date}
+        </if>
+        <if test="end_date!=null and end_date!=''">
+            AND #{end_date} >= erp_work_order_task.real_accomplish_time
+        </if>
+        <if test="product_id!=null and product_id!=''">
+            AND erp_work_order.product_id = #{product_id}
+        </if>
+        <if test="decoration_properties!=null">
+            AND erp_work_order_task.decoration_properties = #{decoration_properties}
+        </if>
+        <if test="service_content!=null ">
+            AND erp_work_order_task.decoration_content = #{service_content}
+        </if>
+        <if test="inner_flag!=null">
+            AND erp_work_order.inner_flag = #{inner_flag}
+        </if>
+        <if test="company_id!=null and company_id!=''">
+            AND erp_work_order.company_id = #{company_id}
+        </if>
+        <if test="group_id!=null and group_id!=''">
+            AND erp_work_order.group_id in (${group_id})
+        </if>
+
+        <if test="service_user_id!=null and service_user_id !=''">
+            AND erp_work_order_task.service_user_id = #{service_user_id}
+        </if>
+        <if test="service_dic_group_id!=null and service_dic_group_id !=''">
+            AND erp_work_order_task.service_dic_group_id = #{service_dic_group_id}
+        </if>
+        <if test="service_group_id!=null and service_group_id !=''">
+            AND erp_work_order_task.service_group_id = #{service_group_id}
+        </if>
+        <if test="progress_state == null or progress_state != 0">
+            AND erp_work_order_task.progress_state = 2
+        </if>
+        <if test="progress_state != null and progress_state == 0">
+            AND erp_work_order_task.progress_state in(0,1)
+        </if>
+        <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+            AND (erp_work_order_task.service_dic_group_id in ${serviceGroupStr} or erp_work_order_task.service_group_id in ${serviceGroupStr} or erp_work_order_task.service_user_id = #{login_user_id})
+        </if>
+
+        <if test="order_id!=null and order_id!=''">
+            AND erp_work_order.order_id  like '%${order_id}%'
+        </if>
+        <if test="shop_name!=null and shop_name!=''">
+            AND erp_work_order.shop_name like '%${shop_name}%'
+        </if>
+
+        <if test="order_type!=null ">
+            AND erp_work_order.order_type = #{order_type}
+        </if>
+        <if test="service_state!=null ">
+            AND erp_work_order.service_state = #{service_state}
+        </if>
+
+    </select>
+
+</mapper>

@@ -1,0 +1,968 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderAssign.dao.OrderAssignDao">
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getList" resultType="WorkOrderBo" parameterType="OrderAssignQueryBo">
+        <if test=" 1 > pageSize ">
+            SELECT
+            erp_work_order.*
+            FROM
+            erp_work_order
+            WHERE del_flag = 0 and valid_flag = 1 and service_group_id is not null and service_company_id is not null
+            and order_approve_state = 2
+            <!--
+            <if test="queryMode != 'SUBORDER_BY_ORDER'">
+                and (order_approve_state = 2)
+            </if>
+            -->
+            <if test="queryMode == 'ORDER'">
+                and erp_work_order.main_order_id is NULL
+            </if>
+            <if test="queryMode == 'SUBORDER'">
+                and erp_work_order.main_order_id is not NULL
+            </if>
+            <if test="queryMode == 'SUBORDER_BY_ORDER'">
+                and erp_work_order.main_order_id = #{mainOrderId}
+            </if>
+            <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_DEPT'">
+                <if test="uedjlDeptIdList == null and service_group_id != null">
+                    and erp_work_order.service_group_id = #{service_group_id}
+                </if>
+                <if test="uedjlDeptIdList != null">
+                    and erp_work_order.service_group_id in
+                    <foreach item="item" index="index" collection="uedjlDeptIdList"
+                             open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            </if>
+            <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode == 'SUBORDER'">
+                and erp_work_order.service_small_group_id = #{service_small_group_id}
+            </if>
+            <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode != 'SUBORDER'">
+                and erp_work_order.order_id in
+                <foreach item="item" index="index" collection="orderIdList"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test= "orderIdList!=null and dataLimitMode == 'ASSIGNED_TO_LOGIN_USER'">
+                and erp_work_order.order_id in
+                <foreach item="item" index="index" collection="orderIdList"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="productId != null and productId != ''">
+                and erp_work_order.product_id = #{productId}
+            </if>
+            <if test="orderStateSel != null and orderStateSel != ''">
+                and erp_work_order.service_state = #{orderStateSel}
+            </if>
+            <if test="orderCompanySel != null and orderCompanySel != ''">
+                and erp_work_order.company_id = #{orderCompanySel}
+            </if>
+            <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+                and erp_work_order.service_company_id = ${serviceCompanyId}
+            </if>
+            <if test="serviceDeptId!=null and serviceDeptId!=''">
+                and erp_work_order.service_group_id = ${serviceDeptId}
+            </if>
+            <if test="orderGroupSel != null and orderGroupSel != ''">
+                and erp_work_order.group_id = #{orderGroupSel}
+            </if>
+            <if test="orderTypeSel!=null and orderTypeSel!=''">
+                and erp_work_order.order_type = #{orderTypeSel}
+            </if>
+            <if test="innerFlagSel!=null">
+                and erp_work_order.inner_flag = ${innerFlagSel}
+            </if>
+            <if test="processCodeSel!=null and processCodeSel!=''">
+                and erp_work_order.curr_pro_code like '%${processCodeSel}'
+            </if>
+            <if test="approveStateSel!=null">
+                and erp_work_order.approve_state = ${approveStateSel}
+            </if>
+            <if test="serviceGroupSel!=null and serviceGroupSel!=''">
+                and erp_work_order.service_small_group_name like '%${serviceGroupSel}%'
+            </if>
+            <if test="orderManSel!=null and orderManSel!=''">
+                and user_name like '%${orderManSel}%'
+            </if>
+            <if test="shopIdSel!=null and shopIdSel!=''">
+                and shop_name like '%${shopIdSel}%'
+            </if>
+            <if test="orderNumberSel!=null and orderNumberSel!=''">
+                and order_id like '%${orderNumberSel}%'
+            </if>
+
+            <if test="amNameSel!=null and amNameSel!=''">
+                and service_am_names like '%${amNameSel}%'
+            </if>
+            <if test="aeNameSel!=null and aeNameSel!=''">
+                and service_ae_names like '%${aeNameSel}%'
+            </if>
+
+            <!--add by jijun 20170216 时间维度查询-->
+            <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='xiadan_time'">
+                <if test="search_start_time!=null and search_start_time!=''">
+                    AND erp_work_order.create_time >= '${search_start_time}'
+                </if>
+                <if test="search_end_time!=null and search_end_time!=''">
+                    <![CDATA[and erp_work_order.create_time <= '${search_end_time}']]>
+                </if>
+            </if>
+            <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='service_time'">
+                <if test="search_start_time!=null and search_start_time!=''">
+                    AND erp_work_order.frist_service_begin_time >= '${search_start_time}'
+                </if>
+                <if test="search_end_time!=null and search_end_time!=''">
+                    <![CDATA[and erp_work_order.frist_service_begin_time <= '${search_end_time}']]>
+                </if>
+            </if>
+            <!-- add by jijun 20170222 服务平台 -->
+            <if test="shop_source!=null">
+                and shop_source = #{shop_source}
+            </if>
+            <!--订单来源 add by jijun 20170511 -->
+            <if test="order_source!=null and order_source!=''">
+            	and order_source = #{order_source}
+            </if>
+            <!-- end by jijun 20170511 -->
+
+            <!--update by jijun 20170216 改用时间维度查询-->
+            <!--<if test="startDateSel!=null and startDateSel!=''">
+                and erp_work_order.create_time >= '${startDateSel}'
+            </if>
+            <if test="endDateSel!=null and endDateSel!=''">
+                and '${endDateSel}' >= erp_work_order.create_time
+            </if>-->
+            <!--end update-->
+            order by erp_work_order.create_time desc
+        </if>
+
+        <if test=" pageSize >= 1 ">
+            select * from (select DATEDIFF(a.plan_end_time,current_timestamp) as days,a.*
+            from (
+            SELECT
+            *
+            FROM
+            erp_work_order
+            WHERE del_flag = 0 and valid_flag = 1 and service_group_id is not null and service_company_id is not null
+            and order_approve_state = 2
+            <!--
+            <if test="queryMode != 'SUBORDER_BY_ORDER'">
+                and (order_approve_state = 2)
+            </if>
+            -->
+            <if test="queryMode == 'ORDER'">
+                and erp_work_order.main_order_id is NULL
+            </if>
+            <if test="queryMode == 'SUBORDER'">
+                and erp_work_order.main_order_id is not NULL
+            </if>
+            <if test="queryMode == 'SUBORDER_BY_ORDER'">
+                and erp_work_order.main_order_id = #{mainOrderId}
+            </if>
+            <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_DEPT'">
+                <if test="uedjlDeptIdList == null and service_group_id != null">
+                    and (erp_work_order.service_group_id = ${service_group_id}
+                    or erp_work_order.order_id in (select c.main_order_id
+                    from erp_work_order c
+                    where c.service_group_id = ${service_group_id}))
+                </if>
+                <if test="uedjlDeptIdList != null">
+                    and erp_work_order.service_group_id in
+                    <foreach item="item" index="index" collection="uedjlDeptIdList"
+                             open="(" separator="," close=")">
+                        #{item}
+                    </foreach>
+                </if>
+            </if>
+            <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode == 'SUBORDER'">
+                and erp_work_order.service_small_group_id = #{service_small_group_id}
+            </if>
+            <if test="orderIdList !=null and dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode != 'SUBORDER'">
+                and erp_work_order.order_id in
+                <foreach item="item" index="index" collection="orderIdList"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="orderIdList !=null and  dataLimitMode == 'ASSIGNED_TO_LOGIN_USER'">
+                and erp_work_order.order_id in
+                <foreach item="item" index="index" collection="orderIdList"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="productId != null and productId != ''">
+                and erp_work_order.product_id = #{productId}
+            </if>
+            <if test="orderStateSel != null and orderStateSel != ''">
+                and erp_work_order.service_state = #{orderStateSel}
+            </if>
+            <if test="orderCompanySel != null and orderCompanySel != ''">
+                and erp_work_order.company_id = #{orderCompanySel}
+            </if>
+            <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+                and erp_work_order.service_company_id = ${serviceCompanyId}
+            </if>
+            <if test="serviceDeptId!=null and serviceDeptId!=''">
+                and (erp_work_order.service_group_id = ${serviceDeptId}
+                or erp_work_order.order_id in (select c.main_order_Id
+                from erp_work_order c
+                where c.service_group_id = ${serviceDeptId}))
+            </if>
+            <if test="orderGroupSel != null and orderGroupSel != ''">
+                and erp_work_order.group_id = #{orderGroupSel}
+            </if>
+            <if test="orderTypeSel!=null and orderTypeSel!=''">
+                and erp_work_order.order_type = #{orderTypeSel}
+            </if>
+            <if test="innerFlagSel!=null">
+                and erp_work_order.inner_flag = ${innerFlagSel}
+            </if>
+            <if test="processCodeSel!=null and processCodeSel!=''">
+                and erp_work_order.curr_pro_code like '%${processCodeSel}'
+            </if>
+            <if test="approveStateSel!=null">
+                and erp_work_order.approve_state = ${approveStateSel}
+            </if>
+            <if test="serviceGroupSel!=null and serviceGroupSel!=''">
+                and erp_work_order.service_small_group_name like '%${serviceGroupSel}%'
+            </if>
+            <if test="orderManSel!=null and orderManSel!=''">
+                and user_name like '%${orderManSel}%'
+            </if>
+            <if test="shopIdSel!=null and shopIdSel!=''">
+                and shop_name like '%${shopIdSel}%'
+            </if>
+            <if test="orderNumberSel!=null and orderNumberSel!=''">
+                and order_id like '%${orderNumberSel}%'
+            </if>
+
+            <if test="amNameSel!=null and amNameSel!=''">
+                and service_am_names like '%${amNameSel}%'
+            </if>
+            <if test="aeNameSel!=null and aeNameSel!=''">
+                and service_ae_names like '%${aeNameSel}%'
+            </if>
+
+            <!--add by jijun 20170216 时间维度-->
+            <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='xiadan_time'">
+                <if test="search_start_time!=null and search_start_time!=''">
+                    AND erp_work_order.create_time >= '${search_start_time}'
+                </if>
+                <if test="search_end_time!=null and search_end_time!=''">
+                    <![CDATA[and erp_work_order.create_time <= '${search_end_time}']]>
+                </if>
+            </if>
+            <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='service_time'">
+                <if test="search_start_time!=null and search_start_time!=''">
+                    AND erp_work_order.frist_service_begin_time >= '${search_start_time}'
+                </if>
+                <if test="search_end_time!=null and search_end_time!=''">
+                    <![CDATA[and erp_work_order.frist_service_begin_time <= '${search_end_time}']]>
+                </if>
+            </if>
+            <!-- add by jijun 20170222 服务平台 -->
+            <if test="shop_source!=null">
+                and shop_source = #{shop_source}
+            </if>
+            <!--订单来源 add by jijun 20170511 -->
+            <if test="order_source!=null and order_source!=''">
+            	and order_source = #{order_source}
+            </if>
+            <!-- end by jijun 20170511 -->
+            
+            <!--update by jijun 20170216 改成时间维度查询查询-->
+            <!--<if test="startDateSel!=null and startDateSel!=''">
+                and erp_work_order.create_time >= '${startDateSel}'
+            </if>
+            <if test="endDateSel!=null and endDateSel!=''">
+                and '${endDateSel}' >= erp_work_order.create_time
+            </if>-->
+            <!--end update-->
+
+            <if test="plan_end_time!=null and plan_end_time!=''">
+                and plan_end_time LIKE '%${plan_end_time}%'
+            </if>
+            <if test="exist_xudan_flag!=null and exist_xudan_flag!=''">
+                <if test="exist_xudan_flag == -1">
+                    <![CDATA[AND (erp_work_order.exist_xudan_flag IS NULL OR erp_work_order.exist_xudan_flag <>1)]]>
+                </if>
+                <if test="exist_xudan_flag != -1">
+                    and exist_xudan_flag=#{exist_xudan_flag}
+                </if>
+
+            </if>
+            )a )b
+            <if test="days!=null and days !=''">
+                <![CDATA[WHERE b.days<=#{days} AND b.days>0 and b.service_state <>7]]>
+            </if>
+
+            order by create_time desc
+            limit #{startRow},#{pageSize}
+        </if>
+    </select>
+
+    <select id="getTotalCount" resultType="Integer" parameterType="OrderAssignQueryBo">
+        SELECT count(*) FROM (SELECT DATEDIFF(a.plan_end_time,current_timestamp) as days,a.* FROM(
+        SELECT
+        *
+        FROM
+        erp_work_order
+        WHERE del_flag = 0 and valid_flag = 1 and service_group_id is not null and service_company_id is not null
+        and order_approve_state = 2
+        <!--
+        <if test="queryMode != 'SUBORDER_BY_ORDER'">
+            and (order_approve_state = 2)
+        </if>
+        -->
+        <if test="queryMode == 'ORDER'">
+            and erp_work_order.main_order_id is NULL
+        </if>
+        <if test="queryMode == 'SUBORDER'">
+            and erp_work_order.main_order_id is not NULL
+        </if>
+        <if test="queryMode == 'SUBORDER_BY_ORDER'">
+            and erp_work_order.main_order_id = #{mainOrderId}
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_DEPT'">
+            <if test="uedjlDeptIdList == null and service_group_id != null">
+                and (erp_work_order.service_group_id = ${service_group_id}
+                or erp_work_order.order_id in (select c.main_order_id
+                from erp_work_order c
+                where c.service_group_id = ${service_group_id}))
+            </if>
+            <if test="uedjlDeptIdList != null">
+                and erp_work_order.service_group_id in
+                <foreach item="item" index="index" collection="uedjlDeptIdList"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode == 'SUBORDER'">
+            and erp_work_order.service_small_group_id = #{service_small_group_id}
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP' and queryMode != 'SUBORDER'">
+            and erp_work_order.order_id in
+            <foreach item="item" index="index" collection="orderIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_USER'">
+            and erp_work_order.order_id in
+            <foreach item="item" index="index" collection="orderIdList"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="productId != null and productId != ''">
+            and erp_work_order.product_id = #{productId}
+        </if>
+        <if test="orderStateSel != null and orderStateSel != ''">
+            and erp_work_order.service_state = #{orderStateSel}
+        </if>
+        <if test="orderCompanySel != null and orderCompanySel != ''">
+            and erp_work_order.company_id = #{orderCompanySel}
+        </if>
+        <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+            and erp_work_order.service_company_id = ${serviceCompanyId}
+        </if>
+        <if test="serviceDeptId!=null and serviceDeptId!=''">
+            and (erp_work_order.service_group_id = ${serviceDeptId}
+                or erp_work_order.order_id in (select c.main_order_id
+                from erp_work_order c
+                where c.service_group_id = ${serviceDeptId}))
+        </if>
+        <if test="orderGroupSel != null and orderGroupSel != ''">
+            and erp_work_order.group_id = #{orderGroupSel}
+        </if>
+        <if test="orderTypeSel!=null and orderTypeSel!=''">
+            and erp_work_order.order_type = #{orderTypeSel}
+        </if>
+        <if test="innerFlagSel!=null">
+            and erp_work_order.inner_flag = ${innerFlagSel}
+        </if>
+        <if test="processCodeSel!=null and processCodeSel!=''">
+            and erp_work_order.curr_pro_code like '%${processCodeSel}'
+        </if>
+        <if test="approveStateSel!=null">
+            and erp_work_order.approve_state = ${approveStateSel}
+        </if>
+        <if test="serviceGroupSel!=null and serviceGroupSel!=''">
+            and erp_work_order.service_small_group_name like '%${serviceGroupSel}%'
+        </if>
+        <if test="orderManSel!=null and orderManSel!=''">
+            and user_name like '%${orderManSel}%'
+        </if>
+        <if test="shopIdSel!=null and shopIdSel!=''">
+            and shop_name like '%${shopIdSel}%'
+        </if>
+        <if test="orderNumberSel!=null and orderNumberSel!=''">
+            and order_id like '%${orderNumberSel}%'
+        </if>
+
+        <if test="amNameSel!=null and amNameSel!=''">
+            and service_am_names like '%${amNameSel}%'
+        </if>
+        <if test="aeNameSel!=null and aeNameSel!=''">
+            and service_ae_names like '%${aeNameSel}%'
+        </if>
+
+        <!--add by jijun 20170216 时间维度-->
+        <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='xiadan_time'">
+            <if test="search_start_time!=null and search_start_time!=''">
+                AND erp_work_order.create_time >= '${search_start_time}'
+            </if>
+            <if test="search_end_time!=null and search_end_time!=''">
+                <![CDATA[and erp_work_order.create_time <= '${search_end_time}']]>
+            </if>
+        </if>
+        <if test="time_weidu_flag!=null and time_weidu_flag!='' and time_weidu_flag=='service_time'">
+            <if test="search_start_time!=null and search_start_time!=''">
+                AND erp_work_order.frist_service_begin_time >= '${search_start_time}'
+            </if>
+            <if test="search_end_time!=null and search_end_time!=''">
+                <![CDATA[and erp_work_order.frist_service_begin_time <= '${search_end_time}']]>
+            </if>
+        </if>
+        <!-- add by jijun 20170222 服务平台 -->
+        <if test="shop_source!=null">
+            and shop_source = #{shop_source}
+        </if>
+        <!--update by jijun 20170216 改成时间维度查询-->
+       <!-- <if test="startDateSel!=null and startDateSel!=''">
+            and erp_work_order.create_time >= '${startDateSel}'
+        </if>
+        <if test="endDateSel!=null and endDateSel!=''">
+            and '${endDateSel}' >= erp_work_order.create_time
+        </if>-->
+        <!--end update-->
+
+        <if test="plan_end_time!=null and plan_end_time!=''">
+            and plan_end_time LIKE '%${plan_end_time}%'
+        </if>
+        <if test="exist_xudan_flag!=null and exist_xudan_flag!=''">
+            <if test="exist_xudan_flag == -1">
+                <![CDATA[AND (erp_work_order.exist_xudan_flag IS NULL OR erp_work_order.exist_xudan_flag <>1)]]>
+            </if>
+            <if test="exist_xudan_flag != -1">
+                and exist_xudan_flag=#{exist_xudan_flag}
+            </if>
+
+        </if>
+        )a )b
+        <if test="days!=null and days !=''">
+            <![CDATA[WHERE b.days<=#{days} AND b.days>0 and b.service_state <>7]]>
+        </if>
+
+    </select>
+
+    <!-- Get next order assign config info base on company, product and current assign state-->
+    <select id="getNextAssignConfig" resultType="OrderAssignConfigBo" parameterType="OrderAssignConfigBo">
+        select * from erp_workorder_assign_config
+        where assign_state > #{assign_state}
+        <if test="company_id==null or company_id==''">
+            and company_id is NULL
+        </if>
+        <if test="company_id!=null and company_id!=''">
+            and company_id = #{company_id}
+        </if>
+        and product_id = #{product_id}
+        order by assign_state
+        limit 0,2
+    </select>
+
+    <!-- Get next order assign config info base on company, product -->
+    <select id="getAssignConfigList" resultType="OrderAssignConfigBo" parameterType="Map">
+        select * from erp_workorder_assign_config
+        where
+        product_id = #{productId}
+        <if test="companyId==null or companyId==''">
+            and company_id is NULL
+        </if>
+        <if test="companyId!=null and companyId!=''">
+            and company_id = #{companyId}
+        </if>
+        order by sort_num
+    </select>
+    <!-- TP青岛更改 游胜振 2017-03-07 ADD START -->    
+    <select id="getAssignConfigListForKeman" resultType="OrderAssignConfigBo" parameterType="Map">
+        SELECT
+			*
+		FROM
+			erp_workorder_assign_config t
+		WHERE
+			(
+				t.owner_role_en_name LIKE '%assign%jl'
+				OR t.owner_role_en_name LIKE '%assign%zj'
+			)
+		AND t.product_id = #{productId}
+		ORDER BY
+			assign_resource_tpye ASC;
+    </select>
+    <select id="getAssignConfigListForXiaofu" resultType="OrderAssignConfigBo">
+			SELECT
+				assign_name_title
+			FROM
+				erp_workorder_assign_config t
+			WHERE
+				t.product_id = #{productId}
+			AND t.service_user_type != 0
+    </select>
+    <!-- TP青岛更改 游胜振 2017-03-07 ADD END -->
+
+    <!-- Get user list by dic_group_id and role_en_name -->
+    <select id="getUserListByGroupRole" resultType="UserBo" parameterType="Map">
+        select U.*
+        from base_user U
+        right join base_role_user RU on U.user_id = RU.user_id
+        LEFT JOIN base_role R on R.role_id = RU.role_id
+        WHERE
+        U.del_flag = 0 and U.valid_flag = 1
+        <if test="roleEnName!=null and roleEnName!=''">
+            and R.role_en_name = #{roleEnName}
+        </if>
+        <if test="mainGroupId!=null and mainGroupId!=''">
+            and ( U.dic_group_id = #{mainGroupId} or U.group_id = #{mainGroupId} or U.xuni_group_id = #{mainGroupId})
+        </if>
+    </select>
+
+    <!-- Get assign config info by assign config primary key -->
+    <select id="getAssignConfigById" resultType="OrderAssignConfigBo">
+        select * from erp_workorder_assign_config
+        where assign_config_id = #{assignConfigId}
+        limit 0,1
+    </select>
+
+    <!-- Get assign info by assign primary key -->
+    <select id="getAssignById" resultType="OrderAssignCurrentBo">
+        select * from erp_workorder_assign_current
+        where assign_current_id = #{assignId}
+    </select>
+
+    <!-- Get current order assign info list by order id -->
+    <select id="getAssignListByOrderId" resultType="OrderAssignCurrentBo">
+        SELECT
+        AC.*,
+        G.`name` AS                   assigner_dic_group_name,
+        U.`name` AS                   assigner_name
+        FROM
+        erp_workorder_assign_current AC
+        LEFT JOIN base_group G ON AC.assigner_dic_group_id = G.group_id
+        LEFT JOIN base_user U ON AC.assigner = U.user_id
+        WHERE
+        AC.order_id = #{orderId}
+    </select>
+
+    <!-- Get current order assign info list by parent assign id -->
+    <select id="getAssignListByParentId" resultType="OrderAssignCurrentBo" parameterType="java.lang.Integer">
+        SELECT * FROM erp_workorder_assign_current
+        WHERE
+       ( #{parentId} is not NULL and parent_id = #{parentId})
+        or
+        (#{parentId} is NULL and parent_id is NULL)
+    </select>
+
+    <!-- 保存 订单分配数据-->
+    <insert id="saveOrderAssign" parameterType="OrderAssignCurrentBo"
+            useGeneratedKeys="true" keyProperty="assign_current_id">
+        insert into erp_workorder_assign_current (
+        order_id, parent_id, current_assign_config_id, assigning_config_id, assign_name_title,
+        assigner, assigner_dic_group_id, current_assign_state,
+        assign_decision_type, pre_group_id, pre_user_id,
+        shop_account_id, small_group_leader_id, service_user_type,
+        create_time, create_user_id, last_edited_user_id,
+        last_edited_time
+        )values(
+        #{order_id}, #{parent_id}, #{current_assign_config_id}, #{assigning_config_id}, #{assign_name_title},
+        #{assigner}, #{assigner_dic_group_id}, #{current_assign_state},
+        #{assign_decision_type}, #{pre_group_id}, #{pre_user_id},
+        #{shop_account_id}, #{small_group_leader_id}, #{service_user_type},
+        #{create_time}, #{create_user_id}, #{last_edited_user_id},
+        #{last_edited_time}
+        )
+    </insert>
+
+    <delete id="delOrderAssign">
+        delete from erp_workorder_assign_current
+        where
+        assign_current_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <!-- 删除子订单数据 -->
+    <update id="delSubOrder" parameterType="WorkOrderBo">
+        update erp_work_order
+        set del_flag = 1
+        where
+        order_id = #{order_id}
+    </update>
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getAssignListByGroup" resultType="String" parameterType="OrderAssignQueryBo">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner_dic_group_id = #{service_small_group_id}
+        <if test="startDateSel!=null and startDateSel!=''">
+            and erp_workorder_assign_current.create_time >= '${startDateSel}'
+        </if>
+    </select>
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getAssignListByUser" resultType="String" parameterType="OrderAssignQueryBo">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner = #{service_user_id}
+        <if test="startDateSel!=null and startDateSel!=''">
+            and erp_workorder_assign_current.create_time >= '${startDateSel}'
+        </if>
+    </select>
+
+    <delete id="delSubOrderList">
+        delete from erp_work_order
+        where
+        order_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+    <update id="updateSubOrderForValid">
+        update erp_work_order
+        set valid_flag = 1
+        where
+        order_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <select id="getSubOrderList" resultType="WorkOrderBo" parameterType="String">
+        SELECT
+        erp_work_order.*
+        FROM
+        erp_work_order
+        WHERE
+        del_flag = 0 and valid_flag = 1
+        and
+        main_order_id = #{mainOrderId}
+    </select>
+
+    <update id="updateOrderForAssign" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+        service_assign_time = #{service_assign_time}
+
+            , service_state = #{service_state}
+
+            , service_small_group_id = #{service_small_group_id}
+
+            , service_small_group_name = #{service_small_group_name}
+            <if test="service_am_ids!=null and service_am_ids!=''">
+            , service_am_ids = #{service_am_ids}
+            </if>
+            <if test="service_am_names!=null and service_am_names!=''">
+            , service_am_names = #{service_am_names}
+            </if>
+            , service_ae_ids = #{service_ae_ids}
+            , service_ae_names = #{service_ae_names}
+
+            , current_assign_state = #{current_assign_state}
+
+            , s_small_group_leader_names = #{s_small_group_leader_names}
+
+            , s_small_group_leader_string = #{s_small_group_leader_string}
+
+        where
+        order_id = #{order_id}
+    </update>
+
+    <update id="updateSubOrderForAssignModify" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+
+        sign_interval = #{sign_interval}
+
+        <if test="remark!=null and remark!=''">
+            , remark = #{remark}
+        </if>
+        <if test="sign_service_fee!=null and sign_service_fee!=''">
+            , sign_service_fee = #{sign_service_fee}
+        </if>
+        <if test="sign_period!=null and sign_period!=''">
+            , sign_period = #{sign_period}
+        </if>
+        <if test="free_service_days!=null and free_service_days!=''">
+            , free_service_days = #{free_service_days}
+        </if>
+        <if test="real_pay_money!=null and real_pay_money!=''">
+            , real_pay_money = #{real_pay_money}
+        </if>
+        <if test="beable_service_days!=null and beable_service_days!=''">
+            , beable_service_days = #{beable_service_days}
+        </if>
+        <if test="service_content!=null and service_content!=''">
+            , service_content = #{service_content}
+        </if>
+        , yuji_service_satrt_time = #{yuji_service_satrt_time},
+        yuji_service_end_time = #{yuji_service_end_time}
+        where
+        order_id = #{order_id}
+    </update>
+
+   
+    <select id="getWorkOrderById" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        order_id = #{orderId}
+         <!-- 添加软件运营转单 原单查询条件 -->
+        and (del_flag = 0 or del_flag is null OR (del_flag = 2  AND valid_flag=2)) 
+    </select>
+
+    <select id="getWorkOrderByIdIgnoreDelValid" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        order_id = #{orderId}
+    </select>
+
+    <select id="getWorkShopsByIdList" resultType="WorkShopBo">
+        select * from erp_work_shop
+        where
+        shop_p_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <update id="updateOrderAM" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+        service_am_names = #{service_am_names}, service_state = #{service_state}
+        where
+        order_id = #{order_id}
+    </update>
+
+    <update id="updateParentAssignInfo" parameterType="OrderAssignCurrentBo">
+        update erp_workorder_assign_current
+        set
+        small_group_leader_id = #{small_group_leader_id}
+        where
+        assign_current_id = #{assign_current_id}
+    </update>
+
+    <!--    批量更改组
+         插入到分配历史表-->
+    <insert id="insert2AssignLog" parameterType="OrderAssignCurrentBo"
+            useGeneratedKeys="true" keyProperty="assign_log_id">
+        insert into erp_workorder_assign_log
+        select
+        null,
+        b.order_id,
+        b.assigning_config_id,
+        b.current_assign_config_id,
+        b.assigner,
+        b.assigner_dic_group_id,
+        b.pre_group_id,
+        null,
+        b.last_edited_time,
+        b.assigner_dic_group_id,
+        b.create_time,
+        b.create_user_id,
+        b.del_flag,
+        null
+        from  erp_workorder_assign_current b
+        where
+        b.order_id in
+        <foreach item="item" index="index" collection="orderIds"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>
+        and b.assigner_dic_group_id is not null
+  </insert>
+
+
+    <!--批量更改组
+    更新当前分配表中的小组字段，最后修改人，最后修改时间-->
+    <update id="updateAssignCurrent">
+        update erp_workorder_assign_current
+        set
+        assigner_dic_group_id = #{assigner_dic_group_id},
+        small_group_leader_id=#{small_group_leader_id},
+        last_edited_time=#{assign_time},
+        last_edited_user_id=#{assigner}
+        where
+        order_id in
+        <foreach item="item" index="index" collection="orderIds"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>
+        and assigner_dic_group_id is not null
+    </update>
+
+    <!--   批量更改组
+          更新订单表小组和小组长，最后修改人，最后修改时间-->
+    <update id="updateOrder">
+        update erp_work_order
+        set
+        service_small_group_id = #{assigner_dic_group_id},
+        service_small_group_name = #{assigner_dic_group_name},
+        s_small_group_leader_names=#{small_group_leader_name},
+        last_edited_time=#{assign_time},
+        last_edited_user_id=#{assigner}
+        where
+        order_id in
+        <foreach item="item" index="index" collection="orderIds"
+                 open="(" separator="," close=")">
+            '${item}'
+        </foreach>
+    </update>
+
+    <!-- 查询等待分配的订单-->
+    <select id="getWaitingToAssign" resultType="WorkOrderBo" parameterType="WaitingToAssignQueryBo">
+        SELECT
+        erp_work_order.*
+        FROM
+        erp_work_order
+        WHERE del_flag = 0 and valid_flag = 1 and service_group_id is not null and service_company_id is not null
+        and order_approve_state = 2
+        <if test="queryMode == 'ORDER'">
+            and erp_work_order.main_order_id is NULL
+        </if>
+        <if test="queryMode == 'SUBORDER'">
+            and erp_work_order.main_order_id is not NULL
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_DEPT'">
+            and erp_work_order.service_group_id in
+            <foreach item="item" index="index" collection="service_group_ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and service_state = 1
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_MAIN_GROUP'">
+            and erp_work_order.order_id in
+            <foreach item="item" index="index" collection="order_ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and (service_state = 1 or service_state = 2 or service_state = 3)
+        </if>
+        <if test="dataLimitMode == 'ASSIGNED_TO_LOGIN_USER'">
+            and erp_work_order.order_id in
+            <foreach item="item" index="index" collection="order_ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            and (service_state = 2 or service_state = 3)
+        </if>
+        <if test="product_id != null and product_id != ''">
+            and erp_work_order.product_id = #{product_id}
+        </if>
+        order by erp_work_order.create_time desc
+    </select>
+
+
+    <!-- 得到分配到小组的记录，因为性能的问题只处理一年以内的记录 -->
+    <select id="getAssignListToGroup" resultType="String">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner_dic_group_id = #{param1}
+        and erp_workorder_assign_current.create_time >= ADDDATE(date(now()),-360)
+    </select>
+
+    <!-- 得到分配到小组内的记录，因为性能的问题只处理一年以内的记录 -->
+    <select id="getAssignListToUserInGroup" resultType="String">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.pre_group_id = #{param1}
+        and erp_workorder_assign_current.create_time >= ADDDATE(date(now()),-360)
+    </select>
+
+    <!-- 得到分配到指定类型的人的记录，因为性能的问题只处理一年以内的记录 -->
+    <select id="getAssignListToUser" resultType="String">
+        SELECT
+        DISTINCT order_id
+        FROM
+        erp_workorder_assign_current
+        WHERE
+        erp_workorder_assign_current.assigner = #{param1}
+        and erp_workorder_assign_current.service_user_type = #{param2}
+        and erp_workorder_assign_current.create_time >= ADDDATE(date(now()),-360)
+    </select>
+
+    <!-- 查询等待服务的订单-->
+    <select id="getWaitingToService" resultType="WorkOrderBo" parameterType="WaitingToServiceQueryBo">
+        SELECT
+        erp_work_order.*
+        FROM
+        erp_work_order
+        WHERE del_flag = 0 and valid_flag = 1 and service_group_id is not null and service_company_id is not null
+        and order_approve_state = 2
+        and (service_state = 3)
+        <if test="queryMode == 'ORDER'">
+            and erp_work_order.order_id in
+            <foreach item="item" index="index" collection="order_ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="queryMode == 'SUBORDER_BY_ORDER'">
+            and erp_work_order.main_order_id in
+            <foreach item="item" index="index" collection="order_ids" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="product_id != null and product_id != ''">
+            and erp_work_order.product_id = #{product_id}
+        </if>
+        order by erp_work_order.create_time desc
+    </select>
+
+    <!-- sem bd-->
+    <select id="getAssignToListForSem" resultType="UserBo">
+        SELECT * FROM base_user WHERE dic_group_id IN (SELECT group_id FROM base_group WHERE parent_id in (839,650,654)) and valid_flag =1 and del_flag = 0
+    </select>
+
+    <!-- zz bd-->
+    <select id="getAssignToListForZz" resultType="UserBo">
+        SELECT * FROM base_user WHERE dic_group_id IN (SELECT group_id FROM base_group WHERE parent_id in (658))
+        and valid_flag =1 and del_flag = 0
+    </select>
+
+    <!-- query if ued order can be cancelled -->
+    <select id="getCountAssignedDesigner" resultType="java.lang.Integer" parameterType="String">
+        SELECT count(*) FROM erp_workorder_assign_current WHERE order_id = #{order_id}
+        and current_assign_state = 30
+    </select>
+
+    <!-- cancel ued order which is not assigned to designer -->
+    <select id="cancelUEDOrder" parameterType="String">
+        update erp_work_order
+        set service_state = 9
+        WHERE order_id = #{order_id}
+    </select>
+
+</mapper>
+

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.accountReport.dao.AccountCommunicateInfoDao">
+
+    <!-- Get commnunicate info by id -->
+    <select id="getCommunicateInfoById" resultType="AccountCommunicateInfoBo">
+        SELECT
+        *
+        FROM
+        erp_account_communicate_info
+        WHERE
+        communicate_id = #{param1}
+    </select>
+
+    <insert id="addCommunicateInfo" parameterType="AccountCommunicateInfoBo" useGeneratedKeys="true" keyProperty="communicate_id">
+        INSERT INTO erp_account_communicate_info (
+        shop_p_id,
+        order_id,
+        communicate_title,
+        communicate_time,
+        communicate_user_id,
+        communicate_company_id,
+        communicate_group_id,
+        communicate_dic_group_id,
+        communicate_content,
+        product_id,
+        contact_name,
+        contact_position,
+        contact_phone,
+        contact_wangwang,
+        communicate_type,
+        create_time,
+        create_user_id,
+        last_edited_time,
+        last_edited_user_id,
+        valid_flag,
+        del_flag,
+        invalid_time,
+        delete_time
+        )
+        VALUES (
+        #{shop_p_id},
+        #{order_id},
+        #{communicate_title},
+        #{communicate_time},
+        #{communicate_user_id},
+        #{communicate_company_id},
+        #{communicate_group_id},
+        #{communicate_dic_group_id},
+        #{communicate_content},
+        #{product_id},
+        #{contact_name},
+        #{contact_position},
+        #{contact_phone},
+        #{contact_wangwang},
+        #{communicate_type},
+        #{create_time},
+        #{create_user_id},
+        #{last_edited_time},
+        #{last_edited_user_id},
+        #{valid_flag},
+        #{del_flag},
+        #{invalid_time},
+        #{delete_time}
+        );
+    </insert>
+
+    <!-- 删除logic -->
+    <update id="deleteCommunicateInfoById" >
+        update  erp_account_communicate_info
+        set del_flag=1, valid_flag=0
+        where
+        communicate_id = #{param1}
+    </update>
+
+    <update id="updateCommunicateInfo" parameterType="AccountCommunicateInfoBo">
+        update erp_account_communicate_info set
+        order_id =                #{order_id},
+        communicate_title =       #{communicate_title},
+        communicate_time =        #{communicate_time},
+        communicate_user_id =     #{communicate_user_id},
+        communicate_company_id =     #{communicate_company_id},
+        communicate_group_id =     #{communicate_group_id},
+        communicate_dic_group_id =     #{communicate_dic_group_id},
+        communicate_content =     #{communicate_content},
+        product_id =     #{product_id},
+        contact_name =     #{contact_name},
+        contact_position =     #{contact_position},
+        contact_phone =     #{contact_phone},
+        contact_wangwang =     #{contact_wangwang},
+        communicate_type =     #{communicate_type},
+        last_edited_time =        #{last_edited_time},
+        last_edited_user_id =     #{last_edited_user_id}
+        where
+        communicate_id = #{communicate_id}
+    </update>
+
+    <select id="getList" resultType="AccountCommunicateInfoBo" parameterType="AccountCommunicateQueryBo">
+        SELECT
+        COMM.*,
+        U.name AS communicate_user_name,
+        COMP.name AS communicate_company_name,
+        DEPT.name AS communicate_group_name,
+        G.name AS communicate_dic_group_name
+        FROM
+        erp_account_communicate_info COMM
+        LEFT JOIN base_user U on COMM.communicate_user_id = U.user_id
+        LEFT JOIN base_company COMP  on COMM.communicate_company_id = COMP.company_id
+        LEFT JOIN base_group DEPT on COMM.communicate_group_id = DEPT.group_id
+        LEFT JOIN base_group G on COMM.communicate_dic_group_id = G.group_id
+        WHERE
+        COMM.shop_p_id = #{shop_p_id} and COMM.valid_flag=1 and COMM.del_flag=0
+        order by COMM.create_time desc
+    </select>
+
+    <select id="getTotalCount" resultType="Integer" parameterType="AccountCommunicateQueryBo">
+        SELECT
+        count(*)
+        FROM
+        erp_account_communicate_info COMM
+        WHERE
+        COMM.shop_p_id = #{shop_p_id} and COMM.valid_flag=1 and COMM.del_flag=0
+    </select>
+
+</mapper>

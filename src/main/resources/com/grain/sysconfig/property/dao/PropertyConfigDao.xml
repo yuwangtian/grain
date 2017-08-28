@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.property.dao.PropertyConfigDao">
+
+    <!-- Get property by key -->
+    <select id="getPropertyByKey" resultType="PropertyConfigBo">
+        SELECT
+        *
+        FROM
+        base_property_config
+        WHERE
+        property_key = #{propertyKey}
+    </select>
+
+    <!-- Get property by group -->
+    <select id="getPropertyByGroup" resultType="PropertyConfigBo">
+        SELECT
+        *
+        FROM
+        base_property_config
+        WHERE
+        property_group = #{propertyGroup}
+        order by sort_num
+    </select>
+
+</mapper>

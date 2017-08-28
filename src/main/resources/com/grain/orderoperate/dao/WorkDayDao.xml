@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkDayDao">
+
+    <insert id="saveWorkDayOptInfo" parameterType="WorkDayOptInfoBo">
+        INSERT INTO
+        erp_work_day_opt_info(
+        product_id,order_id, shop_id, service_day, service_month,
+        order_state, customer_price_per_day, serivce_user_type,
+        service_user_type_name, service_user_id, service_user_name,
+        service_dic_group_id, servcie_dic_group_name, service_group_id,
+        service_group_name, service_company_id, service_compan_name,
+        serviced_days, serviced_money, days_of_month, money_of_month,
+        user_days_of_month, user_money_of_month, report_day, valid_flag, free_service_flag,
+        create_time,service_day_flag,group_id
+        ) VALUES(
+        #{product_id},#{order_id}, #{shop_id},#{service_day}, #{service_month},
+        #{order_state},#{customer_price_per_day},#{serivce_user_type},
+        #{service_user_type_name},#{service_user_id},#{service_user_name},
+        #{service_dic_group_id},#{servcie_dic_group_name},#{service_group_id},
+        #{service_group_name},#{service_company_id},#{service_compan_name},
+        #{serviced_days},#{serviced_money},#{days_of_month},#{money_of_month},
+        #{user_days_of_month}, #{user_money_of_month}, #{report_day}, #{valid_flag}, #{free_service_flag},
+        #{create_time},#{service_day_flag},#{group_id}
+        )
+    </insert>
+
+
+    <update id="updateOrderServicedMoneyDayInfo" parameterType="WorkOrderBo">
+        update erp_work_order set
+        serviced_days = #{serviced_days},
+        serviced_money = #{serviced_money},
+        plan_end_time = #{plan_end_time}
+        <!--TP青岛更改 曹群星 2017-06-22 ADD START-->
+        <!-- 剩余服务周期、剩余服务金额 -->
+        <if test="rest_service_days!=null and rest_service_days!=''">
+        	,rest_service_days = #{rest_service_days}
+        </if>
+        <if test="rest_servcie_money!=null and rest_servcie_money!=''">
+        	,rest_servcie_money = #{rest_servcie_money}
+        </if>
+		<!--TP青岛更改 曹群星 2017-06-22 ADD END-->
+        where order_id = #{order_id}
+    </update>
+
+
+    <select id="getUserListBoByUserName" resultType="UserBo">
+        select
+        U.user_id AS user_id,
+        U.name AS name,
+        U.login_name AS login_name,
+        G.group_id AS dic_group_id,
+        G.name AS dic_group_name,
+        D.group_id AS group_id,
+        D.name AS group_name,
+        C.company_id AS company_id,
+        C.name AS company_name
+        from
+        base_user U
+        LEFT JOIN
+        base_group G on U.dic_group_id = G.group_id
+        LEFT JOIN
+        base_group D on U.group_id = D.group_id
+        left join
+        base_company C on G.main_company_id = C.company_id
+        where
+        U.name = #{param1}
+    </select>
+
+
+    <select id="getUserBoByUserNameAndDept" resultType="UserBo">
+        select
+        U.user_id AS user_id,
+        U.name AS name,
+        U.login_name AS login_name,
+        G.group_id AS dic_group_id,
+        G.name AS dic_group_name,
+        D.group_id AS group_id,
+        D.name AS group_name,
+        C.company_id AS company_id,
+        C.name AS company_name
+        from
+        base_user U
+        LEFT JOIN
+        base_group G on U.dic_group_id = G.group_id
+        LEFT JOIN
+        base_group D on U.group_id = D.group_id
+        left join
+        base_company C on G.main_company_id = C.company_id
+        where
+        U.name = #{param1}
+        and U.group_id = #{param2}
+        and U.valid_flag=1
+    </select>
+
+
+    <select id="getLatestWorkDayOptInfoBefore" resultType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        order_id = #{param2} and #{param1} > report_day and valid_flag = 1
+        order by report_day desc
+        limit 0, 1
+    </select>
+
+    <select id="getCurrentMonthLatestWorkDayOptInfo" resultType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        order_id = #{param1} and report_day like #{param2} and valid_flag = 1
+        order by report_day desc
+        limit 0, 1
+    </select>
+
+    <select id="getOrderWorkDayOptInfoListByMonth" resultType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        order_id = #{param1} and report_day like #{param2} and valid_flag = 1
+        order by report_day asc
+    </select>
+
+
+    <select id="getWorkDayOptInfoByComboPK" resultType="WorkDayOptInfoBo" parameterType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        order_id = #{order_id}
+        and service_day = #{service_day}
+        and serivce_user_type = #{serivce_user_type}
+        and service_user_name = #{service_user_name}
+        and valid_flag = 1
+        limit 0, 1
+    </select>
+
+    <update id="updateWorkDayMoneyFields" parameterType="WorkDayOptInfoBo">
+        update erp_work_day_opt_info
+        set serviced_money = #{serviced_money}
+        , money_of_month = #{money_of_month}
+        , user_money_of_month = #{user_money_of_month}
+        , customer_price_per_day = #{customer_price_per_day}
+        where id = #{id}
+    </update>
+
+    <select id="getCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = 1
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getMinusCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = -1
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getFreeCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and free_service_flag = 1
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getOrderCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = 1
+        and order_id = #{param2}
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getOrderMinusCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = -1
+        and order_id = #{param2}
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getOrderFreeCountMonthOfDays" resultType="java.util.Map" >
+        SELECT
+        count(DISTINCT service_day) AS count,
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and free_service_flag = 1
+        and order_id = #{param2}
+        and valid_flag = 1
+        GROUP BY
+        order_id
+    </select>
+
+    <select id="getUserCountMonthOfDays" resultType="java.lang.Integer" >
+        SELECT
+        count(DISTINCT service_day) AS count
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = 1
+        and order_id = #{param2}
+        and service_user_name = #{param3}
+        and serivce_user_type = #{param4}
+        and valid_flag = 1
+    </select>
+
+    <select id="getUserMinusCountMonthOfDays" resultType="java.lang.Integer" >
+        SELECT
+        count(DISTINCT service_day) AS count
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and service_day_flag = -1
+        and order_id = #{param2}
+        and service_user_name = #{param3}
+        and serivce_user_type = #{param4}
+        and valid_flag = 1
+    </select>
+
+    <select id="getUserFreeCountMonthOfDays" resultType="java.lang.Integer" >
+        SELECT
+        count(DISTINCT service_day) AS count
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        report_day like  #{param1} and order_state = 4 and free_service_flag = 1
+        and order_id = #{param2}
+        and service_user_name = #{param3}
+        and serivce_user_type = #{param4}
+        and valid_flag = 1
+    </select>
+
+    <select id="getWorkDayFromOrder" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where service_state in(4,5,6)
+        and product_id not in (6193,6203)
+        and ((product_id = 6202 and main_order_id is not null) or product_id != 6202)
+        and valid_flag != 0 and del_flag != 1
+    </select>
+
+    <select id="getAllReMoneyOrderList" resultType="WorkOrderBo">
+        SELECT * from erp_work_order
+        where service_state in (5,7,8)
+        and product_id not in (6193,6203)
+        and ((product_id = 6202 and main_order_id is not null) or product_id != 6202)
+        and valid_flag != 0 and del_flag != 1
+        and order_id in (
+        select order_id from erp_work_order_re_money
+        where pro_code in ('TuiKuanShenPi', 'ZhuanDanShenPi', 'ZhuanTiChengShenPi')
+        and order_state_before = 4 and rest_days_after = 0
+        and create_time like #{param1}
+        )
+    </select>
+
+    <update id="updateOrderOperateData" parameterType="OrderOperateBo">
+        update erp_workorder_operate set
+        reason = #{reason},
+        remark = #{remark},
+        acture_time = #{acture_time},
+        schedule_time = #{schedule_time},
+
+        original_service_money = #{original_service_money},
+        fixed_service_money = #{fixed_service_money},
+        original_service_days = #{original_service_days},
+        fixed_service_days = #{fixed_service_days},
+
+        last_edited_user_id = #{last_edited_user_id},
+        last_edited_time = #{last_edited_time},
+
+        serviced_days = #{serviced_days},
+        serviced_money = #{serviced_money},
+        rest_service_days = #{rest_service_days},
+        rest_servcie_money = #{rest_servcie_money},
+        opt_second_type = #{opt_second_type},
+        opt_third_type = #{opt_third_type}
+
+        where order_operate_id = #{order_operate_id}
+    </update>
+
+    <select id="getOrderWorkDayOptInfoListBetween" resultType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        order_id = #{param1}
+        and service_day >= #{param2}
+        and #{param3} > service_day
+        and valid_flag = 1
+        order by service_day asc
+    </select>
+
+    <select id="getOrderWorkDayRunDaysAfter" resultType="java.lang.Integer">
+        select count( distinct service_day ) from erp_work_day_opt_info
+        where
+        order_id = #{param1}
+        and report_day >= #{param2}
+        and valid_flag = 1
+        order by report_day asc
+    </select>
+
+
+    <update id="updateWorkDayValidFlag" parameterType="WorkDayOptInfoBo">
+        update erp_work_day_opt_info set
+        valid_flag = #{valid_flag}
+        where id = #{id}
+    </update>
+
+    <update id="fixOrderData" parameterType="WorkOrderBo">
+        update erp_work_order set
+        last_suspend_time = #{last_suspend_time},
+        frist_service_begin_time = #{frist_service_begin_time},
+        last_start_time = #{last_start_time},
+        real_pay_money = #{real_pay_money},
+        beable_service_days = #{beable_service_days},
+        plan_end_time = #{plan_end_time}
+        where order_id = #{order_id}
+    </update>
+
+    <select id="getOrderCurrentMonthPriceOfDayList" resultType="String">
+        select distinct customer_price_per_day from erp_work_day_opt_info
+        where
+        order_id = #{param1} and report_day like #{param2} and valid_flag = 1
+        order by report_day desc
+    </select>
+
+    <select id="getWorkOrderById" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        order_id = #{orderId}
+        and (del_flag = 0 or del_flag is null)
+    </select>
+
+    <select id="getUserMonthWorkDayList" resultType="WorkDayOptInfoBo">
+        select * from erp_work_day_opt_info
+        where
+        service_user_id = #{param1}
+        and report_day like #{param2}
+        and valid_flag = 1
+        and user_days_of_month > 0
+        order by report_day desc, service_day desc
+    </select>
+
+<select id="getNeedAppendWorkDayOptInfoOrders" parameterType="string" resultType="string">
+        SELECT
+          order_id
+        FROM
+        erp_work_order
+        WHERE
+        service_state = 4
+        AND product_id NOT IN (6193, 6203)
+        AND (
+        (
+        product_id = 6202
+        AND main_order_id IS NOT NULL
+        )
+        OR product_id != 6202
+        )
+        AND valid_flag != 0
+        AND del_flag != 1
+        AND order_id NOT IN (
+        SELECT
+        order_id
+        FROM
+        erp_workorder_operate
+        WHERE
+        opt_time = #{param1}
+        AND opt_type NOT IN (24, 15)
+        )
+        <![CDATA[AND frist_service_begin_time <=  #{param1}]]>
+        AND order_id NOT IN (
+        SELECT
+        order_id
+        FROM
+        erp_work_day_opt_info
+        WHERE
+        service_day = #{param1}
+        )
+    </select>
+
+    
+    <delete id="delWorkDayOptInfoByWorkOrderIds" parameterType="Map">
+        DELETE FROM erp_work_day_opt_info WHERE order_id in
+        <foreach item="item" index="index" collection="workOrderIds"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        AND service_day >= #{date}
+    </delete>
+
+</mapper>
+

@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.order.base.dao.OperabilityConfigDao">
+
+   <!-- 更新剩余服务周期、剩余服务金额 -->
+    <update id="changeOrderRestServiceDayMoney" parameterType="WorkOrderBo">
+        update erp_work_order set
+     		rest_service_days = #{rest_service_days}
+	        ,rest_servcie_money = #{rest_servcie_money}
+	    where order_id = #{order_id}
+	</update>
+	
+    <!-- 根据操作类型得到操作配置记录 -->
+    <select id="getOrderOperateConfig" parameterType="OrderOperateConfigBo" resultType="OrderOperateConfigBo">
+        select * from erp_workorder_operate_config
+        where del_flag = '0' and valid_flag = '1'
+        and
+        product_id = #{product_id}
+        and
+        inner_flag = #{inner_flag}
+        and
+        <if test="service_state!=null">
+            service_state = #{service_state}
+        </if>
+        <if test="service_state==null">
+            service_state is null
+        </if>
+        and
+        <if test="process_code!=null">
+            process_code like concat('%',#{process_code})
+        </if>
+        <if test="process_code==null">
+            (process_code is null or process_code = '')
+        </if>
+        and
+        <if test="approve_state!=null">
+            approve_state = #{approve_state}
+        </if>
+        <if test="approve_state==null">
+            approve_state is null
+        </if>
+        and
+        <if test="all_flag!=null">
+            all_flag = #{all_flag}
+        </if>
+        <if test="all_flag==null">
+            all_flag is null
+        </if>
+        and
+        <if test="date_order_flag!=null">
+            date_order_flag = #{date_order_flag}
+        </if>
+        <if test="date_order_flag==null">
+            date_order_flag is null
+        </if>
+        and
+        <if test="time_line!=null">
+            time_line = #{time_line}
+        </if>
+        <if test="time_line==null">
+            time_line is null
+        </if>
+        limit 0, 1
+    </select>
+
+    <!-- 判断某产品是不是有相关的操作配置 -->
+    <select id="getOperateConfigCountByProductId" parameterType="Integer" resultType="Integer">
+        select count(*) from erp_workorder_operate_config
+        where del_flag = '0' and valid_flag = '1'
+        and
+        product_id = #{productId}
+    </select>
+
+
+    <select id="getWorkOrderById" resultType="WorkOrderBo">
+        select work_order.*,product.en_code product_encode from erp_work_order work_order LEFT JOIN erp_product product
+        ON work_order.product_id = product.product_id
+        where
+        work_order.order_id = #{orderId}
+                <!-- 添加软件运营转单 原单查询条件 -->
+        and (work_order.del_flag = 0 or work_order.del_flag is null OR (work_order.del_flag = 2  AND work_order.valid_flag=2))
+    </select>
+
+    <select id="getWorkOrderListByParentId" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        parent_order_id = #{parentOrderId}
+        and (del_flag = 0 or del_flag is null)
+    </select>
+
+    <!-- 从回退款表中取新单审批结果 -->
+    <select id="getNewOrderApproveResult" resultType="ApproveResultBo">
+        select
+        order_inst_process_id as inst_process_id,
+        order_process_code as pro_code,
+        order_pro_short_name as pro_short_name,
+        order_approve_state as approve_state,
+        order_approve_agree_time as approve_agree_time
+        from erp_work_order
+        where
+        order_id = #{orderId}
+    </select>
+
+    <!-- 从定单表中取当前审批结果 -->
+    <select id="getCurrentApproveResult" resultType="ApproveResultBo">
+        select
+        inst_process_id,
+        curr_pro_code as pro_code,
+        curr_pro_short_name as pro_short_name,
+        approve_state,
+        approve_agree_time
+        from erp_work_order
+        where
+        order_id = #{orderId}
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+    </select>
+
+    <!-- 从回退款表及操作表中取定单审批中的结果 -->
+    <select id="getOrderApprovingList" resultType="ApproveResultBo">
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        re_all_flag as all_flag,
+        NULL as date_order_flag
+        from erp_work_order_re_money
+        where
+        order_id = #{orderId}
+        and approve_state = 1
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+        union
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        NULL as all_flag,
+        date_order_flag
+        from erp_workorder_operate
+        where
+        order_id = #{orderId}
+        and approve_state = 1
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+    </select>
+
+    <!-- 从回退款表及操作表中取定单审批被驳回的结果 -->
+    <select id="getOrderNotApprovedList" resultType="ApproveResultBo">
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        re_all_flag as all_flag,
+        NULL as date_order_flag
+        from erp_work_order_re_money
+        where
+        order_id = #{orderId}
+        and approve_state = 3
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+        union
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        NULL as all_flag,
+        date_order_flag
+        from erp_workorder_operate
+        where
+        order_id = #{orderId}
+        and approve_state = 3
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+    </select>
+
+    <!-- 从回退款表及操作表中取定单审批的结果 -->
+    <select id="getOrderApproveList" resultType="ApproveResultBo">
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        re_all_flag as all_flag,
+        NULL as date_order_flag
+        from erp_work_order_re_money
+        where
+        order_id = #{0}
+        and pro_code like concat('%',#{1})
+        and approve_state = #{2}
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+        union
+        select
+        inst_process_id,
+        pro_code,
+        pro_short_name,
+        approve_state,
+        approve_agree_time,
+        NULL as all_flag,
+        date_order_flag
+        from erp_workorder_operate
+        where
+        order_id = #{0}
+        and pro_code like concat('%',#{1})
+        and approve_state = #{2}
+        and (del_flag = 0 or del_flag is null)
+        and valid_flag = 1
+    </select>
+
+    <!-- 修改流程数据 -->
+    <update id="changeOrderState" parameterType="WorkOrderBo">
+        update erp_work_order set
+        service_state = #{service_state}
+        where order_id = #{order_id}
+    </update>
+
+    <!-- 修改订单状态 -->
+    <update id="changeOrderProcessState" parameterType="WorkOrderBo">
+        update erp_work_order set
+        order_approve_state = #{order_approve_state}
+        , order_approve_agree_time = #{order_approve_agree_time}
+        , order_process_code = #{order_process_code}
+        , order_pro_short_name = #{order_pro_short_name}
+        , order_inst_process_id = #{order_inst_process_id}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="changeCurrentProcessState" parameterType="WorkOrderBo">
+        update erp_work_order set
+        approve_state = #{approve_state}
+        , approve_agree_time = #{approve_agree_time}
+        , curr_pro_code = #{curr_pro_code}
+        , curr_pro_short_name = #{curr_pro_short_name}
+        , inst_process_id = #{instProcessId}
+        where order_id = #{order_id}
+    </update>
+
+    <!-- 修改回退款表流程状态 -->
+    <update id="changeReMoneyProcessState" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money set
+        approve_state = #{approve_state}
+        , approve_agree_time = #{approve_agree_time}
+        , pro_code = #{pro_code}
+        , pro_short_name = #{pro_short_name}
+        , inst_process_id = #{inst_process_id}
+        where re_money_id = #{re_money_id}
+    </update>
+
+    <!-- 修改订单振作表流程状态 -->
+    <update id="changeOperateProcessState" parameterType="OrderOperateBo">
+        update erp_workorder_operate set
+        approve_state = #{approve_state}
+        , approve_agree_time = #{approve_agree_time}
+        , pro_code = #{pro_code}
+        , pro_short_name = #{pro_short_name}
+        , inst_process_id = #{inst_process_id}
+        where order_operate_id = #{order_operate_id}
+    </update>
+
+
+    <update id="changeOrderMoneyAndDayState" parameterType="WorkOrderBo">
+        update erp_work_order set
+        real_pay_money = #{real_pay_money},
+        beable_service_days = #{beable_service_days},
+        prepay_money = #{prepay_money},
+        prepay_flag = #{prepay_flag},
+        service_state = #{service_state},
+        real_end_time = #{real_end_time},
+        <!---   add by yuchen 2015-11-19 begin 退款 转单 服务费转提成 更换合同金额和周期 -->
+        <if test="sign_service_fee!=null">
+            sign_service_fee = #{sign_service_fee},
+        </if>
+
+    <if test="sign_period!=null">
+        sign_period = #{sign_period},
+    </if>
+    <!---   add by yuchen 2015-11-19 end  退款 转单 服务费转提成时候 更换合同金额和周期 -->
+    end_type = #{end_type}
+    <!-- 应收金额 add by caoqunxing 20170626 -->
+    <if test="receivable_money!=null and receivable_money!=''">
+    	,receivable_money=#{receivable_money}
+    </if>
+    <!--TP青岛更改 曹群星 2017-07-03 ADD START-->
+     <!-- 剩余服务周期、剩余服务金额 -->
+     <if test="rest_service_days!=null and rest_service_days!=''">
+     	,rest_service_days = #{rest_service_days}
+     </if>
+     <if test="rest_servcie_money!=null and rest_servcie_money!=''">
+     	,rest_servcie_money = #{rest_servcie_money}
+     </if>
+	<!--TP青岛更改 曹群星 2017-07-03 ADD END-->
+    where order_id = #{order_id}
+</update>
+    <update id="updateOrderMoneyForOneDay" parameterType="WorkOrderBo">
+        update erp_work_order set
+        latest_price_of_day = #{latest_price_of_day},
+        serviced_money = #{serviced_money},
+        serviced_days = #{serviced_days}
+        where order_id = #{order_id}
+    </update>
+
+    <!-- 修改子任务状态数据 -->
+    <update id="changeOrderTaskState" parameterType="OrderTaskBo">
+        update erp_work_order_task set
+        progress_state = #{progress_state}
+        where order_task_id = #{order_task_id}
+    </update>
+
+    <select id="getProcessNameByCode" parameterType="String" resultType="String">
+        select name from erp_work_def_opt
+        where
+        type = 3 and en_name = #{proCode}
+        limit 0, 1
+    </select>
+
+    <select id="getChildOrderList" resultType="WorkOrderBo">
+        select * from erp_work_order
+        where
+        parent_order_id = #{param1}
+        and order_source =  #{param2}
+        and del_flag = 0 and valid_flag = 1
+    </select>
+
+    <select id="getAEUserIdListByOrderId" resultType="Integer">
+        select assigner from erp_workorder_assign_current
+        where
+        order_id = #{orderId}
+        and assigner is not null
+        and service_user_type = 1
+        and del_flag = 0
+    </select>
+
+    <update id="updateOrderEndType" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+        end_type = #{end_type}, real_end_time = #{real_end_time}, plan_end_time = #{plan_end_time}
+        where
+        order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderParentIdForZhuanDan" parameterType="WorkOrderBo">
+        update erp_work_order
+        set
+        opt_parent_id = #{opt_parent_id},
+        parent_order_id = #{parent_order_id},
+        root_order_id = #{root_order_id}
+        where
+        order_id = #{order_id}
+    </update>
+
+    <delete id="deleteOrderByPhysicalMode" parameterType="WorkOrderBo">
+       delete from erp_work_order
+       where order_id = #{order_id}
+    </delete>
+
+    <update id="changeOrderPlanEndTime" parameterType="WorkOrderBo">
+        update erp_work_order set
+        plan_end_time = #{plan_end_time}
+        where order_id = #{order_id}
+    </update>
+
+    <update id="updateOrderFreeServiceDays" parameterType="WorkOrderBo">
+        update erp_work_order set
+        free_service_days = #{free_service_days}
+        where order_id = #{order_id}
+    </update>
+
+    <!-- 修改撞单记录流程数据 -add by qiaojingjun 20160726 -->
+    <update id="changeReMoneyProcessStateCollision" parameterType="WorkOrderReMoneyBo">
+        update erp_work_order_re_money set
+        approve_state = #{approve_state}
+        , approve_agree_time = #{approve_agree_time}
+        , pro_code = #{pro_code}
+        , pro_short_name = #{pro_short_name}
+        where inst_process_id = #{inst_process_id} and collision_flag = 2
+    </update>
+</mapper>

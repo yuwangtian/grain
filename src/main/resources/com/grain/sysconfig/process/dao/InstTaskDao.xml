@@ -1,0 +1,2076 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.process.dao.InstTaskDao">
+
+
+    <!--//TP青岛更改 曹群星 2017-01-21 ADD START-->
+    <select id="getProcdefIdByKey" resultType="String">
+        SELECT ID_ FROM act_re_procdef where KEY_=#{param1} ORDER BY VERSION_ DESC LIMIT 1
+    </select>
+    <!--//TP青岛更改 曹群星 2017-01-21 ADD END-->
+
+
+	<!-- TP青岛更改 曹群星 2017-02-18 ADD START -->
+	<!-- 二次修改,添加approve_state,back_flag,back_flag_from字段  by jijun 20170220-->
+	<!-- 修改当前审批状态 -->
+	<update id="updateCurrentApproveState" parameterType="TaskBusinessBo">
+		UPDATE act_hi_taskinst_business SET current_approve_state= #{current_approve_state}
+		WHERE current_inst_task_id=#{current_inst_task_id}
+		and inst_process_id=#{inst_process_id}
+		and inst_task_id =#{inst_task_id}
+	</update>
+	
+	<!-- 获取驳回信息 -->
+	<select id="getBackInfo" resultType="TaskBo">
+    	 SELECT
+			b.inst_task_name AS taskEnName,
+			o.content
+		FROM
+			act_hi_taskinst_business b
+		INNER JOIN base_flow_opinion o ON b.inst_task_id = o.inst_task_id
+		WHERE
+			b.order_id = #{param1}
+		AND b.back_flag_from = 1
+    </select>
+    
+	<!-- TP青岛更改 曹群星 2017-02-18 ADD END -->
+	
+	<sql id="select_todo">
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		ari.GROUP_ID_ as roleName,
+		ari.TYPE_ as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		1 AS is_todo,
+		artb.is_recall
+		FROM
+		act_ru_task art
+		LEFT JOIN act_ru_identitylink ari on art.ID_ =
+		ari.TASK_ID_
+		LEFT JOIN act_ru_task_business artb on ari.TASK_ID_ =
+		artb.inst_task_id
+		left join erp_work_order erp on erp.order_id=
+		artb.order_id
+		LEFT JOIN base_role br on ari.GROUP_ID_ =
+		br.role_en_name
+		LEFT JOIN base_role_user bru on bru.role_id =
+		br.role_id
+		LEFT JOIN base_user bu on bu.user_id=bru.user_id
+		LEFT JOIN
+		base_group bg on bg.group_id=bu.group_id
+	</sql>
+	<!-- 获取待办列表 -->
+	<select id="getTodoList" resultType="TaskBo">
+
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		1 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and artb.back_flag=1
+		and artb.is_recall!= 1 
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />		
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		and artb.back_flag=1
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		and artb.back_flag=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		and artb.back_flag=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and ari.TYPE_='candidate'
+		and artb.back_flag=1
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		order by startTime asc
+		limit #{startRow},#{pageSize}
+	</select>
+	<!-- 获取全部列表 -->
+	<select id="getAllList" resultType="TaskBo">
+
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		1 AS is_todo,
+		artb.is_recall
+		from act_ru_task art,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />		
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION 
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION ALL
+		<include refid="select_alldone" />
+		FROM
+		act_hi_taskinst_business artb
+		left join erp_work_order erp on
+		erp.order_id=artb.order_id
+		WHERE
+		artb.assignee =#{loginUserName}
+		<include refid="taskListSearch" />
+		order by startTime desc
+		limit #{startRow},#{pageSize}
+	</select>
+	<!-- 获取驳回列表 -->
+	<select id="getBackList" resultType="TaskBo">
+
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		0 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and artb.back_flag=0
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />		
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		and artb.back_flag=0
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		and artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		and artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		order by startTime desc
+		limit #{startRow},#{pageSize}
+	</select>
+	
+	<!-- 撤回任务列表 add by jijun 20170628-->
+	<select id="getRecallList" resultType="TaskBo">
+
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		0 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and artb.is_recall=1
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />		
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		and artb.is_recall=1
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		and artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		and artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		order by startTime desc
+		limit #{startRow},#{pageSize}
+	</select>
+	
+	
+	<!-- 全部任务列表的总数 -->
+	<select id="getAllTotalCount" resultType="Integer">
+		select count(*) from
+		(
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		1 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION 
+		<include refid="select_todo" />		
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION 
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION 
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION 
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION ALL
+		<include refid="select_alldone" />
+		FROM
+		act_hi_taskinst_business artb
+		left join erp_work_order erp on
+		erp.order_id=artb.order_id
+		WHERE
+		artb.assignee =#{loginUserName}
+		<include refid="taskListSearch" />
+		)result
+
+	</select>
+	<select id="getTodoTotalCount" resultType="Integer">
+		select count(*) from
+		(
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		1 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.back_flag=1
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		and artb.back_flag=1
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.back_flag=1
+		and artb.group_id IS NULL
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.back_flag=1
+		and artb.company_id is null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.back_flag=1
+		and artb.company_id is not null
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		)result
+
+	</select>
+	
+	<select id="getBackTotalCount" resultType="Integer">
+		select count(*) from
+		(
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		0 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		AND artb.back_flag=0
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		AND artb.back_flag=0
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		AND artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		AND artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		AND artb.back_flag=0
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		)result
+	</select>
+	
+	<!-- 获取撤回任务总数 add by jijun 20170628 -->
+	<select id="getRecallTotalCount" resultType="Integer">
+		select count(*) from
+		(
+		select art.id_ as taskId,
+		art.name_ as taskName ,
+		'' as back_flag_from,
+		concat(artb.process_key,"_",art.TASK_DEF_KEY_) as taskEnName,
+		art.ASSIGNEE_ as loginName,
+		art.PROC_INST_ID_ as instProcessId,
+		art.PROC_DEF_ID_ as defProcessId,
+		art.CREATE_TIME_ as startTime,
+		'' as endTime,
+		art.FORM_KEY_ as formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' as roleName,
+		'' as pType,
+		artb.order_id as order_id,
+		artb.product_id as product_type,
+		artb.product_name as product_name,
+		artb.process_name as processName,
+		artb.process_key as processKey,
+		artb.shop_name as shop_id,
+		artb.back_flag as backFlag,
+		artb.group_id as group_id,
+		artb.company_id as company_id,
+		artb.process_start_name as process_start_name,
+		artb.process_start_time as process_start_time,
+		artb.edit_url as edit_url,
+		'' AS currentTaskName,
+		'' AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.current_task_user_name as userName,
+		erp.service_state,
+		erp.shop_p_id,
+		0 AS is_todo,
+		artb.is_recall
+		from act_ru_task art ,
+		act_ru_task_business artb
+		left join erp_work_order erp
+		on erp.order_id=artb.order_id
+		where
+		art.ID_=artb.inst_task_id
+		and artb.abolish_flag!=1
+		and art.ASSIGNEE_ in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		AND artb.is_recall=1
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		WHERE
+		artb.group_id IS NULL
+		AND artb.company_id IS NULL
+		AND artb.is_recall=1
+		AND ari.TYPE_ = 'candidate'
+		AND artb.abolish_flag != 1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bg.main_company_id=artb.company_id
+		and artb.company_id is not null
+		and artb.group_id IS NULL
+		AND artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+
+		where bu.group_id=artb.group_id
+		and artb.group_id is not null
+		and artb.company_id is null
+		AND artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		UNION
+		<include refid="select_todo" />
+		where
+		bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		AND artb.is_recall=1
+		and ari.TYPE_='candidate'
+		and artb.abolish_flag!=1
+		and bu.login_name in
+		<foreach item="item" index="index" collection="loginNameList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		and ari.GROUP_ID_ in
+		<foreach item="item" index="index" collection="roleIdList"
+			open="(" separator="," close=")">
+			'${item}'
+		</foreach>
+		<include refid="taskListSearch" />
+		)result
+	</select>
+	
+	
+	<sql id="select_done">
+		select artb.inst_task_id AS taskId,
+			artb.back_flag_from	,
+		artb.inst_task_name AS taskName,
+		concat(
+		artb.process_key,
+		"_",
+		artb.task_def_key
+		) AS taskEnName,
+		artb.assignee AS loginName,
+		artb.inst_process_id AS instProcessId,
+		artb.def_process_id AS defProcessId,
+		artb.start_time AS startTime,
+		artb.end_time AS endTime,
+		artb.form_key AS formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' AS roleName,
+		'' AS pType,
+		artb.order_id AS order_id,
+		artb.product_id AS product_type,
+		artb.product_name AS product_name,
+		artb.process_name AS processName,
+		artb.process_key AS processKey,
+		artb.shop_name AS shop_id,
+		artb.back_flag AS backFlag,
+		artb.group_id AS group_id,
+		artb.company_id AS company_id,
+		artb.process_start_name AS process_start_name,
+		artb.process_start_time AS process_start_time,
+		artb.current_task_name AS currentTaskName,
+		artb.current_task_user_name AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.assignee AS userName,
+		erp.service_state,
+		erp.shop_p_id,
+		0 AS is_todo,
+		<!-- TP青岛更改 曹群星 2017-02-18 ADD START -->
+		artb.current_approve_state AS current_approve_state
+		<!-- TP青岛更改 曹群星 2017-02-18 ADD END -->
+	</sql>
+	
+	<sql id="select_alldone">
+		select artb.inst_task_id AS taskId,
+		artb.inst_task_name AS taskName,
+			artb.back_flag_from	,
+		concat(
+		artb.process_key,
+		"_",
+		artb.task_def_key
+		) AS taskEnName,
+		artb.assignee AS loginName,
+		artb.inst_process_id AS instProcessId,
+		artb.def_process_id AS defProcessId,
+		artb.start_time AS startTime,
+		artb.end_time AS endTime,
+		artb.form_key AS formUrl,
+		artb.history_tasks AS history_tasks,
+		artb.history_tasks_users AS history_tasks_users,
+		'' AS roleName,
+		'' AS pType,
+		artb.order_id AS order_id,
+		artb.product_id AS product_type,
+		artb.product_name AS product_name,
+		artb.process_name AS processName,
+		artb.process_key AS processKey,
+		artb.shop_name AS shop_id,
+		artb.back_flag AS backFlag,
+		artb.group_id AS group_id,
+		artb.company_id AS company_id,
+		artb.process_start_name AS process_start_name,
+		artb.process_start_time AS process_start_time,
+		'' as edit_url,
+		artb.current_task_name AS currentTaskName,
+		artb.current_task_user_name AS currentUserName,
+		artb.approve_state as approve_state,
+		artb.assignee AS userName,
+		erp.service_state,
+		erp.shop_p_id,
+		2 AS is_todo,
+		artb.is_recall
+	</sql>
+	
+	<!-- 获取已办列表 -->
+	<select id="getDoneList" resultType="TaskBo">
+		<include refid="select_done" />
+		FROM
+		act_hi_taskinst_business artb
+		left join erp_work_order erp on
+		erp.order_id=artb.order_id
+		WHERE
+		artb.assignee =#{loginUserName}
+		<include refid="taskListSearch" />
+		ORDER BY
+		endTime DESC,
+		startTime DESC
+		limit #{startRow},#{pageSize}
+	</select>
+
+
+	<sql id="taskListSearch">
+		<if test="order_id != null and order_id != ''">
+			and artb.order_id like '%${order_id}%'
+		</if>
+		<if test="shop_id != null and shop_id != ''">
+			and artb.shop_name like '%${shop_id}%'
+		</if>
+		<if test="userName != null and userName != ''">
+			and artb.current_task_user_name like '%${userName}%'
+			<!-- and artb.assignee_name like '%${userName}%' -->
+		</if>
+		<if test="product_type != null and product_type != ''">
+			and artb.product_id = ${product_type}
+		</if>
+		<!-- <if test="service_state != null and service_state != ''">
+			and artb.service_state = ${service_state}
+		</if> -->
+		<if test="approve_state != null and approve_state != ''">
+			and artb.approve_state = ${approve_state}
+		</if>
+		<if test="service_state != null and service_state != ''">
+			and erp.service_state = ${service_state}
+		</if>
+		<if test="backFlag!=null and backFlag!=''">
+			and artb.back_flag = ${backFlag}
+		</if>
+		<if test="search_approve_state!=null and search_approve_state!=''">
+			and artb.approve_state = ${search_approve_state}
+		</if>
+		<if test="processKey!=null and processKey!=''">
+			and artb.process_key like'%${processKey}'
+		</if>
+		<if test="taskEnName!=null and taskEnName!=''">
+			and concat(artb.process_key,"_",artb.task_def_key) like '%${taskEnName}'
+		</if>
+		<if test="startTime_start!=null and startTime_start!=''">
+			and artb.start_time>'${startTime_start}'
+		</if>
+		<if test="startTime_end!=null and startTime_end!=''">
+			and '${startTime_end}' >=artb.start_time
+		</if>
+		<if test="endTime_start!=null and endTime_start!=''">
+			and artb.end_time >'${endTime_start}'
+		</if>
+		<if test="endTime_end!=null and endTime_end!=''">
+			and '${endTime_end}'>=artb.end_time
+		</if>
+
+		<if test="process_start_time_start!=null and process_start_time_start!=''">
+			and artb.process_start_time >'${process_start_time_start}'
+		</if>
+		<if test="process_start_time_end!=null and process_start_time_end!=''">
+			and '${process_start_time_end}'>=artb.process_start_time
+		</if>
+		<!-- 加入查询条件 流程启动人 add by  lishengzhuang 2016-10-25 -->
+      <if test="start_user_name != null and start_user_name != ''">
+            and  artb.process_start_name like '%${start_user_name}%'
+      </if>
+	</sql>
+
+	<select id="getDoneTotalCount" resultType="Integer">
+		select count(*) from
+		(
+		<include refid="select_done" />
+		FROM
+		act_hi_taskinst_business artb
+		left join erp_work_order erp on
+		erp.order_id=artb.order_id
+		WHERE
+		artb.assignee =#{loginUserName}
+		<include refid="taskListSearch" />
+		)result
+	</select>
+
+	<!-- 通过流程实例ID获取流程已办列表 -->
+	<select id="getDoneListByInstProcessId" resultType="TaskBo">
+		select bu.name userName,result.*,bfo.content, bu.email userEMail,
+		bu.user_id userId from (
+		<include refid="select_done" />
+		FROM
+		act_hi_taskinst_business artb
+		LEFT JOIN erp_work_order erp on artb.order_id = erp.order_id
+		WHERE
+		artb.inst_process_id =#{param1}
+		) result
+		LEFT JOIN base_flow_opinion bfo
+		on bfo.inst_task_id=taskId
+		LEFT JOIN base_user bu
+		on bu.login_name=result.loginName
+		where bu.login_name is not null
+		and bu.valid_flag=1 and bu.del_flag=0
+		order by result.startTime asc,endTime asc
+	</select>
+
+
+	<!--提交流程的任务时候，保存任务对应的业务数据 -->
+	<insert id="saveTaskBusiness" parameterType="TaskBusinessBo"
+		useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO act_ru_task_business
+		(
+		inst_task_id,
+		inst_process_id,
+		order_id,
+		process_name,
+		process_key,
+		order_name,
+		shop_name,
+		product_id,
+		product_name,
+		back_flag,
+		group_id,
+		company_id,
+		create_time,
+		create_user_id,
+		process_start_name,
+		process_start_time,
+		edit_url,
+		history_tasks,
+		history_tasks_users,
+		current_inst_task_id,
+		current_task_name,
+		current_task_user_name,
+		inst_task_name,
+		assignee,
+		assignee_name,
+		task_def_key,
+		def_process_id,
+		form_key,
+		start_time,
+		approve_state,
+		end_time,
+		xuyue_price_not_less_than_last_huikuan_price,
+		not_go_platform_protocol,
+		contract_special_case_apply,
+		price_less_than_floor_price,
+		good_customers,
+		other_special_bmjl,
+		other_special_vp,
+		is_recall
+		)VALUES(
+		#{inst_task_id},
+		#{inst_process_id},
+		#{order_id},
+		#{process_name},
+		#{process_key},
+		#{order_name},
+		#{shop_name},
+		#{product_id},
+		#{product_name},
+		#{back_flag},
+		#{group_id},
+		#{company_id},
+		#{create_time},
+		#{create_user_id},
+		#{process_start_name},
+		#{process_start_time},
+		#{edit_url},
+		#{history_tasks},
+		#{history_tasks_users},
+		#{current_inst_task_id},
+		#{currentTaskName},
+		#{currentUserName},
+		#{inst_task_name},
+		#{assignee},
+		#{assignee_name},
+		#{task_def_key},
+		#{def_process_id},
+		#{form_key},
+		#{start_time},
+		#{approve_state},
+		#{end_time},
+		#{xuyue_price_not_less_than_last_huikuan_price},
+		#{not_go_platform_protocol},
+		#{contract_special_case_apply},
+		#{price_less_than_floor_price},
+		#{good_customers},
+		#{other_special_bmjl},
+		#{other_special_vp},
+		#{is_recall}
+		)
+	</insert>
+
+
+	<!--更新最新的当前任务业务 -->
+	<update id="updateRunProcessBusiness" parameterType="TaskBusinessBo">
+		update act_ru_task_business artb
+		<set>
+			<if test="currentTaskName != null and currentTaskName != ''">
+				artb.current_task_name = #{currentTaskName},
+			</if>
+			<if test="current_inst_task_id != null and current_inst_task_id != ''">
+				artb.current_inst_task_id = #{current_inst_task_id},
+			</if>
+			<if test="edit_url != null and edit_url != ''">
+				artb.edit_url = #{edit_url},
+			</if>
+			<if test="currentUserName != null and currentUserName != ''">
+				artb.current_task_user_name=#{currentUserName},
+			</if>
+			<if test="history_tasks != null and history_tasks != ''">
+				artb.history_tasks=#{history_tasks},
+			</if>
+			<if test="history_tasks_users != null and history_tasks_users != ''">
+				artb.history_tasks_users=#{history_tasks_users},
+			</if>
+			<if test="approve_state != null and approve_state != '' and approve_state != 0">
+				artb.approve_state=#{approve_state},
+			</if>
+			<if test="is_recall!=null and is_recall!=''">
+				artb.is_recall = #{is_recall}
+			</if>
+		</set>
+		where
+		artb.inst_process_id = #{inst_process_id}
+	</update>
+	<!--更新最新的当前任务业务 -->
+	<update id="updateHisProcessBusiness" parameterType="TaskBusinessBo">
+		update act_hi_taskinst_business artb
+		<set>
+			<if test="currentTaskName != null and currentTaskName != ''">
+				artb.current_task_name = #{currentTaskName},
+			</if>
+			<if test="current_inst_task_id != null and current_inst_task_id != ''">
+				artb.current_inst_task_id = #{current_inst_task_id},
+			</if>
+			<if test="edit_url != null and edit_url != ''">
+				artb.edit_url = #{edit_url},
+			</if>
+			<if test="currentUserName != null and currentUserName != ''">
+				artb.current_task_user_name=#{currentUserName},
+			</if>
+			<if test="history_tasks != null and history_tasks != ''">
+				artb.history_tasks=#{history_tasks},
+			</if>
+			<if test="history_tasks_users != null and history_tasks_users != ''">
+				artb.history_tasks_users=#{history_tasks_users},
+			</if>
+			<if test="approve_state != null and approve_state != '' and approve_state != 0">
+				artb.approve_state=#{approve_state},
+			</if>
+			<if test="is_recall!=null and is_recall!=0">
+				artb.is_recall = #{is_recall}
+			</if>
+		</set>
+		where
+		artb.inst_process_id = #{inst_process_id}
+	</update>
+	<!--更新历史环节和办理人员业务 -->
+	<update id="upateTaskBusiness" parameterType="TaskBusinessBo">
+		update act_ru_task_business artb
+		<set>
+			<if test="currentTaskName != null and currentTaskName != ''">
+				artb.current_task_name = #{currentTaskName},
+			</if>
+			<if test="current_inst_task_id != null and current_inst_task_id != ''">
+				artb.current_inst_task_id = #{current_inst_task_id},
+			</if>
+			<if test="edit_url != null and edit_url != ''">
+				artb.edit_url = #{edit_url},
+			</if>
+			<if test="currentUserName != null and currentUserName != ''">
+				artb.current_task_user_name=#{currentUserName},
+			</if>
+			<if test="approve_state != null and approve_state != ''">
+				artb.approve_state=#{approve_state},
+			</if>
+			<!--<if test="history_tasks != null and history_tasks != ''"> -->
+			<!--artb.history_tasks=#{history_tasks}, -->
+			<!--</if> -->
+			<!--<if test="history_tasks_users != null and history_tasks_users != ''"> -->
+			<!--artb.history_tasks_users=#{history_tasks_users}, -->
+			<!--</if> -->
+			<if test="assignee_id != null and assignee_id != ''">
+				artb.assignee_id=#{assignee_id},
+			</if>
+			<if test="assignee_name != null and assignee_name != ''">
+				artb.assignee_name=#{assignee_name},
+			</if>
+			<if test="assignee != null and assignee != ''">
+				artb.assignee=#{assignee},
+			</if>
+			<if test="end_time != null and end_time != ''">
+				artb.end_time=#{end_time},
+			</if>
+            <if test="back_flag_from != null and back_flag_from != ''">
+                artb.back_flag_from=#{back_flag_from},
+            </if>
+            <!--是否驳回标记 add by jijun 20170514 -->
+           	<if test="back_flag!=null and back_flag!=''">
+           		artb.back_flag = #{back_flag}
+           	</if>
+		</set>
+		where
+		artb.inst_task_id = #{inst_task_id}
+	</update>
+
+	<select id="getTaskBusinessBoByTaskId" resultType="TaskBusinessBo">
+		SELECT
+		artb.*,
+		artb.product_id as product_type
+		from act_ru_task_business artb
+		where
+		artb.inst_task_id=#{param1}
+	</select>
+
+
+	<select id="getTaskBusinessBoByTaskIdFromActInstTask"
+		resultType="TaskBusinessBo">
+		SELECT
+		NAME_ as inst_task_name,
+		ASSIGNEE_ as assignee,
+		TASK_DEF_KEY_ as task_def_key,
+		PROC_DEF_ID_ as def_process_id,
+		FORM_KEY_ as form_key,
+		START_TIME_ as start_time,
+		END_TIME_ as end_time
+		from act_hi_taskinst aht
+		where
+		aht.id_=#{param1}
+	</select>
+
+	<select id="getTaskUserName" resultType="UserBo">
+
+		select
+		bu.*
+		from
+		base_user bu,
+		act_ru_task art
+		where
+		art.ASSIGNEE_=bu.login_name
+		and art.ID_=#{param1}
+		UNION
+		select
+		bu.*
+		from
+		base_user bu,
+		base_role_user bru,
+		base_role br ,
+		act_ru_identitylink ari ,
+		act_ru_task art ,
+		act_ru_task_business artb,
+		base_group bg
+		where
+		bu.user_id=bru.user_id
+		and artb.abolish_flag!=1
+		and br.role_id=bru.role_id
+		and art.ID_=ari.TASK_ID_
+		and art.ID_=artb.inst_task_id
+		and ari.TYPE_='candidate'
+		and ari.GROUP_ID_=br.role_en_name
+		and bu.group_id=bg.group_id
+		and artb.group_id is null
+		and artb.company_id is null
+		and ari.TASK_ID_=#{param1}
+
+		UNION
+		select
+		bu.*
+		from
+		base_user bu,
+		base_role_user bru,
+		base_role br ,
+		act_ru_identitylink ari ,
+		act_ru_task art ,
+		act_ru_task_business artb,
+		base_group bg
+		where
+		bu.user_id=bru.user_id
+		and artb.abolish_flag!=1
+		and br.role_id=bru.role_id
+		and art.ID_=ari.TASK_ID_
+		and art.ID_=artb.inst_task_id
+		and ari.TYPE_='candidate'
+		and ari.GROUP_ID_=br.role_en_name
+		and bu.group_id=bg.group_id
+		and artb.group_id is not null
+		and artb.company_id is not null
+		and bu.group_id=artb.group_id
+		and bg.main_company_id=artb.company_id
+		and ari.TASK_ID_=#{param1}
+		UNION
+		select
+		bu.*
+		from
+		base_user bu,
+		base_role_user bru,
+		base_role br ,
+		act_ru_identitylink ari ,
+		act_ru_task art ,
+		act_ru_task_business artb,
+		base_group bg
+		where
+		bu.user_id=bru.user_id
+		and artb.abolish_flag!=1
+		and br.role_id=bru.role_id
+		and art.ID_=ari.TASK_ID_
+		and art.ID_=artb.inst_task_id
+		and ari.TYPE_='candidate'
+		and ari.GROUP_ID_=br.role_en_name
+		and bu.group_id=bg.group_id
+		and artb.company_id is not null
+		and artb.group_id is null
+		and bg.main_company_id=artb.company_id
+		and ari.TASK_ID_=#{param1}
+		UNION
+		select
+		bu.*
+		from
+		base_user bu,
+		base_role_user bru,
+		base_role br ,
+		act_ru_identitylink ari ,
+		act_ru_task art ,
+		act_ru_task_business artb,
+		base_group bg
+		where
+		bu.user_id=bru.user_id
+		and artb.abolish_flag!=1
+		and br.role_id=bru.role_id
+		and art.ID_=ari.TASK_ID_
+		and art.ID_=artb.inst_task_id
+		and ari.TYPE_='candidate'
+		and ari.GROUP_ID_=br.role_en_name
+		and bu.group_id=bg.group_id
+		and artb.group_id is not null
+		and bu.group_id=artb.group_id
+		and artb.company_id is null
+		and ari.TASK_ID_=#{param1}
+	</select>
+
+	<!--流程办结时候，将业务数据移动到历史表 -->
+	<insert id="insertIntoHisByInstprocessId">
+		Insert into act_hi_taskinst_business
+		select * from act_ru_task_business b
+		where b.inst_process_id=#{param1}
+		and b.end_time is not null
+	</insert>
+
+
+	<!-- 删除订单数据 -->
+	<delete id="deleteTaskBusinessBoByInstprocessId">
+		delete from act_ru_task_business
+		WHERE inst_process_id = #{param1}
+		and end_time is not null
+	</delete>
+
+	<delete id="deleteActRuTaskBusinessByInstTaskId">
+		delete from act_ru_task_business
+		WHERE inst_task_id = #{param1}
+	</delete>
+
+
+	<!--通过流程环节的英文名获取，该环节的类型： -->
+	<select id="getTaskOPTByTaskEnName" resultType="TaskBusinessBo">
+		SELECT
+		ewdo.task_user_type,
+		ewdo.role_name,
+		ewdo.edit_url
+		from erp_work_def_opt ewdo
+		where
+		ewdo.en_name=#{param1}
+	</select>
+	<!--更新已办人员（act_ru_identitylink） -->
+	<update id="upateTaskAssignee">
+		update act_ru_identitylink ari set
+		ari.USER_ID_ = #{param1}
+		where
+		ari.TASK_ID_ = #{param2}
+	</update>
+	<!--更新已办人员（任务历史表） -->
+	<update id="upateTaskInstAssignee">
+		update act_hi_identitylink ahi set
+		ahi.USER_ID_ = #{param1}
+		where
+		ahi.TASK_ID_ = #{param2}
+	</update>
+	<!--委办（通过to_user_id获取from_user_login_name） -->
+	<select id="getCommissionFromUserLoginNameByToUserId"
+		resultType="String">
+		select bu.login_name from erp_work_commission ewc,base_user bu
+		where
+		bu.user_id=ewc.from_user_id
+		and
+		ewc.to_user_id = #{param1}
+	</select>
+	<!--委办（通过from_user_id获取to_user_login_name） -->
+	<select id="getCommissionToUserByFromUserId" resultType="UserBo">
+		select bu.* from erp_work_commission ewc,base_user bu
+		where
+		bu.user_id=ewc.to_user_id
+		and
+		ewc.from_user_id = #{param1}
+		and bu.valid_flag=1
+		and bu.del_flag=0
+	</select>
+	<!--废除流程 任务业务表 -->
+	<update id="abolishTaskBusiness">
+		update act_ru_task_business artb set
+		artb.abolish_flag =#{param2},
+		artb.abolish_user =#{param3},
+		artb.abolish_time =#{param4},
+		artb.abolish_opt_type =#{param5},
+		artb.abolish_remark =#{param6},
+		artb.approve_state =#{param7}
+		where
+		artb.inst_process_id = #{param1}
+	</update>
+	<!---废除流程 任务业务表 -->
+	<update id="abolishHiTaskBusiness">
+		update act_hi_taskinst_business artb set
+		artb.abolish_flag =#{param2},
+		artb.abolish_user =#{param3},
+		artb.abolish_time =#{param4},
+		artb.abolish_opt_type =#{param5},
+		artb.abolish_remark =#{param6},
+		artb.approve_state =#{param7}
+		where
+		artb.inst_process_id = #{param1}
+	</update>
+	<!--废除流程 订单表 -->
+	<update id="abolishWorkOrder">
+		update erp_work_order artb set
+		artb.approve_state =#{param2}
+		where
+		artb.inst_process_id = #{param1}
+	</update>
+	<!--废除流程 则将订单置为无效状态 -->
+	<update id="invalidWorkOrder">
+		update erp_work_order set valid_flag=0,del_flag=1 where
+		order_inst_process_id=#{param1}
+	</update>
+
+	<!--废除流程 投放操作表 -->
+	<update id="abolishWorkOrderOperate">
+		update erp_workorder_operate artb set
+		artb.approve_state =#{param2}
+		where
+		artb.inst_process_id = #{param1}
+	</update>
+	<!--废除流程 收支表 -->
+	<update id="abolishWorkOrderMoney">
+		update erp_work_order_re_money artb set
+		artb.approve_state =#{param2}
+		where
+		artb.inst_process_id = #{param1}
+	</update>
+
+	<!--通过虚拟部门获取人员 -->
+	<select id="getUserByXuniGroupId" resultType="UserBo">
+		SELECT
+		bu.*
+		FROM
+		base_user bu
+		WHERE
+		bu.xuni_group_id =#{param1}
+		and bu.valid_flag=1
+		and bu.del_flag=0
+	</select>
+
+	<!-- 获取用户，当前角色是否能获取参与人 -->
+	<select id="getUserByGroupIdAndRoleName" resultType="UserBo">
+		SELECT
+		bg.parent_id as parent_group_id,bu.*
+		FROM
+		base_user bu
+		LEFT JOIN base_group bg ON bu.group_id = bg.group_id
+		LEFT JOIN base_role_user bru ON bru.user_id = bu.user_id
+		LEFT JOIN base_role br on br.role_id=bru.role_id
+		WHERE
+		bu.group_id =#{param1}
+		and br.role_en_name=#{param2}
+		and bu.valid_flag=1
+		and bu.del_flag=0
+	</select>
+	
+	<select id="getUserListByRoleName" resultType="UserBo">
+	    SELECT
+		bu.*
+		FROM
+		base_user bu
+		LEFT JOIN base_group bg ON bu.group_id = bg.group_id
+		LEFT JOIN base_role_user bru ON bru.user_id = bu.user_id
+		LEFT JOIN base_role br on br.role_id=bru.role_id
+		WHERE
+		bg.main_company_id =#{param1}
+		and br.role_en_name=#{param2}
+		and bu.valid_flag=1
+		and bu.del_flag=0
+	</select>
+	
+	<!-- 获取用户，当前角色是否能获取参与人 -->
+	<select id="getUserByDicGroupIdAndRoleName" resultType="UserBo">
+		SELECT
+		bg.parent_id as parent_group_id,bu.*
+		FROM
+		base_user bu
+		LEFT JOIN base_group bg ON bu.group_id = bg.group_id
+		LEFT JOIN base_role_user bru ON bru.user_id = bu.user_id
+		LEFT JOIN base_role br on br.role_id=bru.role_id
+		WHERE
+		bu.dic_group_id =#{param1}
+		and br.role_en_name=#{param2}
+		and bu.valid_flag=1
+		and bu.del_flag=0
+	</select>
+	<!-- 获取父部门Id -->
+	<select id="getParentGroupId" resultType="Integer">
+		SELECT
+		bg.parent_id as parent_group_id
+		FROM
+		base_group bg
+		WHERE
+		bg.group_id =#{param1}
+	</select>
+
+	<!--/** * 通过流程实例ID获取审批状态 * 从订单表中 * 从操作表中（状态和remoney） * * @param instProcessId 
+		* @return */ -->
+	<select id="getApproveStateByInstProcessId" resultType="Integer">
+		SELECT
+		ewo.approve_state
+		FROM
+		erp_work_order ewo
+		WHERE
+		ewo.order_inst_process_id =#{param1}
+		UNION
+		SELECT
+		eworm.approve_state
+		FROM
+		erp_work_order_re_money eworm
+		WHERE
+		eworm.inst_process_id = #{param1}
+		UNION
+		SELECT
+		ewo.approve_state
+		FROM
+		erp_workorder_operate ewo
+		WHERE
+		ewo.inst_process_id =#{param1}
+	</select>
+	<!--修改店铺信息 -->
+	<update id="updateShopInfo" parameterType="TaskBusinessBo">
+		update act_ru_task_business
+		set shop_name=#{shop_name}
+		where order_id=#{order_id}
+	</update>
+	<update id="updateShopInfoTwo" parameterType="TaskBusinessBo">
+		update act_hi_taskinst_business
+		set shop_name=#{shop_name}
+		where order_id=#{order_id}
+	</update>
+	<select id="findTrackTask" parameterType="TaskBusinessBo"
+		resultType="TaskBusinessBo">
+		SELECT * FROM
+		(SELECT
+		order_id,shop_name,product_name,inst_task_name,process_name,assignee_name,process_key,process_start_time,
+		process_start_name,history_tasks,history_tasks_users,edit_url,start_time,approve_state,back_flag,inst_process_id,
+		def_process_id,form_key,inst_task_id,task_def_key
+		FROM act_hi_taskinst_business
+		where 1=1
+		<include refid="trackTaskSearch" />
+		ORDER BY create_time DESC)a
+		GROUP BY a.inst_process_id
+		limit #{startRow},#{pageSize}
+	</select>
+	<select id="findCountTrackTask" parameterType="TaskBusinessBo"
+		resultType="int">
+		SELECT count(b.create_time) FROM (SELECT create_time FROM
+		(SELECT create_time,inst_process_id FROM act_hi_taskinst_business
+		where 1=1
+		<include refid="trackTaskSearch" />
+		ORDER BY create_time DESC)a
+		GROUP BY a.inst_process_id) b
+	</select>
+	<sql id="trackTaskSearch">
+		<if test="order_id != null and order_id != ''">
+			and order_id like '%${order_id}%'
+		</if>
+		<if test="shop_name != null and shop_name != ''">
+			and shop_name like '%${shop_name}%'
+		</if>
+		<if test="product_id != null and product_id != ''">
+			and product_id = ${product_id}
+		</if>
+		<if test="process_key!=null and process_key!=''">
+			and process_key='${process_key}'
+		</if>
+		<if test="task_en_name!=null and task_en_name!=''">
+			and concat(process_key,"_",task_def_key) ='${task_en_name}'
+		</if>
+		<if test="process_start_time_start!=null and process_start_time_start!=''">
+			and process_start_time >'${process_start_time_start}'
+		</if>
+		<if test="assignee_name != null and assignee_name != ''">
+			and assignee_name like '%${assignee_name}%'
+		</if>
+		<if test="approveState!=null and approveState!=''">
+			<if test="approveState==-1">
+				and approve_state = 0
+			</if>
+			<if test="approveState!=-1">
+				and approve_state = #{approveState}
+			</if>
+
+		</if>
+	</sql>
+	<select id="exportTrackTask" parameterType="TaskBusinessBo"
+		resultType="TaskBusinessBo">
+		SELECT * FROM
+		(SELECT
+		order_id,shop_name,product_name,inst_task_name,process_name,assignee_name,process_key,process_start_time,
+		process_start_name,history_tasks,history_tasks_users,edit_url,start_time,approve_state,back_flag,inst_process_id
+		FROM act_hi_taskinst_business
+		where 1=1
+		<include refid="trackTaskSearch" />
+		ORDER BY create_time DESC)a
+		GROUP BY a.inst_process_id
+	</select>
+
+	<select id="getRunTaskByInstProcessId" resultType="TaskBusinessBo">
+		SELECT *
+		FROM act_ru_task_business
+		where inst_process_id = #{inst_process_id}
+	</select>
+
+	<select id="getRunningProcessByOrderId" resultType="TaskBusinessBo">
+		SELECT *
+		FROM act_ru_task_business
+		where order_id = #{order_id}
+		and abolish_flag = 0
+	</select>
+
+	<select id="getHiTaskByInstId" resultType="TaskBusinessBo">
+		SELECT * FROM `act_hi_taskinst_business` where inst_process_id = #{1};
+	</select>
+
+	<select id="getPlanTodoListJson" resultType="TaskBo">
+
+		SELECT
+		c.order_id as order_id,
+		c.process_name as processName,
+		c.inst_process_id as instProcessId,
+		c.shop_name as shop_id,
+		c.product_name as product_name,
+		c.process_key as processKey,
+		concat(c.process_key,"_",d.TASK_DEF_KEY) as taskEnName,
+		d.inst_task_id as taskId,
+		d.process_start_name as process_start_name,
+		d.process_start_time as process_start_time,
+		d.current_task_name as taskName,
+		d.current_task_user_name as userName,
+		d.def_process_id as defProcessId
+		FROM
+		erp_work_plan_process c, act_ru_task_business d
+		WHERE
+		c.inst_process_id NOT IN (
+		SELECT
+		a.inst_process_id
+		FROM
+		act_hi_taskinst_business a,
+		erp_work_plan_process b
+		WHERE
+		a.assignee_id = #{userId}
+		AND a.inst_process_id = b.inst_process_id)
+		and c.inst_process_id = d.inst_process_id
+		and c.owner_user_id =#{userId}
+	</select>
+
+	<update id="upateUrgentFlagByOrderId">
+		UPDATE erp_work_order set urgent_order_flag = 0 where order_id = #{param1}
+	</update>
+
+	<select id="getOrderById" resultType="WorkOrderBo">
+		select * from erp_work_order where order_id = #{param1} and valid_flag=1 and
+		del_flag=0
+	</select>
+
+	<select id="getActHiTaskInstBusinesses" parameterType="TaskBusinessBo" resultType="TaskBusinessBo">
+		SELECT 
+		COUNT(0) hiTaskTotalInGroup,
+		group_concat(task_def_key) groupConcatOfTaskDefKey,
+		ahtb.* 
+		FROM act_hi_taskinst_business ahtb
+		where 1=1
+		<if test="order_id!=null and order_id!=''">
+			and ahtb.order_id = #{order_id} 
+		</if>
+		<if test="task_def_key!=null and task_def_key!=''">
+			and ahtb.task_def_key = #{task_def_key} 
+		</if>
+		<if test="current_approve_state!=null and current_approve_state!=''">
+			and ahtb.current_approve_state = #{current_approve_state}
+		</if>
+		<if test="inst_process_id!=null and inst_process_id!=''">
+			and ahtb.inst_process_id = #{inst_process_id}
+		</if>
+		GROUP BY ahtb.inst_process_id
+	</select>
+
+</mapper>

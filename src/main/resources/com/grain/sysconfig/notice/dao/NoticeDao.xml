@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.notice.dao.NoticeDao">
+    <!-- 查询信息 -->
+    <select id="getNoticeList" resultType="NoticeBo">
+        <!-- 不分页查询 -->
+        <if test=" 1 > pageSize ">
+            <include refid="queryNoticeSql"></include>
+        </if>
+        <!-- 分页查询 -->
+        <if test=" pageSize > 1 ">
+            <include refid="queryNoticeSql"/>
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询公告列表数据 -->
+    <sql id="queryNoticeSql">
+        SELECT
+            *
+        FROM
+            erp_notice
+        WHERE
+          <include refid="noticeQueryWhere"/>
+        ORDER BY create_time DESC
+
+    </sql>
+
+    <!-- 查询公告总记录数 -->
+    <select id="getNoticeListCount" resultType="Integer">
+        SELECT
+            count(*)
+        FROM
+            erp_notice
+        WHERE
+          <include refid="noticeQueryWhere"/>
+    </select>
+
+    <!-- 培训列表查询条件-->
+    <sql id="noticeQueryWhere">
+        1=1
+        AND valid_flag = 1
+        AND del_flag = 0
+
+        <if test=" notice_title != null and notice_title !=''">
+            AND notice_title like '%${notice_title}%'
+        </if>
+        <if test=" query_begin_time != null and query_begin_time !='' ">
+            AND create_time >= #{query_begin_time}
+        </if>
+
+        <if test=" query_end_time != null and query_end_time !='' ">
+            AND  #{query_end_time} >= create_time
+        </if>
+
+    </sql>
+
+    <!-- 添加培训 -->
+    <insert id="insertNotice">
+       INSERT INTO erp_notice (
+            notice_title,
+            notice_content,
+            remark,
+            sort_num,
+            create_time,
+            create_user_id,
+            create_user_name,
+            last_edited_time,
+            last_edited_user_id
+        )
+        VALUES (
+            #{notice_title},
+            #{notice_content},
+            #{remark},
+            #{sort_num},
+            #{create_time},
+            #{create_user_id},
+            #{create_user_name},
+            #{last_edited_time},
+            #{last_edited_user_id}
+        );
+
+    </insert>
+
+
+    <!-- 更新公告 -->
+    <update id="updateNotice">
+        UPDATE erp_notice
+        SET
+            notice_title = #{notice_title},
+            notice_content = #{notice_content},
+            remark = #{remark},
+            sort_num = #{sort_num},
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id}
+        WHERE
+            notice_id = #{notice_id}
+    </update>
+
+
+    <!-- 删除公告 -->
+    <update id="deleteNotice">
+        UPDATE erp_notice
+        SET
+            valid_flag = 0,
+            del_flag = 1,
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id},
+            invalid_time = #{invalid_time},
+            delete_time = #{delete_time}
+        WHERE
+          notice_id = #{notice_id}
+    </update>
+
+    <select id="getNoticeById" resultType="NoticeBo">
+        SELECT
+          *
+        FROM
+          erp_notice
+        WHERE
+          notice_id = #{notice_id}
+    </select>
+
+    <!-- 添加培训 -->
+    <insert id="insertDebug">
+        INSERT INTO base_debug (
+        title,
+        bug_type,
+        shop_name,
+        order_id,
+        user_name,
+        dept_name,
+        debug_content,
+        insertTime,
+        valid_flag,
+        del_flag,
+        jiejue_flag,
+        jiejuefangan,
+        jiejueTime
+        )
+        VALUES (
+        #{title},
+        #{bug_type},
+        #{shop_name},
+        #{order_id},
+        #{user_name},
+        #{dept_name},
+        #{debug_content},
+        #{insertTime},
+         1,
+         0,
+        #{jiejue_flag},
+        #{jiejuefangan},
+        #{jiejueTime}
+        );
+
+    </insert>
+
+    <select id="getDebugList" resultType="DebugInfo" parameterType="DebugInfo">
+        <!-- 不分页查询 -->
+        <if test=" 1 > pageSize ">
+            <include refid="queryDebugSql"></include>
+        </if>
+        <!-- 分页查询 -->
+        <if test=" pageSize > 1 ">
+            <include refid="queryDebugSql"/>
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询公告列表数据 -->
+    <sql id="queryDebugSql">
+        SELECT
+        *
+        FROM
+        base_debug
+        WHERE
+        <include refid="debugQueryWhere"/>
+        ORDER BY insertTime DESC
+
+    </sql>
+
+    <!-- 查询公告总记录数 -->
+    <select id="getDebugListCount" resultType="Integer" parameterType="DebugInfo">
+        SELECT
+        count(*)
+        FROM
+        base_debug
+        WHERE
+        <include refid="debugQueryWhere"/>
+    </select>
+
+    <!-- 培训列表查询条件-->
+    <sql id="debugQueryWhere">
+        1=1
+        and valid_flag =1
+        and del_flag =0
+
+        <if test=" title != null and title !=''">
+            AND title like '%${title}%'
+        </if>
+        <if test=" query_begin_time != null and query_begin_time !='' ">
+            AND insertTime >= #{query_begin_time}
+        </if>
+
+        <if test=" query_end_time != null and query_end_time !='' ">
+            AND  #{query_end_time} >= insertTime
+        </if>
+        <if test=" queryJiejueType =='0'.toString() ">
+            AND  jiejue_flag = '已处理'
+        </if>
+        <if test="queryJiejueType =='1'.toString() ">
+            AND (jiejue_flag = '未处理' or jiejue_flag ='')
+        </if>
+        <if test="queryJiejueType =='2'.toString() ">
+            AND  jiejue_flag = '处理中'
+        </if>
+
+    </sql>
+
+    <!-- 更新公告 -->
+    <update id="updateDebugInfo">
+        UPDATE base_debug
+        SET
+         title = #{title},
+        bug_type = #{bug_type},
+        shop_name = #{shop_name},
+        order_id = #{order_id},
+        debug_content = #{debug_content},
+       jiejue_user_name=#{jiejue_user_name},
+       jiejue_dept_name=#{jiejue_dept_name},
+        jiejue_flag = #{jiejue_flag},
+        jiejuefangan = #{jiejuefangan},
+        jiejueTime = #{jiejueTime}
+        WHERE
+        id = #{id}
+    </update>
+    <!-- 删除公告 -->
+    <update id="deleteDebugInfo">
+        UPDATE base_debug
+        SET
+        valid_flag = 0,
+        del_flag = 1,
+        delete_time = #{delete_time}
+        WHERE
+        id = #{id}
+    </update>
+
+
+
+
+
+
+</mapper>

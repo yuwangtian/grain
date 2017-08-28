@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.training.dao.TrainingDao">
+    <!-- 查询信息 -->
+    <select id="getTrainingList" resultType="TrainingBo">
+        <!-- 不分页查询 -->
+        <if test=" 1 > pageSize ">
+            <include refid="queryTrainingSql"></include>
+        </if>
+        <!-- 分页查询 -->
+        <if test=" pageSize > 1 ">
+            <include refid="queryTrainingSql"/>
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询培训列表数据 -->
+    <sql id="queryTrainingSql">
+            SELECT
+                *
+            FROM
+                erp_training
+            WHERE
+              <include refid="trainingWhere"/>
+            ORDER BY training_begin_time DESC
+
+    </sql>
+
+    <!-- 查询培训总记录数 -->
+    <select id="getTrainingListCount" resultType="Integer">
+            SELECT
+                count(*)
+            FROM
+                erp_training
+            WHERE
+              <include refid="trainingWhere"/>
+    </select>
+
+    <!-- 培训列表查询条件-->
+    <sql id="trainingWhere">
+        1=1
+        AND valid_flag = 1
+        AND del_flag = 0
+        <if test=" training_title != null and training_title != '' ">
+            AND training_title like '%${training_title}%'
+        </if>
+        <if test=" training_type != null ">
+            AND training_type = #{training_type}
+        </if>
+        <if test=" training_address != null ">
+            AND training_address = #{training_address}
+        </if>
+        <if test=" training_month != null and training_month !='' ">
+            AND training_begin_time like '%${training_month}%'
+        </if>
+
+        <if test=" query_begin_time != null and query_begin_time !='' ">
+            AND training_begin_time >= #{query_begin_time}
+        </if>
+
+        <if test=" query_end_time != null and query_end_time !='' ">
+            AND  #{query_end_time} >= training_begin_time
+        </if>
+        <if test=" off_flag != null ">
+            AND off_flag = #{off_flag}
+        </if>
+
+    </sql>
+
+    <!-- 添加培训 -->
+    <insert id="insertTraining">
+        INSERT INTO erp_training (
+            training_title,
+            training_type,
+            training_address,
+            training_begin_time,
+            training_end_time,
+            training_period_desc,
+            training_money,
+            remark,
+            create_time,
+            create_user_id,
+            last_edited_time,
+            last_edited_user_id,
+            sort_num
+        )
+        VALUES (
+            #{training_title},
+            #{training_type},
+            #{training_address},
+            #{training_begin_time},
+            #{training_end_time},
+            #{training_period_desc},
+            #{training_money},
+            #{remark},
+            #{create_time},
+            #{create_user_id},
+            #{last_edited_time},
+            #{last_edited_user_id},
+            #{sort_num}
+        );
+    </insert>
+
+
+    <!-- 更新培训 -->
+    <update id="updateTraining">
+        UPDATE erp_training
+        SET
+            training_title = #{training_title},
+            training_type = #{training_type},
+            training_address = #{training_address},
+            training_begin_time = #{training_begin_time},
+            training_end_time = #{training_end_time},
+            training_period_desc = #{training_period_desc},
+            training_money = #{training_money},
+            remark = #{remark},
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id},
+            sort_num = #{sort_num}
+        WHERE
+            training_id = #{training_id}
+    </update>
+
+
+    <!-- 删除培训 -->
+    <update id="deleteTraining">
+        UPDATE erp_training
+        SET valid_flag = 0,
+        del_flag = 1,
+        last_edited_time = #{last_edited_time},
+        last_edited_user_id = #{last_edited_user_id},
+        invalid_time = #{invalid_time},
+        delete_time = #{delete_time}
+        WHERE
+        training_id = #{training_id}
+    </update>
+
+    <!-- 下架培训 -->
+    <update id="offTraining">
+        UPDATE erp_training
+        SET
+            off_flag = #{off_flag},
+            off_time = #{off_time},
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id}
+        WHERE
+          training_id = #{training_id}
+    </update>
+
+    <!-- 查询信息 -->
+    <select id="getTrainingLessonList" resultType="TrainingLessonBo">
+        <!-- 不分页查询 -->
+        <if test=" 1 > pageSize ">
+            <include refid="queryTrainingLessonSql"></include>
+        </if>
+        <!-- 分页查询 -->
+        <if test=" pageSize > 1 ">
+            <include refid="queryTrainingLessonSql"></include>
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询课程列表数据 -->
+    <sql id="queryTrainingLessonSql">
+        SELECT
+          *
+        FROM
+          erp_training_lesson
+        WHERE
+            valid_flag = 1
+        AND del_flag = 0
+        <if test=" lesson_id != null ">
+            AND lesson_id = #{lesson_id}
+        </if>
+        <if test=" training_id != null ">
+            AND training_id = #{training_id}
+        </if>
+    </sql>
+
+    <!-- 新增课程 -->
+    <insert id="insertTrainingLesson">
+        INSERT INTO erp_training_lesson (
+            training_id,
+            lesson_name,
+            lesson_begin_time,
+            lesson_end_time,
+            lesson_content,
+            lesson_lecturer_id,
+            lesson_lecturer_name,
+            lesson_hour,
+            remark,
+            create_time,
+            create_user_id,
+            last_edited_time,
+            last_edited_user_id,
+            sort_num
+        )
+        VALUES (
+            #{training_id},
+            #{lesson_name},
+            #{lesson_begin_time},
+            #{lesson_end_time},
+            #{lesson_content},
+            #{lesson_lecturer_id},
+            #{lesson_lecturer_name},
+            #{lesson_hour},
+            #{remark},
+            #{create_time},
+            #{create_user_id},
+            #{last_edited_time},
+            #{last_edited_user_id},
+            #{sort_num}
+        );
+    </insert>
+
+    <!-- 更新课程 -->
+    <update id="updateTrainingLesson">
+        UPDATE erp_training_lesson
+        SET
+            lesson_name = #{lesson_name},
+            lesson_begin_time = #{lesson_begin_time},
+            lesson_end_time = #{lesson_end_time},
+            lesson_content = #{lesson_content},
+            lesson_lecturer_id = #{lesson_lecturer_id},
+            lesson_lecturer_name = #{lesson_lecturer_name},
+            lesson_hour = #{lesson_hour},
+            remark = #{remark},
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id},
+            sort_num = #{sort_num}
+        WHERE
+            lesson_id = #{lesson_id}
+    </update>
+
+    <!-- 删除课程,可根据培训ID和课程ID删除，如果培训ID，课程ID都为空，则都不删除 -->
+    <update id="deleteTrainingLesson">
+        UPDATE erp_training_lesson
+        SET valid_flag = 0,
+        del_flag = 1,
+        last_edited_time = #{last_edited_time},
+        last_edited_user_id = #{last_edited_user_id},
+        invalid_time = #{invalid_time},
+        delete_time = #{delete_time}
+        WHERE
+            1=1
+            <if test=" training_id !=null ">
+                AND training_id = #{training_id}
+            </if>
+            <if test=" lesson_id !=null ">
+                AND lesson_id = #{lesson_id}
+            </if>
+            <if test=" training_id == null and lesson_id == null">
+                AND 1=2
+            </if>
+    </update>
+
+    <select id="getTrainingsByIdList" resultType="TrainingBo">
+        select * from  erp_training
+        where
+        training_id in
+        <foreach item="item" index="index" collection="list"
+                 open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+</mapper>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkMonthDao">
+ 
+    <insert id="saveWorkMonthInfo" parameterType="WorkMonthInfoBo">
+        INSERT INTO
+        erp_work_month_info(
+        product_id,order_id, shop_id, report_year, report_month,
+        service_group_id,
+        service_group_name, service_company_id, service_company_name,
+        serviced_days, serviced_money, days_of_month, money_of_month,
+        report_day, create_time
+        ) VALUES(
+        #{product_id},#{order_id}, #{shop_id},#{report_year}, #{report_month},
+        #{service_group_id},
+        #{service_group_name},#{service_company_id},#{service_company_name},
+        #{serviced_days},#{serviced_money},#{days_of_month},#{money_of_month},
+        #{report_day}, #{create_time}
+        )
+    </insert>
+
+
+    <update id="updateWorkMonthInfo" parameterType="WorkMonthInfoBo">
+        update erp_work_month_info set
+        serviced_days = #{serviced_days},
+        serviced_money = #{serviced_money},
+        days_of_month = #{days_of_month},
+        money_of_month = #{money_of_month},
+        report_day = #{report_day}
+        where id = #{id}
+    </update>
+
+    <select id="getLatestWorkMonthInfoBefore" resultType="WorkMonthInfoBo">
+        select * from erp_work_month_info
+        where
+        order_id = #{param2} and #{param1} > report_day
+        order by report_day desc
+        limit 0, 1
+    </select>
+
+    <select id="getCurrentWorkMonthInfo" resultType="WorkMonthInfoBo">
+        select * from erp_work_month_info
+        where
+        order_id = #{param1} and report_day like #{param2}
+        order by report_day desc
+        limit 0, 1
+    </select>
+
+    <select id="getWorkMonthInfoByComboPK" resultType="WorkMonthInfoBo">
+        select * from erp_work_month_info
+        where
+        order_id = #{param1}
+        and report_year = #{param2}
+        and report_month = #{param3}
+        limit 0, 1
+    </select>
+
+</mapper>
+

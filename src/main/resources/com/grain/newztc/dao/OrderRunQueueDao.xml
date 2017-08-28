@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.newztc.dao.OrderRunQueueDao">
+    <!-- 查询信息 -->
+    <select id="getOrderRunBoList" resultType="OrderRunBo">
+        select * from erp_order_run_queue
+    </select>
+
+    <!-- 添加 -->
+    <insert id="insertOrderRun" parameterType="OrderRunBo">
+        INSERT INTO erp_order_run_queue (
+        order_id,
+        run_flag,
+        create_time
+        )
+        VALUES (
+        #{order_id},
+        #{run_flag},
+        #{create_time}
+        );
+    </insert>
+
+    <!-- 删除 -->
+    <delete id="deleteOrderRun" parameterType="OrderRunBo">
+        delete from erp_order_run_queue
+        WHERE
+        id = #{id}
+    </delete>
+
+    <!-- 查询信息 -->
+    <select id="getOrderForKc" resultType="Map">
+        select distinct shop_name as shopAccount, service_ae_names as ae, service_am_names as am, if(service_state = 4, 1,0) as runFlag from erp_work_order where product_name = 'SEM产品'  and service_state =4
+    </select>
+
+</mapper>

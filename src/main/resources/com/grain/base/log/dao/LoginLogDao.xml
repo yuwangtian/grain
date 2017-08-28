@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.grain.base.log.dao.LoginLogDao">
+
+	<insert id="insert" parameterType="LoginLogBo" >
+		REPLACE INTO operate_log (
+		  userId,
+		  loginDate,
+		  loginLong,
+		  loginType,
+		  sessionId,
+		  loginState
+		) 
+		VALUES
+		  (
+		    #{userId},#{loginDate},#{loginLong}, #{loginType},#{sessionId},#{loginState}
+		  )
+	</insert>
+	
+	<!-- 获取登录时间 -->
+	<select id="getLoginDate" resultType="String">
+		SELECT 
+		  loginDate
+		FROM
+		  erp_login_log 
+		WHERE sessionId = #{param1}
+		  AND userId = #{param2} 
+	</select>
+	
+	<!-- 获取未正常退出的记录 -->
+	<select id="getNotLogOut" resultType="LoginLogBo">
+		SELECT 
+		  * 
+		FROM
+		  erp_login_log 
+		WHERE userId = #{param1}
+		  AND loginState = 1
+	</select>
+	
+	<!-- 更新登录状态 -->
+	<update id="updateLoginState" parameterType="LoginLogBo">
+		UPDATE 
+		  erp_login_log 
+		SET
+		  loginState = 0 
+		WHERE userId = #{userId} 
+		  AND loginType = 1 
+		  AND sessionId = #{sessionId} 
+	</update>
+</mapper>

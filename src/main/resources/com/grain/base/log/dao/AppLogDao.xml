@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+        
+<mapper namespace="com.grain.base.log.dao.AppLogDao">
+    <insert id="insert" parameterType="OperateLogBo"
+		useGeneratedKeys="true" keyProperty="id">
+    	
+       INSERT INTO base_operate_log (
+       
+       page_id,operate_user_id,operate_time,operate_content,
+       
+       operate_ip,sys_url_port,operate_type,
+       
+       order_id
+       
+       )VALUES(
+       
+       #{page_id},#{operate_user_id},#{operate_time}, #{operate_content},
+       
+       #{operate_ip},#{sys_url_port},#{operate_type},
+       
+       #{order_id}
+       
+       )
+    </insert>
+</mapper>

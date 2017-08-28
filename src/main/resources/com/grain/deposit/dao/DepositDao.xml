@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.grain.deposit.dao.DepositDao">
+
+	<sql id="Base_Column_List">
+		deposit_id,
+		shop_name,
+		shop_p_id,
+		user_id,
+		user_name,
+		product_id,
+		product_name,
+		product_encode,
+		target_order_id,
+		company_id,
+		company_name,
+		deposit_belong_id,
+		deposit_belong_name,
+		direct_group_id,
+		direct_group_name,
+		curr_pro_short_name,
+		open_shop_flag,
+		inst_process_id,
+		deposit_title,
+		service_content,
+		client_desire,
+		sign_time,
+		sign_service_fee,
+		approve_state,
+		approve_agree_time,
+		remark,
+		create_time,
+		valid_flag,
+		del_flag
+	</sql>
+	<select id="getListNoJoin" resultType="DepositBo">
+		<!-- 非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+			SELECT * FROM erp_deposit
+			<if test="tableAlias!=null and tableAlias!=''">
+				${tableAlias}
+			</if>
+			WHERE 1=1 and del_flag = 0 AND valid_flag = 1
+			<if test="filtersql!=null and filtersql!=''">
+				${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+				${ordersql}
+			</if>
+			order by create_time desc
+		</if>
+		<!-- 分页查询 查询记录 -->
+		SELECT * FROM erp_deposit
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE 1=1 and del_flag = 0 AND valid_flag = 1
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+			${ordersql}
+		</if>
+		order by create_time desc
+		LIMIT #{startResult},#{pageSize}
+	</select>
+	<!-- 查询并设置记录总数 -->
+	<select id="getTotalCountListNoJoin" resultType="Integer">
+		SELECT count(*) FROM erp_deposit
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE 1=1 and del_flag = 0 AND valid_flag = 1
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+	</select>
+	<!-- 增加定金信息 -->
+	<insert id="saveDeposit" parameterType="DepositBo">
+		INSERT INTO erp_deposit
+		(deposit_id, shop_name,
+		shop_p_id, user_id, user_name, product_id,
+		product_name,
+		target_order_id, company_id, company_name,
+		deposit_belong_id, deposit_belong_name, direct_group_id,
+		direct_group_name,
+		curr_pro_short_name, open_shop_flag,
+		inst_process_id,
+		deposit_title, service_content,
+		client_desire,
+		sign_time, sign_service_fee, approve_state, remark,
+		create_time,
+		valid_flag, del_flag,product_encode,approve_agree_time,curr_pro_code)
+		VALUES
+		(#{deposit_id},#{shop_name},#{shop_p_id},#{user_id},#{user_name},#{product_id},#{product_name},#{target_order_id},#{company_id},#{company_name},
+
+		#{deposit_belong_id},#{deposit_belong_name},#{direct_group_id},#{direct_group_name},#{curr_pro_short_name},#{open_shop_flag},#{inst_process_id},#{deposit_title},#{service_content},
+		#{client_desire},#{sign_time},
+		#{sign_service_fee},#{approve_state},#{remark},#{create_time},#{valid_flag},#{del_flag},#{product_encode},#{approve_agree_time},#{curr_pro_code})
+	</insert>
+	<!-- 更新定金信息 -->
+	<update id="updateDeposit" parameterType="DepositBo">
+		UPDATE erp_deposit SET
+		deposit_id=#{deposit_id}, shop_name=#{shop_name},
+		shop_p_id=#{shop_p_id}, user_id=#{user_id},
+		user_name=#{user_name},
+		product_id=#{product_id},
+		product_name=#{product_name},
+		target_order_id=#{target_order_id}, company_id=#{company_id},
+		company_name=#{company_name},
+		deposit_belong_id=#{deposit_belong_id},
+		deposit_belong_name=#{deposit_belong_name},
+		direct_group_id=#{direct_group_id},
+		direct_group_name=#{direct_group_name},
+		curr_pro_short_name=#{curr_pro_short_name},
+		open_shop_flag=#{open_shop_flag},
+		inst_process_id=#{inst_process_id},
+		deposit_title=#{deposit_title},
+		service_content=#{service_content},
+		client_desire=#{client_desire}, sign_time=#{sign_time},
+		sign_service_fee=#{sign_service_fee},
+		approve_state=#{approve_state},
+		remark=#{remark},
+		create_time=#{create_time}, valid_flag=#{valid_flag},
+		del_flag=#{del_flag},product_encode=#{product_encode},approve_agree_time=#{approve_agree_time},curr_pro_code=#{curr_pro_code}
+		WHERE deposit_id=#{deposit_id} ;
+	</update>
+	<!-- 更新定金审批信息 -->
+	<update id="updateDepositApproveState" parameterType="DepositBo">
+		UPDATE erp_deposit SET
+		 
+		<if test="sign_service_fee !=null">
+		sign_service_fee=#{sign_service_fee},
+		</if>
+		approve_state=#{approve_state},
+	    approve_agree_time=#{approve_agree_time}
+		WHERE deposit_id=#{deposit_id} ;
+	</update>
+	<!-- 查询定金信息 add by lishengzhuang 2016 10-7 -->
+	<select id="depositSearchList" parameterType="DepositQueryBo"
+		resultType="DepositBo">
+		select * FROM erp_deposit
+		where 1=1
+		<if test="product_id !=null and product_id!=''">
+			and product_id = ${product_id}
+		</if>
+		<if test="shop_name !=null and shop_name !=''">
+			and shop_name like '%${shop_name}%'
+		</if>
+		<if test="user_name!=null and user_name!='' ">
+			and user_name like '%${user_name}%'
+		</if>
+		<if test="begin_time!=null and begin_time!=''">
+			and create_time &gt;= #{begin_time}
+		</if>
+		<if test="end_time!=null and end_time!=''">
+			and #{end_time} &gt;= create_time
+		</if>
+		order by create_time desc
+		<if test="page >= 0"> LIMIT #{page},#{rows} </if>
+	</select>
+	<!-- 定金查询 总数 add by lishengzhuang 2016 10-8 -->
+	<select id="depositSearchListTotal" parameterType="DepositQueryBo"
+		resultType="Integer">
+		select count(*) FROM erp_deposit
+		where 1=1
+		<if test="product_id !=null and product_id!=''">
+			and product_id = ${product_id}
+		</if>
+		<if test="shop_name !=null and shop_name !=''">
+			and shop_name like '%${shop_name}%'
+		</if>
+		<if test="user_name!=null and user_name!='' ">
+			and user_name like '%${user_name}%'
+		</if>
+		<if test="begin_time !=null and begin_time !=''">
+			and create_time &gt;= #{begin_time}
+		</if>
+		<if test="end_time !=null and end_time !=''">
+			and #{end_time} &gt;= create_time
+		</if>
+
+	</select>
+
+	<select id="taskDepositList" resultType="DepositTaskOperateBo">
+		<!-- 非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+			SELECT * FROM erp_deposit_task_operate
+			<if test="tableAlias!=null and tableAlias!=''">
+				${tableAlias}
+			</if>
+			WHERE  valid_flag=1 
+			<if test="filtersql!=null and filtersql!=''">
+				${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+				${ordersql}
+			</if>
+		</if>
+		<!-- 分页查询 查询记录 -->
+		SELECT * FROM erp_deposit_task_operate
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE valid_flag=1
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+			${ordersql}
+		</if>
+		LIMIT #{startResult},#{pageSize}
+	</select>
+	<select id="taskDepositListTotal" 	resultType="Integer">
+		select count(*) FROM erp_deposit_task_operate  
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE valid_flag=1
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+	</select>
+	<insert id="saveTaskDeposit" parameterType="DepositTaskOperateBo">
+		INSERT INTO erp_deposit_task_operate (
+		deposit_id,
+		opt_user_name,
+		opt_user_id,
+		curr_pro_code,
+		curr_pro_short_name,
+		inst_process_id,
+		original_money,
+		refund_money,
+		reason,
+		task_content,
+		remark,
+		current_user_id,
+		current_user_name,
+		start_user_id,
+		start_user_name,
+		approve_status,
+		opt_type,
+		create_time,
+		start_time,
+		opt_time,
+		task_flag,
+		valid_flag,
+		product_id,
+		product_name,
+		shop_name
+		)
+		VALUES
+		(
+		#{deposit_id},
+		#{opt_user_name},
+		#{opt_user_id},
+		#{curr_pro_code},
+		#{curr_pro_short_name},
+		#{inst_process_id},
+		#{original_money},
+		#{refund_money},
+		#{reason},
+		#{task_content},
+		#{remark},
+		#{current_user_id},
+		#{current_user_name},
+		#{start_user_id},
+		#{start_user_name},
+		#{approve_status},
+		#{opt_type},
+		#{create_time},
+		#{start_time},
+		#{opt_time},
+		#{task_flag},
+		#{valid_flag},
+		#{product_id},
+		#{product_name},
+		#{shop_name}
+		)
+
+	</insert>  
+	
+		<select id="getTaskOperateBoList" resultType="DepositTaskOperateBo">
+		<!-- 非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+			SELECT * FROM erp_deposit_task_operate
+			<if test="tableAlias!=null and tableAlias!=''">
+				${tableAlias}
+			</if>
+			WHERE valid_flag=1
+			<if test="filtersql!=null and filtersql!=''">
+				${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+				${ordersql}
+			</if>
+		</if>
+		<!-- 分页查询 查询记录 -->
+		SELECT * FROM erp_deposit_task_operate
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE 1=1 
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+			${ordersql}
+		</if>
+		LIMIT #{startResult},#{pageSize}
+	</select>
+	<!-- 查询并设置记录总数 -->
+	<select id="getCountListTaskOperateBo" resultType="Integer">
+		SELECT count(*) FROM erp_deposit_task_operate
+		<if test="tableAlias!=null and tableAlias!=''">
+			${tableAlias}
+		</if>
+		WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+			${filtersql}
+		</if>
+	</select>
+	<!-- 修改操作表 -->
+	<update id="updateTaskOperateBo" parameterType="DepositTaskOperateBo">
+	update erp_deposit_task_operate set
+	opt_user_name=#{opt_user_name},
+	opt_user_id=#{opt_user_id},
+   
+    <if test="approve_status != null">
+    approve_status=#{approve_status},
+    </if>
+     <if test="original_money != null">
+    original_money=#{original_money},
+    </if>
+     <if test="refund_money != null">
+    refund_money=#{refund_money},
+    </if>
+    <if test="task_flag != null">
+    task_flag=#{task_flag},
+    </if>
+    <if test="current_user_id != null">
+     current_user_id=#{current_user_id},
+    </if>
+      <if test="current_user_name != null">
+     current_user_name=#{current_user_name},
+    </if>
+	 opt_time=#{opt_time},
+	task_content=#{task_content}
+	where deposit_operate_id=#{deposit_operate_id}
+	</update>
+	<update id="updateTaskOperateBoFlag" parameterType="DepositTaskOperateBo">
+	update erp_deposit_task_operate set
+         task_flag=#{task_flag}
+	where
+	 deposit_operate_id=#{deposit_operate_id}
+	</update>
+	
+	<update id="updateDepositOrderId" parameterType="DepositBo">
+	    UPDATE erp_deposit SET
+	    target_order_id=#{target_order_id}
+	    <if test="approve_state != null and approve_state != ''">
+	    ,approve_state=#{approve_state}
+	    </if>
+		WHERE deposit_id=#{deposit_id};
+	</update>
+	
+	<update id="abolishDeposit" parameterType="DepositBo">
+	 update erp_deposit SET  valid_flag=#{valid_flag}
+	 WHERE deposit_id=#{deposit_id};
+	 <!-- 修改操作表 -->
+	update erp_deposit_task_operate set valid_flag=#{valid_flag}
+	where deposit_id=#{deposit_id};
+	</update>
+</mapper>

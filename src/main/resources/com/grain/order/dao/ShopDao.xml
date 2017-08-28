@@ -1,0 +1,518 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.order.dao.ShopDao">
+
+	<!-- TP青岛更改 曹群星 2017-02-14 ADD START -->
+	<!-- 获取店铺最新联系方式 -->
+	<select id="getShopDetailByShopPId" resultType="WorkShopDetailBo">
+		SELECT
+		*
+		FROM
+			erp_work_order_shop_detail
+		WHERE
+			order_id = (
+				SELECT
+					order_id
+				FROM
+					erp_work_order
+				WHERE
+					shop_p_id = #{param1}
+				ORDER BY
+					create_time DESC
+				LIMIT 1
+			)
+    </select>
+	<!-- 获取店铺服务轨迹 -->
+	<select id="ListShopService" resultType="WorkShopServiceBo">
+		(SELECT
+			ord.order_id,
+			ord.order_id as order_p_id,
+			ord.product_name,
+			log.operate_type,
+			CASE log.operate_type
+				WHEN '1' THEN '下单'
+				WHEN '2' THEN '商务分配'
+				WHEN '3' THEN '分配组'
+				WHEN '4' THEN '分配人'
+				WHEN '5' THEN '开启'
+				WHEN '6' THEN '暂停'
+				WHEN '7' THEN '休眠'
+				WHEN '8' THEN '退款'
+				WHEN '9' THEN '全部转单'
+				WHEN '10' THEN '部分转单'
+				WHEN '11' THEN '退款'
+				WHEN '12' THEN '退款'
+				WHEN '13' THEN '退款'
+				WHEN '14' THEN '回款'
+				WHEN '15' THEN '回款'
+				WHEN '16' THEN '断约'
+				WHEN '17' THEN '内单结束'
+				ELSE ''
+			END as operateTypeStr,
+			log.operate_time,
+			log.operate_user_name,
+			concat(log.operate_company_name,'-',log.operate_group_name,'-',log.operate_dic_group_name) AS operate_company,
+			log.operate_reason
+
+
+		FROM
+			erp_workorder_operate_log AS log
+		INNER JOIN erp_work_order AS ord ON log.order_id = ord.order_id
+		WHERE
+			ord.shop_p_id = #{param1}
+		AND operate_type IS NOT NULL)
+		UNION ALL
+		(SELECT
+			ord.order_id,
+			ord.order_id as order_p_id,
+			ord.product_name,
+			log.opt_type,
+		    CASE log.opt_type
+	            WHEN '1' THEN '开启'
+	            WHEN '2' THEN '暂停'
+	            WHEN '3' THEN '休眠'
+	            WHEN '4' THEN '断约'
+	            WHEN '5' THEN '休眠开启'
+				WHEN '6' THEN '结束'
+				WHEN '24' THEN '赠送服务期'
+				WHEN '22' THEN '修改数据'
+	            ELSE ''
+	        END as operateTypeStr,
+			log.opt_time,
+			log.opt_user_name,
+			concat(log.company_name,'-',log.group_name,'-',log.direct_group_name) AS operate_company,
+			log.reason
+		
+		FROM
+			erp_workorder_operate AS log
+		INNER JOIN erp_work_order AS ord ON log.order_id = ord.order_id
+		WHERE
+			ord.shop_p_id = #{param1}
+		AND opt_type IS NOT NULL AND opt_type IN(5,6,24,22))
+		
+		ORDER BY order_id ASC,operate_type=1 DESC,operate_time ASC
+	</select>
+	<!-- TP青岛更改 曹群星 2017-02-14 ADD END -->
+	
+	
+	<!-- 获取店铺信息 -->
+	<select id="ListShops" resultType="WorkShopBo">
+		<!--  非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_shop 
+			<if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+			</if>
+	        WHERE 1=1
+			<if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+			</if>
+		</if>
+		<!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_work_shop 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+		</if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+	<select id="getTotalCountListShops" resultType="Integer">
+           SELECT count(*) FROM erp_work_shop 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+		</if>
+	</select>
+	
+	<!-- 获取店铺的附属信息 -->
+	<select id="ListShopDetails" resultType="WorkShopDetailBo">
+		<!--  非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+            SELECT * FROM erp_work_order_shop_detail 
+			<if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+			</if>
+	        WHERE 1=1
+			<if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+			</if>
+		</if>
+		<!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_work_order_shop_detail 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+		</if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+	<select id="getTotalCountListShopDetails" resultType="Integer">
+           SELECT count(*) FROM erp_work_order_shop_detail 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+		</if>
+	</select>
+
+    
+    
+    <!-- 获取店铺数据（网上抓取） -->
+	<select id="listShopsOnlinePage" resultType="WorkShopBo">
+		<!--  非分页, 每页记录小于1时表示不进行分页 -->
+		<if test=" 1 > pageSize ">
+            SELECT * FROM ERP_WORK_SHOP_ONLINE 
+			<if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+			</if>
+	        WHERE 1=1
+			<if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+			</if>
+			<if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+			</if>
+		</if>
+		<!--  分页查询   查询记录  -->
+           SELECT *  FROM ERP_WORK_SHOP_ONLINE 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+		</if>
+		<if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+		</if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+	<select id="getTotalCountListShopsOnline" resultType="Integer">
+           SELECT count(*) FROM ERP_WORK_SHOP_ONLINE 
+		<if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias}
+		</if>
+	       WHERE 1=1
+		<if test="filtersql!=null and filtersql!=''">
+	            ${filtersql}
+		</if>
+	</select>
+	
+	<!-- 保存店铺数据 -->
+	<insert id="saveShop" parameterType="WorkShopBo"
+		useGeneratedKeys="true" keyProperty="shop_p_id">
+	 
+		insert into erp_work_shop (
+		
+		 shop_id, shop_name, shop_nickname, shop_source,
+	
+		 shop_rank, shop_register_time, shop_classfy, shop_url,
+		 
+		 province_id, city_id, shop_address, brand,
+		 
+		 monthly_sales, bargain_num_per_day, client_rank, manager_name,
+		 
+		 manager_phone, manager_qq, manager_sex, manager_wangwang,	
+		 
+		 company_flag, company_name, company_phone, company_bus_registe_no,
+		 
+		 company_total_staff,company_setup_time,
+
+		 customer_training_attribute, enterprise_year_sales, registered_capital, industry_in,
+	 
+	     create_time, create_user_id, last_edited_user_id, last_edited_time, valid_flag, del_flag
+		
+		)values(
+		
+		 #{shop_id}, #{shop_name}, #{shop_name}, #{shop_source},
+	
+		 #{shop_rank}, #{shop_register_time}, #{shop_classfy}, #{shop_url},
+		 
+		 #{province_id}, #{city_id}, #{shop_address}, #{brand},
+		 
+		 #{monthly_sales}, #{bargain_num_per_day}, #{client_rank}, #{manager_name},
+		 
+		 #{manager_phone}, #{manager_qq}, #{manager_sex}, #{manager_wangwang},	
+		 
+		 #{company_flag}, #{company_name}, #{company_phone}, #{company_bus_registe_no},
+		 
+		 #{company_total_staff}, #{company_setup_time},
+
+		 #{customer_training_attribute}, #{enterprise_year_sales}, #{registered_capital}, #{industry_in},
+	 
+	     #{create_time}, #{create_user_id}, #{last_edited_user_id}, #{last_edited_time}, #{valid_flag}, #{del_flag}
+	    
+		)
+		
+	</insert>
+	
+	<!-- 修改店铺数据 -->
+	<update id = "updateShop" parameterType="WorkShopBo">
+	     update erp_work_shop set 
+	     
+	     last_edited_user_id = #{last_edited_user_id}, 
+	     
+	     last_edited_time = #{last_edited_time},
+	     
+	     shop_id = #{shop_id},
+	     
+	     shop_name = #{shop_id},
+	     
+	     shop_nickname = #{shop_name}, 
+	     
+	     shop_source = #{shop_source},
+	     
+	     shop_rank = #{shop_rank},
+	     
+	     shop_register_time = #{shop_register_time},
+	     
+	     shop_classfy = #{shop_classfy},
+	     
+	     shop_url = #{shop_url},
+
+         shop_address = #{shop_address},
+
+	     province_id = #{province_id},
+	     
+	     city_id = #{city_id},
+	     
+	     brand = #{brand},
+	     
+	     monthly_sales = #{monthly_sales},
+	     
+	     bargain_num_per_day = #{bargain_num_per_day},
+	     
+	     client_rank =  #{client_rank},
+	      
+	     manager_name =  #{manager_name},
+	     
+	     manager_phone = #{manager_phone},
+	     
+	     manager_qq = #{manager_qq},
+	     
+	     manager_sex =  #{manager_sex},
+	     
+	     manager_wangwang = #{manager_wangwang},
+
+         customer_training_attribute = #{customer_training_attribute},
+
+         enterprise_year_sales = #{enterprise_year_sales},
+
+         registered_capital = #{registered_capital},
+
+         industry_in = #{industry_in},
+	     
+	     company_flag =  #{company_flag},
+	     
+	     company_name = #{company_name}, 
+	     
+	     company_phone = #{company_phone},
+	      
+	     company_bus_registe_no = #{company_bus_registe_no},
+	      
+	     company_total_staff = #{company_total_staff},
+	     
+	     company_setup_time = #{company_setup_time}
+	     
+	     <if test="valid_flag!=null">
+	       ,   valid_flag = #{valid_flag} 
+	     </if>
+	     
+	     <if test="del_flag!=null">
+	       ,   del_flag = #{del_flag}
+	     </if>
+	     where 
+	     shop_p_id = #{shop_p_id}
+	</update>
+	
+	<!-- 保存店铺附属数据 -->
+	
+	<insert id="saveShopDeail" parameterType="WorkShopDetailBo"
+		useGeneratedKeys="true" keyProperty="order_shop_id">
+		
+	insert into erp_work_order_shop_detail (
+		
+		 order_id,contact_name, contact_position, contact_phone, contact_phone_bak,
+	
+	     contact_qq, contact_wangwang, goods_supply, profit_rate, 
+	 
+	     inquiry_num, avg_guest_price, sell_month, operation_direction,
+	
+	     manager_mentality, condition_fund, weixin_number, weixin_exception,
+	     
+	     boss_character,deposit_id
+		
+	 )values(
+	     
+	     #{order_id}, #{contact_name}, #{contact_position}, #{contact_phone}, #{contact_phone_bak},
+		
+		 #{contact_qq}, #{contact_wangwang}, #{goods_supply}, #{profit_rate}, 
+		 
+		 #{inquiry_num}, #{avg_guest_price}, #{sell_month}, #{operation_direction},
+		
+		 #{manager_mentality}, #{condition_fund},#{weixin_number}, #{weixin_exception},
+		 
+		 #{boss_character},#{deposit_id}
+	    
+	 )
+	 </insert>
+	 
+	<!-- 修改店铺附属数据  -->
+	<update id = "updateShopDeail" parameterType="WorkShopDetailBo">
+		
+		update erp_work_order_shop_detail set 
+		
+		del_flag = 0, 
+		
+		order_id = #{order_id},
+		
+		weixin_number = #{weixin_number}, 
+		
+		weixin_exception = #{weixin_exception}, 
+		
+		boss_character = #{boss_character},
+		
+		contact_name = #{contact_name},
+		
+		contact_position = #{contact_position},
+		
+		contact_phone = #{contact_phone},
+		
+		contact_phone_bak = #{contact_phone_bak},
+		
+		contact_qq = #{contact_qq},
+		
+		contact_wangwang = #{contact_wangwang},
+		
+		goods_supply =#{goods_supply},
+		
+		profit_rate =#{profit_rate},
+		
+		inquiry_num =#{inquiry_num},
+		
+		avg_guest_price =#{avg_guest_price},
+		
+		sell_month =#{sell_month},
+		
+		operation_direction =#{operation_direction},
+		
+		manager_mentality =#{manager_mentality},
+		
+		condition_fund =#{condition_fund}
+	     
+	    where
+	    
+	    order_id = #{order_id}
+	    
+	</update>
+	
+		<!-- 修改店铺附属数据  定金-->
+	<update id = "updateepositShopDeail" parameterType="WorkShopDetailBo">
+		
+		update erp_work_order_shop_detail set 
+		
+		del_flag = 0, 
+		
+		order_id = #{order_id},
+		
+		weixin_number = #{weixin_number}, 
+		
+		weixin_exception = #{weixin_exception}, 
+		
+		boss_character = #{boss_character},
+		
+		contact_name = #{contact_name},
+		
+		contact_position = #{contact_position},
+		
+		contact_phone = #{contact_phone},
+		
+		contact_phone_bak = #{contact_phone_bak},
+		
+		contact_qq = #{contact_qq},
+		
+		contact_wangwang = #{contact_wangwang},
+		
+		goods_supply =#{goods_supply},
+		
+		profit_rate =#{profit_rate},
+		
+		inquiry_num =#{inquiry_num},
+		
+		avg_guest_price =#{avg_guest_price},
+		
+		sell_month =#{sell_month},
+		
+		operation_direction =#{operation_direction},
+		
+		manager_mentality =#{manager_mentality},
+		
+		condition_fund =#{condition_fund}
+	     
+	    where
+	    
+	    deposit_id = #{deposit_id}
+	    
+	</update>
+    <update id="updateOptInfo" parameterType="Map">
+        update erp_work_day_opt_info set
+        shop_id=#{shop_id}
+        where order_id=#{order_id}
+    </update>
+    <update id="updateShopInfo" parameterType="WorkShopBo">
+       update erp_work_shop set
+
+	     last_edited_user_id = #{last_edited_user_id},
+
+	     last_edited_time = #{last_edited_time},
+
+	     shop_id = #{shop_id},
+
+	     shop_name = #{shop_id},
+
+	     shop_nickname = #{shop_name},
+
+	     shop_source = #{shop_source},
+
+	     shop_rank = #{shop_rank},
+		 <!-- TP青岛更改 游胜振 2017-02-27 DEL START -->
+	     <!-- shop_register_time = #{shop_register_time}, -->
+		 <!-- TP青岛更改 游胜振 2017-02-27 DEL END -->
+	     shop_classfy = #{shop_classfy},
+
+	     shop_url = #{shop_url},
+
+        shop_address = #{shop_address},
+
+	     province_id = #{province_id},
+
+	     city_id = #{city_id}
+	     where shop_p_id=#{shop_p_id}
+    </update>
+</mapper>

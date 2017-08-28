@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.user.dao.UserDao">
+
+    <!--已经得救的圣徒-->
+    <select id="getSaitsUserBoByGroupId" resultType="UserBo">
+
+        SELECT
+            *
+        FROM
+            grain_user
+        WHERE
+             FIND_IN_SET (
+                group_id,
+                queryChildrenGroup (#{param1})
+            )
+          and shoujin_flag=1
+    </select>
+
+    <!--福音朋友-->
+    <select id="getFriendsUserBoByGroupId" resultType="UserBo">
+
+        SELECT
+        *
+        FROM
+        grain_user
+        WHERE
+        FIND_IN_SET (
+        group_id,
+        queryChildrenGroup (#{param1})
+        )
+       AND (shoujin_flag != 1 or shoujin_flag is null)
+    </select>
+
+    <!--今年本地新得救圣徒  今年年初(DATE_SUB(CURDATE(),INTERVAL dayofyear(now())-1 DAY))-->
+    <select id="getSaitsUserBoByTimeAndGroupId" resultType="UserBo">
+
+        SELECT
+        *
+        FROM
+        grain_user
+        WHERE
+        FIND_IN_SET (
+            group_id,
+            queryChildrenGroup (#{param1})
+        )
+        AND shoujin_flag = 1
+        and shoujin_time>DATE_SUB(CURDATE(),INTERVAL dayofyear(now())-1 DAY)
+    </select>
+
+    <!--通过ID找用户-->
+    <select id="getUserBoByUserId" resultType="UserBo">
+        SELECT  * from grain_user where user_id=#{param1}
+    </select>
+
+
+    <!--主日聚会-->
+    <select id="getLordDayMeetingByGroupId" resultType="UserBo">
+
+            SELECT
+                u.*
+            FROM
+                grain_user u
+            JOIN grain_meeting_attend m ON m.user_id = u.user_id
+            WHERE
+                FIND_IN_SET(
+                    u.group_id,
+                    queryChildrenGroup (#{param1})
+                )
+            AND u.shoujin_flag = 1
+            AND m.meeting_id = 3
+            and attend_time >= (CurDate() - 7)
+            AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
+    </select>
+
+    <!--聚会-->
+    <select id="getMeetingUserBoByGroupId" resultType="UserBo">
+
+        SELECT
+        u.*
+        FROM
+        grain_user u
+        JOIN grain_meeting_attend m ON m.user_id = u.user_id
+        WHERE
+        FIND_IN_SET(
+        u.group_id,
+        queryChildrenGroup (#{param1})
+        )
+        AND u.shoujin_flag = 1
+         AND m.meeting_id = #{param2}
+        and attend_time >= (CurDate() - 7)
+        AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
+    </select>
+
+
+    <!--参加聚会-->
+    <insert id="attendMeeting">
+        insert into grain_meeting_attend(user_id,meeting_id,attend_time)
+        VALUES (#{param1},#{param2},subdate(curdate(),date_format(curdate(),'%w')) )
+    </insert>
+
+    <!--删除聚会-->
+    <delete id="notAttendMeeting">
+       DELETE from grain_meeting_attend
+       where
+       user_id=#{param1}
+       and meeting_id=#{param2}
+       and attend_time >= (CurDate() - 7)
+       AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
+   </delete>
+
+    <!--受浸-->
+    <update id="shoujin">
+        UPDATE grain_user
+         set
+         shoujin_flag=1,
+         shoujin_local_flag=1,
+         shoujin_time=now()
+        where
+        user_id=#{param1}
+
+    </update>
+    <!--受浸-->
+    <update id="notShoujin">
+        UPDATE grain_user
+        set
+        shoujin_flag=0,
+        shoujin_local_flag=0,
+        shoujin_time=null
+        where
+        user_id=#{param1}
+
+    </update>
+
+
+    <!--增加人员-->
+    <insert id="addUser" parameterType="UserBo">
+        insert into grain_user(name,group_id,group_code,age,sex,shoujin_flag,shoujin_local_flag,shoujin_time,remark)
+        VALUES ('${name}','${group_id}','${group_code}' ,'${age}' ,'${sex}' ,'${shoujin_flag}','${shoujin_local_flag}','${shoujin_time}','${remark}')
+    </insert>
+
+    <update id="updateUser" parameterType="UserBo">
+        update grain_user
+        set
+        name='${name}',
+        group_id='${group_id}',
+        group_code='${group_code}',
+        age='${age}',
+        sex='${sex}',
+        <if test="shoujin_flag != null and shoujin_flag != ''">
+            shoujin_flag='${shoujin_flag}',
+        </if>
+        <if test="shoujin_local_flag != null and shoujin_local_flag != ''">
+            shoujin_local_flag='${shoujin_local_flag}',
+        </if>
+        <if test="shoujin_time != null and shoujin_time != ''">
+            shoujin_time='${shoujin_time}',
+        </if>
+        remark='${remark}'
+        where
+        user_id='${user_id}'
+    </update>
+
+    <!--增加人员-->
+    <insert id="addFriend" parameterType="UserBo">
+        insert into grain_user(name,group_id,group_code,age,sex,remark)
+        VALUES ('${name}','${group_id}','${group_code}' ,'${age}' ,'${sex}' ,'${remark}')
+    </insert>
+    <!--聚会-->
+    <select id="getMeetings" resultType="MeetingBo">
+        SELECT  * from grain_meeting;
+    </select>
+
+    <!--聚会-->
+    <select id="getMeetingByMeeting_id" resultType="MeetingBo">
+        SELECT  * from grain_meeting where meeting_id=#{param1};
+    </select>
+
+
+
+    <!--增加立约-->
+    <insert id="addLiYue" parameterType="LiYueBo">
+        insert into grain_li_yue(li_yue_id,meeting_id,user_id,user_li_yue_type,remark,sort_num)
+        VALUES ('${li_yue_id}','${meeting_id}','${user_id}' ,'${user_li_yue_type}' ,'${remark}' ,'${sort_num}')
+    </insert>
+
+</mapper>

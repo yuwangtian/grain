@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.workday.dao.ServiceDayReportDao">
+
+    <!-- 查询可进行分配的订单-->
+    <select id="getList" resultType="WorkDayOptInfoBo" parameterType="ServiceDayQueryBo">
+        <if test=" 1 > pageSize ">
+            SELECT
+            erp_work_day_opt_info.*
+            FROM
+            erp_work_day_opt_info
+            WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+            <if test="service_company_id_list != null">
+                and service_company_id in
+                <foreach item="item" index="index" collection="service_company_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="service_group_id_list != null">
+                and service_group_id in
+                <foreach item="item" index="index" collection="service_group_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="service_dic_group_id_list != null">
+                and service_dic_group_id in
+                <foreach item="item" index="index" collection="service_dic_group_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="product_id_list != null">
+                and product_id in
+                <foreach item="item" index="index" collection="product_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="inner_flag!=null">
+                <if test="inner_flag==1">
+                    and serviced_money is null
+                </if>
+                <if test="inner_flag==0">
+                    and serviced_money is not null
+                </if>
+            </if>
+            <if test="service_user_name!=null and service_user_name!=''">
+                and service_user_name like '%${service_user_name}%'
+            </if>
+            <if test="report_day_start!=null and report_day_start!=''">
+                and report_day >= '${report_day_start}'
+            </if>
+            <if test="report_day_end!=null and report_day_end!=''">
+                and '${report_day_end}' >= report_day
+            </if>
+            order by report_day desc
+        </if>
+
+        <if test=" pageSize >= 1 ">
+            SELECT
+            erp_work_day_opt_info.*
+            FROM
+            erp_work_day_opt_info
+            WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+            <if test="service_company_id_list != null">
+                and service_company_id in
+                <foreach item="item" index="index" collection="service_company_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="service_group_id_list != null">
+                and service_group_id in
+                <foreach item="item" index="index" collection="service_group_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="service_dic_group_id_list != null">
+                and service_dic_group_id in
+                <foreach item="item" index="index" collection="service_dic_group_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="product_id_list != null">
+                and product_id in
+                <foreach item="item" index="index" collection="product_id_list"
+                         open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="inner_flag!=null">
+                <if test="inner_flag==1">
+                    and serviced_money is null
+                </if>
+                <if test="inner_flag==0">
+                    and serviced_money is not null
+                </if>
+            </if>
+            <if test="service_user_name!=null and service_user_name!=''">
+                and service_user_name like '%${service_user_name}%'
+            </if>
+            <if test="report_day_start!=null and report_day_start!=''">
+                and report_day >= '${report_day_start}'
+            </if>
+            <if test="report_day_end!=null and report_day_end!=''">
+                and '${report_day_end}' >= report_day
+            </if>
+            order by report_day desc
+            limit #{startRow},#{pageSize}
+        </if>
+    </select>
+
+    <select id="getTotalCount" resultType="Integer" parameterType="OrderAssignQueryBo">
+        SELECT
+        COUNT(*)
+        FROM
+        erp_work_day_opt_info
+        WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+        <if test="service_company_id_list != null">
+            and service_company_id in
+            <foreach item="item" index="index" collection="service_company_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="service_group_id_list != null">
+            and service_group_id in
+            <foreach item="item" index="index" collection="service_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="service_dic_group_id_list != null">
+            and service_dic_group_id in
+            <foreach item="item" index="index" collection="service_dic_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="product_id_list != null">
+            and product_id in
+            <foreach item="item" index="index" collection="product_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="inner_flag!=null">
+            <if test="inner_flag==1">
+                and serviced_money is null
+            </if>
+            <if test="inner_flag==0">
+                and serviced_money is not null
+            </if>
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and service_user_name like '%${service_user_name}%'
+        </if>
+        <if test="report_day_start!=null and report_day_start!=''">
+            and report_day >= '${report_day_start}'
+        </if>
+        <if test="report_day_end!=null and report_day_end!=''">
+            and '${report_day_end}' >= report_day
+        </if>
+    </select>
+
+    <!-- 得到部门的统计结果 -->
+    <select id="getGroupServicedDays" resultType="Map" parameterType="OrderAssignQueryBo">
+        SELECT
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as self_sign_am_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as none_self_sign_am_days,
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as self_sign_ae_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as none_self_sign_ae_days,
+        SUM(service_day_flag) as total_serviced_days
+        FROM
+        erp_work_day_opt_info
+        WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+        <if test="service_group_id_list != null">
+            and service_group_id in
+            <foreach item="item" index="index" collection="service_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="product_id_list != null">
+            and product_id in
+            <foreach item="item" index="index" collection="product_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="inner_flag!=null">
+            <if test="inner_flag==1">
+                and serviced_money is null
+            </if>
+            <if test="inner_flag==0">
+                and serviced_money is not null
+            </if>
+        </if>
+        <if test="report_day_start!=null and report_day_start!=''">
+            and report_day >= '${report_day_start}'
+        </if>
+        <if test="report_day_end!=null and report_day_end!=''">
+            and '${report_day_end}' >= report_day
+        </if>
+    </select>
+
+    <!-- 得到小组的统计结果 -->
+    <select id="getDicGroupServicedDays" resultType="Map" parameterType="OrderAssignQueryBo">
+        SELECT
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as self_sign_am_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as none_self_sign_am_days,
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as self_sign_ae_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as none_self_sign_ae_days,
+        SUM(service_day_flag) as total_serviced_days
+        FROM
+        erp_work_day_opt_info
+        WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+        <if test="service_dic_group_id_list != null">
+            and service_dic_group_id in
+            <foreach item="item" index="index" collection="service_dic_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="product_id_list != null">
+            and product_id in
+            <foreach item="item" index="index" collection="product_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="inner_flag!=null">
+            <if test="inner_flag==1">
+                and serviced_money is null
+            </if>
+            <if test="inner_flag==0">
+                and serviced_money is not null
+            </if>
+        </if>
+        <if test="report_day_start!=null and report_day_start!=''">
+            and report_day >= '${report_day_start}'
+        </if>
+        <if test="report_day_end!=null and report_day_end!=''">
+            and '${report_day_end}' >= report_day
+        </if>
+    </select>
+
+    <!-- 得到个人的统计结果 -->
+    <select id="getUserServicedDays" resultType="Map" parameterType="OrderAssignQueryBo">
+        SELECT
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as self_sign_am_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 2) THEN service_day_flag ELSE 0 END) as none_self_sign_am_days,
+        SUM(CASE WHEN (group_id = service_group_id and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as self_sign_ae_days,
+        SUM(CASE WHEN ((group_id != service_group_id or group_id is null) and serivce_user_type = 1) THEN service_day_flag ELSE 0 END) as none_self_sign_ae_days,
+        SUM(service_day_flag) as total_serviced_days
+        FROM
+        erp_work_day_opt_info
+        WHERE valid_flag = 1 and order_state = 4 and serivce_user_type != 3
+        <if test="service_company_id_list != null">
+            and service_company_id in
+            <foreach item="item" index="index" collection="service_company_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="service_group_id_list != null">
+            and service_group_id in
+            <foreach item="item" index="index" collection="service_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="service_dic_group_id_list != null">
+            and service_dic_group_id in
+            <foreach item="item" index="index" collection="service_dic_group_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="product_id_list != null">
+            and product_id in
+            <foreach item="item" index="index" collection="product_id_list"
+                     open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="inner_flag!=null">
+            <if test="inner_flag==1">
+                and serviced_money is null
+            </if>
+            <if test="inner_flag==0">
+                and serviced_money is not null
+            </if>
+        </if>
+        <if test="service_user_id!=null">
+            and service_user_id = '${service_user_id}'
+        </if>
+        <if test="service_user_name!=null and service_user_name!=''">
+            and service_user_name like '%${service_user_name}%'
+        </if>
+        <if test="report_day_start!=null and report_day_start!=''">
+            and report_day >= '${report_day_start}'
+        </if>
+        <if test="report_day_end!=null and report_day_end!=''">
+            and '${report_day_end}' >= report_day
+        </if>
+    </select>
+</mapper>
+

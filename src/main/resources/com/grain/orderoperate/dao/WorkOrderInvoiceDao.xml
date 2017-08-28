@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.orderoperate.dao.WorkOrderInvoiceDao">
+       
+  <sql id="Base_Column_List" >
+    invoice_id  as invoiceId ,
+	order_id as orderId,
+	re_money_id as reMoneyId,
+	shop_name as shopName,
+	taxpayer_id as taxpayerId,
+	company_name as companyName,
+	address as address,
+	bank_name as bankName,
+	phone as phone,
+	bank_account as bankAccount,
+	create_time as createTime,
+	valid_flag as validFlag,
+	invoice_type as  invoiceType
+  </sql>
+  <!--(order_id,re_money_id,shop_name,taxpayer_id,company_name,address,bank_name,phone,bank_account,create_time,valid_flag,invoice_type)
+VALUES (#{orderId},#{reMoneyId},#{shopName},#{taxpayerId},#{companyName},#{address},#{bankName},#{phone},#{bankAccount},#{createTime},#{validFlag},#{invoiceType})
+    -->
+    
+    <select id="getCountWorkOrderInvoice" parameterType="WorkOrderInvoiceBo" resultType="INTEGER">
+      select count(*)  FROM erp_work_order_invoice where order_id= #{orderId} AND shop_name =#{shopName} and re_money_id=#{reMoneyId,jdbcType=INTEGER}
+    </select>
+    
+    
+    <update id="UpdateWorkOrderInviceInfo" parameterType="WorkOrderInvoiceBo" >
+    update erp_work_order_invoice set
+     <!-- TP青岛更改 曹群星 2017-03-08 ADD START -->
+     order_id=#{order_id,jdbcType=VARCHAR},
+     <!-- TP青岛更改 曹群星 2017-03-08 ADD END -->
+     shop_name=#{shopName,jdbcType=VARCHAR},
+      taxpayer_id= #{taxpayerId,jdbcType=VARCHAR},
+     company_name= #{companyName,jdbcType=VARCHAR},
+      address= #{address,jdbcType=VARCHAR},
+      bank_name=  #{bankName,jdbcType=VARCHAR},
+       phone=  #{phone,jdbcType=VARCHAR},
+       bank_account=  #{bankAccount,jdbcType=VARCHAR},
+       create_time= #{createTime,jdbcType=TIMESTAMP},
+       valid_flag= #{validFlag,jdbcType=INTEGER},
+       invoice_type= #{invoiceType,jdbcType=INTEGER}
+      where  invoice_id=#{invoiceId,jdbcType=INTEGER}
+    </update>
+    
+     <!-- <if test="orderId != null" >
+       order_id= #{orderId,jdbcType=INTEGER},
+      </if>
+      <if test="reMoneyId != null" >
+      re_money_id= #{reMoneyId,jdbcType=INTEGER},
+      </if>
+      <if test="shopName != null" >
+     shop_name=#{shopName,jdbcType=VARCHAR},
+      </if>
+      <if test="taxpayerId != null" >
+      taxpayer_id= #{taxpayerId,jdbcType=VARCHAR},
+      </if>
+      <if test="companyName != null" >
+     company_name= #{companyName,jdbcType=VARCHAR},
+      </if>
+      <if test="address != null" >
+      address= #{address,jdbcType=VARCHAR},
+      </if>
+      <if test="bankName != null" >
+      bank_name=  #{bankName,jdbcType=VARCHAR},
+      </if>
+      <if test="phone != null" >
+       phone=  #{phone,jdbcType=VARCHAR},
+      </if>
+      <if test="bankAccount != null" >
+       bank_account=  #{bankAccount,jdbcType=VARCHAR},
+      </if>
+        <if test="createTime != null" >
+       create_time= #{createTime,jdbcType=TIMESTAMP},
+      </if>
+        <if test="validFlag != null" >
+       valid_flag= #{validFlag,jdbcType=INTEGER},
+      </if>
+        <if test="invoiceType != null" >
+       invoice_type= #{invoiceType,jdbcType=INTEGER},
+      </if>
+     </set> -->
+	<insert  id="saveWorkOrderInviceInfo" parameterType="WorkOrderInvoiceBo">
+      INSERT INTO erp_work_order_invoice       
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+      <!-- TP青岛更改 曹群星 2017-03-08 ADD START -->
+      <if test="order_id != null and order_id != '' " >
+        order_id,
+      </if>
+      <!-- TP青岛更改 曹群星 2017-03-08 ADD END -->
+      <if test="shopName != null and shopName != '' " >
+        shop_name,
+      </if>
+      <if test="taxpayerId != null and taxpayerId != ''" >
+        taxpayer_id,
+      </if>
+      <if test="companyName != null and  companyName !=''" >
+        company_name,
+      </if>
+      <if test="address != null and address !=''" >
+        address,
+      </if>
+      <if test="bankName != null and bankName != ''" >
+        bank_name,
+      </if>
+      <if test="phone != null and phone !=''" >
+        phone,
+      </if>
+      <if test="bankAccount != null and bankAccount !=''" >
+        bank_account,
+      </if>
+        <if test="createTime != null and createTime !=''" >
+        create_time,
+      </if>
+        <if test="validFlag != null and validFlag !=''" >
+        valid_flag,
+      </if>
+        <if test="invoiceType != null and invoiceType !=''" >
+        invoice_type,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <!-- TP青岛更改 曹群星 2017-03-08 ADD START -->
+      <if test="order_id != null and order_id !=''" >
+       #{order_id},
+      </if>
+      <!-- TP青岛更改 曹群星 2017-03-08 ADD END -->
+      <if test="shopName != null and shopName !=''" >
+       #{shopName},
+      </if>
+      <if test="taxpayerId != null and taxpayerId !=''" >
+       #{taxpayerId},
+      </if>
+      <if test="companyName != null and companyName !=''" >
+      #{companyName},
+      </if>
+      <if test="address != null and address !=''" >
+       #{address},
+      </if>
+      <if test="bankName != null and bankName !=''" >
+        #{bankName},
+      </if>
+      <if test="phone != null and phone != ''" >
+         #{phone},
+      </if>
+      <if test="bankAccount != null and bankAccount !=''" >
+         #{bankAccount},
+      </if>
+        <if test="createTime != null and createTime !=''" >
+        #{createTime},
+      </if>
+        <if test="validFlag != null and validFlag !=''" >
+        #{validFlag},
+      </if>
+        <if test="invoiceType != null and invoiceType !=''" >
+         #{invoiceType},
+      </if>
+       </trim>
+	</insert>  
+	
+	
+	<select id="getTotalCountWorkOrderInvoice" resultType="Integer">
+        SELECT count(*) FROM erp_work_order_invoice
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        WHERE 1=1 and valid_flag=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+    </select>
+    
+	<select id="getListWorkOrderInvoice" resultType="WorkOrderInvoiceBo">
+        <!--  非分页, 每页记录小于1时表示不进行分页 -->
+        <if test=" 1 > pageSize ">
+            SELECT  <include refid="Base_Column_List" /> FROM erp_work_order_invoice
+            <if test="tableAlias!=null and tableAlias!=''">
+                ${tableAlias}
+            </if>
+            WHERE 1=1 and valid_flag=1
+            <if test="filtersql!=null and filtersql!=''">
+                ${filtersql}
+            </if>
+            <if test="ordersql!=null and ordersql!=''">
+                ${ordersql}
+            </if>
+            order by create_time ASC
+        </if>
+        <!--  分页查询   查询记录  -->
+        SELECT  <include refid="Base_Column_List" /> FROM erp_work_order_invoice
+        <if test="tableAlias!=null and tableAlias!=''">
+            ${tableAlias}
+        </if>
+        WHERE 1=1 and valid_flag=1
+        <if test="filtersql!=null and filtersql!=''">
+            ${filtersql}
+        </if>
+        <if test="ordersql!=null and ordersql!=''">
+            ${ordersql}
+        </if>
+        order by create_time ASC
+        LIMIT #{startResult},#{pageSize} 
+    </select >
+    
+	<select id="searchInvoiceList" parameterType="WorkInvoiceQueryBo" resultType="WorkOrderInvoiceBo">
+	     
+            SELECT
+           <include refid="Base_Column_List" /> FROM erp_work_order_invoice
+           
+            WHERE 1=1 and valid_flag=1
+            
+            <if test="shopName !=null and shopName!=''">
+                and shop_name like '%${shopName}%'
+            </if>
+            <if test="address !=null and address !=''">
+                and address like '%${address}%'
+            </if>
+            <if test="bankName!=null and bankName!='' ">
+                and bank_name like '%${bankName}%'
+            </if>
+            <if test="taxpayerId != null and taxpayerId !=''" >
+                and taxpayer_id like '%${taxpayerId}%'
+            </if>
+            <if test="companyName != null and companyName !=''" >
+                and company_name like '%${companyName}%'
+            </if>
+            <if test="phone!=null and phone!=''">
+                and phone like '%${phone}%'
+            </if>
+            <if test="bankAccount!=null and bankAccount!=''">
+                and bank_account like '%${bankAccount}%'
+            </if>
+            <if test="invoiceType!=null and invoiceType!=''">
+                and invoice_type =  ${invoiceType}
+            </if>
+            <if test="begin_time!=null and begin_time!=''">
+                and create_time &gt;= #{begin_time}
+            </if>
+            <if test="end_time!=null and end_time!=''">
+                and #{end_time} &gt;= create_time
+            </if>
+	      order by create_time desc
+	      <if test="page >= 0"> LIMIT #{page},#{rows} </if>
+          
+	</select>
+	
+	
+		<select id="getTotalCount" parameterType="WorkInvoiceQueryBo" resultType="Integer">
+            SELECT count(*) FROM erp_work_order_invoice
+            WHERE 1=1 and valid_flag=1
+           
+            <if test="shopName !=null and shopName!=''">
+                and shop_name like '%${shopName}%'
+            </if>
+            <if test="address !=null and address !=''">
+                and address like '%${address}%'
+            </if>
+            <if test="bankName!=null and bankName!='' ">
+                and bank_name like '%${bankName}%'
+            </if>
+            <if test="phone!=null and phone!=''">
+                and phone like '%${phone}%'
+            </if>
+            <if test="bankAccount!=null and bankAccount!=''">
+                and bank_account like '%${bankAccount}%'
+            </if>
+            <if test="taxpayerId != null and taxpayerId !=''" >
+                and taxpayer_id like '%${taxpayerId}%'
+            </if>
+            <if test="companyName != null and companyName !=''" >
+                and company_name like '%${companyName}%'
+            </if>
+            <if test="invoiceType!=null and invoiceType!=''">
+                and invoice_type =  ${invoiceType}
+            </if>
+             <if test="begin_time!=null and begin_time!=''">
+                and create_time &gt;= #{begin_time}
+            </if>
+            <if test="end_time!=null and end_time!=''">
+                and #{end_time} &gt;= create_time
+            </if>
+	
+	</select>
+</mapper>

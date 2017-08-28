@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.target.dao.TargetDao">
+    <!-- 查询信息 -->
+    <select id="getTarget" resultType="TargetBo">
+        <!-- 不分页查询 -->
+        <if test=" 1 > pageSize ">
+            <include refid="queryTargetSql"></include>
+        </if>
+        <!-- 分页查询 -->
+        <if test=" pageSize > 1 ">
+            <include refid="queryTargetSql"/>
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <!-- 查询目标列表数据 -->
+    <sql id="queryTargetSql">
+        SELECT
+          *
+        FROM
+          erp_performance_target
+        WHERE
+          <include refid="targetWhere"/>
+        ORDER BY create_time DESC
+
+    </sql>
+
+    <!-- 查询目标总记录数 -->
+    <select id="getTargetCount" resultType="Integer">
+        SELECT
+          count(*)
+        FROM
+          erp_performance_target
+        WHERE
+        <include refid="targetWhere"/>
+    </select>
+
+    <!-- 目标列表查询条件-->
+    <sql id="targetWhere">
+        1=1
+        AND valid_flag = 1
+        AND del_flag = 0
+
+        <if test=" company_id != null ">
+            AND company_id = #{company_id}
+        </if>
+
+        <if test=" group_id != null ">
+            AND group_id = #{group_id}
+        </if>
+
+        <if test=" dic_group_id != null ">
+            AND dic_group_id = #{dic_group_id}
+        </if>
+
+        <if test=" user_name != null and user_name != '' ">
+            AND user_name LIKE  CONCAT('%',#{user_name},'%')
+        </if>
+
+        <if test=" target_start_time != null ">
+            AND target_start_time = #{target_start_time}
+        </if>
+
+        <if test=" target_end_time != null ">
+            AND target_end_time = #{target_end_time}
+        </if>
+
+        <if test=" target_type != null ">
+            AND target_type = #{target_type}
+        </if>
+
+    </sql>
+
+    <!-- 添加目标 -->
+    <insert id="insertTarget">
+        INSERT INTO  erp_performance_target (
+            company_id,
+            company_name,
+            group_id,
+            group_name,
+            dic_group_id,
+            dic_group_name,
+            user_id,
+            user_name,
+            target_start_time,
+            target_end_time,
+            target_type,
+            target_value,
+            remark,
+            create_time,
+            create_user_id,
+            last_edited_time,
+            last_edited_user_id
+        )
+        VALUES (
+            #{company_id},
+            #{company_name},
+            #{group_id},
+            #{group_name},
+            #{dic_group_id},
+            #{dic_group_name},
+            #{user_id},
+            #{user_name},
+            #{target_start_time},
+            #{target_end_time},
+            #{target_type},
+            #{target_value},
+            #{remark},
+            #{create_time},
+            #{create_user_id},
+            #{last_edited_time},
+            #{last_edited_user_id}
+        );
+    </insert>
+
+
+    <!-- 更新目标 -->
+    <update id="updateTarget">
+        UPDATE
+          erp_performance_target
+        SET
+            company_id = #{company_id},
+            company_name = #{company_name},
+            group_id = #{group_id},
+            group_name =  #{group_name},
+            dic_group_id = #{dic_group_id},
+            dic_group_name = #{dic_group_name},
+            user_id = #{user_id},
+            user_name = #{user_name},
+            target_start_time = #{target_start_time},
+            target_end_time = #{target_end_time},
+            target_type = #{target_type},
+            target_value = #{target_value},
+            remark = #{remark},
+            last_edited_time = #{last_edited_time},
+            last_edited_user_id = #{last_edited_user_id}
+        WHERE
+          target_id = #{target_id}
+    </update>
+
+
+    <!-- 删除目标 -->
+    <update id="deleteTarget">
+        UPDATE erp_performance_target
+        SET valid_flag = 0,
+        del_flag = 1,
+        last_edited_time = #{last_edited_time},
+        last_edited_user_id = #{last_edited_user_id},
+        invalid_time = #{invalid_time},
+        delete_time = #{delete_time}
+        WHERE
+        target_id = #{target_id}
+    </update>
+
+</mapper>

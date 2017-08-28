@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.sysconfig.debugInfo.dao.DebugDao">
+
+
+    <!-- 添加培训 -->
+    <insert id="insertDebug">
+       INSERT INTO base_debug (
+            title,
+            bug_type,
+            shop_name,
+            order_id,
+            user_name,
+            dept_name,
+            debug_content
+        )
+        VALUES (
+            #{title},
+            #{bug_type},
+            #{shop_name},
+            #{order_id},
+            #{user_name},
+            #{dept_name},
+            #{debug_content}
+          );
+
+    </insert>
+
+
+</mapper>

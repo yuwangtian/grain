@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.businessAssign.dao.BusinessAssignDao">
+    <!-- 查询可进行商务分配的订单-->
+    <select id="getList" resultType="AssignOrderBo" parameterType="BusAssignQueryBo">
+        <if test=" 1 > pageSize ">
+            SELECT
+            erp_work_order.*
+            FROM
+            erp_work_order
+            WHERE 1=1 and erp_work_order.del_flag=0 and erp_work_order.valid_flag=1
+            <if test="order_id!=null and order_id!=''">
+                and erp_work_order.order_id ='${order_id}'
+            </if>
+            <if test="curr_pro_code!=null">
+                and erp_work_order.curr_pro_code = ${curr_pro_code}
+            </if>
+            <if test="approve_state!=null">
+                and erp_work_order.approve_state = ${approve_state}
+            </if>
+            <if test="product_id!=null">
+                and erp_work_order.product_id = ${product_id}
+            </if>
+            <if test="orderStateSel!=null ">
+                and erp_work_order.service_state = ${orderStateSel}
+            </if>
+            <if test="companyId!=null and companyId!=''">
+                and erp_work_order.company_id = ${companyId}
+            </if>
+            <if test="deptId!=null and deptId!=''">
+                and erp_work_order.group_id = ${deptId}
+            </if>
+            <if test="orderManSel!=null and orderManSel!=''">
+                and erp_work_order.user_name like  '%${orderManSel}%'
+            </if>
+            <if test="shopIdSel!=null and shopIdSel!=''">
+                and erp_work_order.shop_name like  '%${shopIdSel}%'
+            </if>
+            <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+                and erp_work_order.service_company_id = ${serviceCompanyId}
+            </if>
+            <if test="serviceDeptId!=null and serviceDeptId!=''">
+                and erp_work_order.service_group_id = ${serviceDeptId}
+            </if>
+            <if test="startDateSel!=null and startDateSel!=''">
+                and erp_work_order.create_time >= '${startDateSel}'
+            </if>
+            <if test="endDateSel!=null and endDateSel!=''">
+                and '${endDateSel}' >= erp_work_order.create_time
+            </if>
+            and (
+                1=2
+                <if test="orderGroupStr!=null and orderGroupStr!=''">
+                    or erp_work_order.group_id in ${orderGroupStr}
+                </if>
+                <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                    or erp_work_order.service_group_id in ${serviceGroupStr}
+                </if>
+            )
+            and (erp_work_order.product_id != 6202 or (erp_work_order.product_id = 6202 and erp_work_order.main_order_id is not null))
+            and inner_flag != 1
+            order by erp_work_order.create_time desc
+        </if>
+
+        <if test=" pageSize >= 1 ">
+            SELECT
+            erp_work_order.*
+            FROM
+            erp_work_order
+            WHERE 1=1 and erp_work_order.del_flag=0 and erp_work_order.valid_flag=1
+            <if test="order_id!=null and order_id!=''">
+                and erp_work_order.order_id ='${order_id}'
+            </if>
+            <if test="curr_pro_code!=null">
+                and erp_work_order.curr_pro_code = ${curr_pro_code}
+            </if>
+            <if test="approve_state!=null">
+                and erp_work_order.approve_state = ${approve_state}
+            </if>
+            <if test="product_id!=null">
+                and erp_work_order.product_id = ${product_id}
+            </if>
+            <if test="orderStateSel!=null ">
+                and erp_work_order.service_state = ${orderStateSel}
+            </if>
+            <if test="companyId!=null and companyId!=''">
+                and erp_work_order.company_id = ${companyId}
+            </if>
+            <if test="deptId!=null and deptId!=''">
+                and erp_work_order.group_id = ${deptId}
+            </if>
+            <if test="orderManSel!=null and orderManSel!=''">
+                and erp_work_order.user_name like  '%${orderManSel}%'
+            </if>
+            <if test="shopIdSel!=null and shopIdSel!=''">
+                and erp_work_order.shop_name like  '%${shopIdSel}%'
+            </if>
+            <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+                and erp_work_order.service_company_id = ${serviceCompanyId}
+            </if>
+            <if test="serviceDeptId!=null and serviceDeptId!=''">
+                and erp_work_order.service_group_id = ${serviceDeptId}
+            </if>
+            <if test="startDateSel!=null and startDateSel!=''">
+                and erp_work_order.create_time >= '${startDateSel}'
+            </if>
+            <if test="endDateSel!=null and endDateSel!=''">
+                and '${endDateSel}' >= erp_work_order.create_time
+            </if>
+
+            and (
+                1=2
+                <if test="orderGroupStr!=null and orderGroupStr!=''">
+                    or erp_work_order.group_id in ${orderGroupStr}
+                </if>
+                <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                    or erp_work_order.service_group_id in ${serviceGroupStr}
+                </if>
+            )
+            and (erp_work_order.product_id != 6202 or (erp_work_order.product_id = 6202 and erp_work_order.main_order_id is not null))
+            and inner_flag != 1
+            order by erp_work_order.create_time desc
+            limit ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <select id="getTotalCount" resultType="Integer" parameterType="BusAssignQueryBo">
+        SELECT
+          count(1)
+        FROM
+        erp_work_order
+        WHERE 1=1 and erp_work_order.del_flag=0 and erp_work_order.valid_flag=1
+        <if test="order_id!=null and order_id!=''">
+            and erp_work_order.order_id ='${order_id}'
+        </if>
+        <if test="curr_pro_code!=null">
+            and erp_work_order.curr_pro_code = ${curr_pro_code}
+        </if>
+        <if test="approve_state!=null">
+            and erp_work_order.approve_state = ${approve_state}
+        </if>
+        <if test="product_id!=null">
+            and erp_work_order.product_id = ${product_id}
+        </if>
+        <if test="orderStateSel!=null ">
+            and erp_work_order.service_state = ${orderStateSel}
+        </if>
+        <if test="companyId!=null and companyId!=''">
+            and erp_work_order.company_id = ${companyId}
+        </if>
+        <if test="deptId!=null and deptId!=''">
+            and erp_work_order.group_id = ${deptId}
+        </if>
+        <if test="orderManSel!=null and orderManSel!=''">
+            and erp_work_order.user_name like  '%${orderManSel}%'
+        </if>
+        <if test="shopIdSel!=null and shopIdSel!=''">
+            and erp_work_order.shop_name like  '%${shopIdSel}%'
+        </if>
+        <if test="serviceCompanyId!=null and serviceCompanyId!=''">
+            and erp_work_order.service_company_id = ${serviceCompanyId}
+        </if>
+        <if test="serviceDeptId!=null and serviceDeptId!=''">
+            and erp_work_order.service_group_id = ${serviceDeptId}
+        </if>
+        <if test="startDateSel!=null and startDateSel!=''">
+            and erp_work_order.create_time >= '${startDateSel}'
+        </if>
+        <if test="endDateSel!=null and endDateSel!=''">
+            and '${endDateSel}' >= erp_work_order.create_time
+        </if>
+
+        and (
+            1=2
+            <if test="orderGroupStr!=null and orderGroupStr!=''">
+                or erp_work_order.group_id in ${orderGroupStr}
+            </if>
+            <if test="serviceGroupStr!=null and serviceGroupStr!=''">
+                or erp_work_order.service_group_id in ${serviceGroupStr}
+            </if>
+        )
+        and (erp_work_order.product_id != 6202 or (erp_work_order.product_id = 6202 and erp_work_order.main_order_id is not null))
+        and inner_flag != 1
+    </select>
+    <!--根据订单ID查找订单-->
+    <select id="getWorkOrderById" parameterType="String" resultType="AssignOrderBo">
+        SELECT
+            *
+        FROM
+            erp_work_order
+        WHERE order_id= #{id}
+    </select>
+
+    <update id="updateServiceCompany" parameterType="java.util.Map">
+        update erp_work_order set
+        service_company_id = #{company_id},
+        current_assign_state=#{current_assign_state_company}
+        where
+        order_id = #{order_id}
+    </update>
+
+    <update id="updateServiceGroup" parameterType="java.util.Map">
+        update erp_work_order set
+        service_group_id = #{group_id},
+        current_assign_state=#{current_assign_state_group}
+        where
+        order_id = #{order_id}
+    </update>
+
+    <insert id="insertCurAssignCompanyInfo" parameterType="java.util.Map"
+            useGeneratedKeys="true" keyProperty="assign_current_id">
+        insert into erp_workorder_assign_current
+        (order_id,be_assign_resource_id,be_assign_resource_type,be_assign_type_name,assign_time)
+        values
+        (#{order_id},#{company_id},#{be_assign_resource_type_company},#{be_assign_type_name_company},#{create_time})
+    </insert>
+
+    <insert id="insertCurAssignGroupInfo" parameterType="java.util.Map"
+            useGeneratedKeys="true" keyProperty="assign_current_id">
+        insert into erp_workorder_assign_current
+        (order_id,be_assign_resource_id,be_assign_resource_type,be_assign_type_name,assign_time)
+        values
+        (#{order_id},#{group_id},#{be_assign_resource_type_group},#{be_assign_type_name_group},#{create_time})
+    </insert>
+
+    <insert id="insertAssignCompanyLog" parameterType="java.util.Map"
+            useGeneratedKeys="true" keyProperty="assign_log_id">
+        insert into erp_workorder_assign_log
+        (order_id,assign_user_id,assign_direct_group_id,assign_state,be_assign_resource_type,be_assign_resource_id,be_assign_resource_name,assign_time)
+        values
+        (#{order_id},#{usr_id},#{login_group_id},#{current_assign_state_company},#{be_assign_resource_type_company},#{company_id},#{company_name},#{create_time})
+    </insert>
+
+    <insert id="insertAssignGroupLog" parameterType="java.util.Map"
+            useGeneratedKeys="true" keyProperty="assign_log_id">
+        insert into erp_workorder_assign_log
+        (order_id,assign_user_id,assign_direct_group_id,assign_state,be_assign_resource_type,be_assign_resource_id,be_assign_resource_name,assign_time)
+        values
+        (#{order_id},#{usr_id},#{login_group_id},#{current_assign_state_group},#{be_assign_resource_type_group},#{group_id},#{group_name},#{create_time})
+    </insert>
+    <!--根据订单ID查找订单-->
+    <select id="getCompanyIdWithLoginGroupId" parameterType="Integer" resultType="Integer">
+        SELECT max(main_company_id) from base_group where group_id=#{groupId}
+    </select>
+
+    <!--检查是否可以继续分配部门-->
+    <select id="checkAssignAble" parameterType="BusAssignConfigBo" resultType="Integer">
+        SELECT max(assign_flag) from erp_workorder_bus_assign_config where from_company_id=#{from_company_id} and to_company_id=#{to_company_id}
+    </select>
+
+    <!--获取店铺信息-->
+    <select id="getShopInfoById" parameterType="Integer" resultType="WorkShopBo">
+        select * from erp_work_shop where shop_p_id=#{id}
+    </select>
+    
+    <!--获取客户信息-->
+    <select id="getCustomerInfoById" parameterType="Integer" resultType="CustomerBo">
+        select * from erp_work_customer where customer_id=#{id}
+    </select>
+    
+    <!--获取客户信息-->
+    <select id="getServiceInfoByOrderId" parameterType="String" resultType="ServiceBo">
+        select * from erp_work_order_service where order_id=#{order_id}
+    </select>
+    
+    <!-- 订单公司个性化配置（包括商务分配）  配置数据 -->
+    <select id="getListCompanyConfig" resultType="WorkorderCompanyConfig">
+	    <!--  非分页, 每页记录小于1时表示不进行分页 -->
+		  <if test=" 1 > pageSize ">
+            SELECT * FROM erp_workorder_company_config 
+	        <if test="tableAlias!=null and tableAlias!=''">
+	        ${tableAlias}
+	        </if>
+	        WHERE 1=1
+	        <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	        </if>
+	        <if test="ordersql!=null and ordersql!=''">
+	        ${ordersql}
+	        </if>
+	      </if>
+          <!--  分页查询   查询记录  -->
+           SELECT *  FROM erp_workorder_company_config 
+	       <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias} 
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	       ${filtersql}
+	       </if>
+	       <if test="ordersql!=null and ordersql!=''">
+	       ${ordersql}
+	       </if>
+	       LIMIT #{startResult},#{pageSize}
+	</select>
+	<!--  查询并设置记录总数  -->
+    <select id="getTotalCountListCompanyConfig" resultType="Integer">
+           SELECT count(*) FROM erp_workorder_company_config 
+           <if test="tableAlias!=null and tableAlias!=''">
+	       ${tableAlias} 
+	       </if>
+	       WHERE 1=1
+	       <if test="filtersql!=null and filtersql!=''">
+	        ${filtersql}
+	       </if>
+	</select>
+
+</mapper>

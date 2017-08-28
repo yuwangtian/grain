@@ -1,0 +1,61 @@
+apply plugin: 'java'
+apply plugin: 'ssh'
+group 'gradle'
+version = '1.0'
+
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'org.hidetake:gradle-ssh-plugin:0.3.10'
+  }
+}
+
+
+// Global settings
+ssh {
+    identity = file('/usr/lib/gradle/id_rsa/id_rsa.60.77') // Enable public key authentication
+    knownHosts = allowAnyHosts    // Disable host key verification
+}
+
+//Add a remote address
+remotes {
+    webServer {
+        host = '58.56.11.66'
+        port=17624
+        user = 'root'
+    }
+}
+
+task deploy(type: SshTask) {
+    description = 'Deploys an application to the server.'
+
+    ssh {
+        // Enable PTY allocation for sudo
+        pty = false
+    }
+    
+    session(remotes.webServer) {
+
+        // Put a built WAR to the server
+        put 'target/workorder.war', '/home/workorder.war'
+        execute '/home/innerSystem/webserver/workorder/apache-tomcat-7.0.57/bin/shutdown.sh'
+        // Deploy war app 
+        execute 'rm -fr /home/innerSystem/webapps/workorder;unzip -o /home/workorder.war -d /home/innerSystem/webapps/workorder;rm -f /home/workorder.war'
+    }
+}
+
+task startup(type: SshTask) {
+    description = 'Deploys an application to the server.'
+
+    ssh {
+        // Enable PTY allocation for sudo
+        pty = false
+    }
+    
+    session(remotes.webServer) {
+        execute '/home/innerSystem/webserver/workorder/apache-tomcat-7.0.57/bin/startup.sh'
+    }
+}
+

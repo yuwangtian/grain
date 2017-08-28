@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.report.orderReport.dao.OrderReportDao">
+
+    <select id="getOrderCountOfMonth" resultType="Integer">
+        SELECT
+            COUNT(*)
+        FROM
+            erp_work_order
+        WHERE
+            <include refid="orderOfMonthWhere"/>
+    </select>
+
+    <select id="getOrderOfMonth" resultType="OrderReportBo">
+        SELECT
+            *
+        FROM
+            erp_work_order
+        WHERE
+            <include refid="orderOfMonthWhere"/>
+        <if test=" pageSize > 0">
+            LIMIT  ${startRow},${pageSize}
+        </if>
+
+    </select>
+
+    <select id="getReMoneyOrderCountOfMonth" resultType="Integer">
+        SELECT
+            COUNT(DISTINCT order_id)
+        FROM
+            erp_work_order_re_money
+        WHERE
+        <include refid="reMoneyOrderOfMonthWhere"/>
+    </select>
+
+    <select id="getReMoneyOrderOfMonth" resultType="OrderReportBo">
+        SELECT
+            *
+        FROM
+            erp_work_order
+        JOIN (
+            SELECT
+                order_id as re_money_order_id,
+                COUNT(1) as operate_count,
+                SUM(real_re_money) as total_money,
+                SUM(target_service_days) as total_target_service_days,
+                SUM(IF(re_type=11,real_re_money,0)) as service_reason_tuikuan_money,
+                SUM(IF(re_type=11,0,real_re_money)) as not_service_reason_tuikuan_money,
+                SUM(frozen_days) as total_frozen_days
+            FROM
+                erp_work_order_re_money
+            WHERE
+                <include refid="reMoneyOrderOfMonthWhere"/>
+            GROUP BY order_id
+        ) re_money
+        ON re_money.re_money_order_id = erp_work_order.order_id
+        <if test=" pageSize > 0">
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <select id="getReMoneyDetailOfMonthCount" resultType="Integer">
+        SELECT
+           COUNT(*)
+        FROM
+            erp_work_order_re_money
+        WHERE
+        <include refid="reMoneyOrderOfMonthWhere"/>
+    </select>
+
+    <select id="getReMoneyDetailOfMonth" resultType="WorkOrderReMoneyBo">
+        SELECT
+            *
+        FROM
+            erp_work_order_re_money
+        WHERE
+            <include refid="reMoneyOrderOfMonthWhere"/>
+        <if test=" pageSize > 0">
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <select id="getOperateOrderOfMonth" resultType="OrderReportBo">
+        SELECT
+        *
+        FROM
+        erp_work_order
+        LEFT JOIN (
+            SELECT
+                *
+            FROM (
+                SELECT
+                    order_id as operate_order_id,
+                    active_flag
+                FROM
+                    erp_workorder_operate
+                WHERE
+                    <include refid="operateOrderOfMonthWhere"/>
+                ORDER BY acture_time desc
+            ) operate_before_groupby
+            GROUP BY operate_order_id
+        ) operate
+        ON operate.operate_order_id = erp_work_order.order_id
+        WHERE
+            <include refid="orderOfMonthWhere"/>
+        <if test=" pageSize > 0">
+            LIMIT  ${startRow},${pageSize}
+        </if>
+    </select>
+
+    <sql id="orderOfMonthWhere">
+        valid_flag = 1
+        AND del_flag = 0
+        AND order_approve_state = 2
+        AND ((product_id = 6202 and main_order_id is not null) or product_id != 6202)
+        <if test=" create_time != null and create_time != '' ">
+            AND SUBSTR(create_time, 1, 7) = SUBSTR(#{create_time}, 1, 7)
+        </if>
+        <if test=" order_approve_agree_time != null and order_approve_agree_time != '' ">
+            AND SUBSTR(order_approve_agree_time, 1, 7) = SUBSTR(#{order_approve_agree_time}, 1, 7)
+        </if>
+
+        <if test=" real_end_time != null and real_end_time != '' ">
+            AND SUBSTR(real_end_time, 1, 7) = SUBSTR(#{real_end_time}, 1, 7)
+        </if>
+        <if test=" last_suspend_time != null and last_suspend_time != '' ">
+            AND SUBSTR(last_suspend_time, 1, 7) = SUBSTR(#{last_suspend_time}, 1, 7)
+        </if>
+        <if test=" service_state != null ">
+            AND service_state = #{service_state}
+        </if>
+        <if test=" order_type != null ">
+            AND order_type = #{order_type}
+        </if>
+        <if test=" order_source != null ">
+            AND order_source = #{order_source}
+        </if>
+        <if test=" end_type != null ">
+            AND end_type = #{end_type}
+        </if>
+        <if test=" service_group_id != null ">
+            AND service_group_id = #{service_group_id}
+        </if>
+        <if test=" group_id != null ">
+            AND group_id = #{group_id}
+        </if>
+        <if test=" exist_xudan_flag != null ">
+            AND exist_xudan_flag = #{exist_xudan_flag}
+            AND EXISTS (
+                SELECT
+                    1
+                FROM
+                    erp_work_order i
+                WHERE
+                    i.parent_order_id = erp_work_order.order_id
+                    AND i.order_approve_state = 2
+                    AND i.order_source = 9
+            )
+        </if>
+
+    </sql>
+
+    <sql id="reMoneyOrderOfMonthWhere">
+        valid_flag = 1
+        AND del_flag = 0
+        AND approve_state = 2
+        <if test=" order_id != null and order_id != '' ">
+            AND order_id = #{order_id}
+        </if>
+        <if test=" opt_time != null and opt_time != '' ">
+            AND SUBSTR(opt_time, 1, 7) = SUBSTR(#{opt_time}, 1, 7)
+        </if>
+        <if test=" approve_agree_time != null and approve_agree_time != '' ">
+            AND SUBSTR(approve_agree_time, 1, 7) = SUBSTR(#{approve_agree_time}, 1, 7)
+        </if>
+        <if test=" re_flag != null ">
+            AND re_flag = #{re_flag}
+        </if>
+        <if test=" re_all_flag != null ">
+            AND re_all_flag = #{re_all_flag}
+        </if>
+        <if test=" re_type != null ">
+            AND re_type = #{re_type}
+        </if>
+        <if test=" not_re_type != null ">
+            AND (re_type != #{not_re_type} OR re_type IS NULL )
+        </if>
+        <if test=" service_group_id != null ">
+            AND service_group_id = #{service_group_id}
+        </if>
+    </sql>
+
+    <sql id="operateOrderOfMonthWhere">
+        valid_flag = 1
+        AND del_flag = 0
+
+        <if test=" order_id != null and order_id != '' ">
+            AND order_id = #{order_id}
+        </if>
+        <if test=" opt_type != null ">
+            AND opt_type = #{opt_type}
+        </if>
+        <if test=" last_suspend_time != null and last_suspend_time != '' ">
+            AND SUBSTR(acture_time, 1, 7) = SUBSTR(#{last_suspend_time}, 1, 7)
+        </if>
+        <if test=" service_group_id != null ">
+            AND service_group_id = #{service_group_id}
+        </if>
+    </sql>
+</mapper>

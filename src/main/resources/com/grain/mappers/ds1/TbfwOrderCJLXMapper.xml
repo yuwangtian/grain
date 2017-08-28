@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.grain.mappers.ds1.TbfwOrderCJLXMapper">
+    <insert id="insert">
+        INSERT INTO de_tbfw_order_cjlxConfig
+        (id,
+         ddlyType)
+        VALUES
+            (#{id},
+             #{ddlyType});
+    </insert>
+    <select id="getList" resultType="TbfwOrderCJLX">
+        SELECT
+            id,
+            ddlyType
+        FROM de_tbfw_order_cjlxConfig
+        ORDER BY ddlyType
+    </select>
+    <update id="update">
+        UPDATE de_tbfw_order_cjlxConfig
+        SET
+            ddlyType = #{ddlyType}
+        WHERE id = #{id};
+    </update>
+
+    <select id="findById" resultType="TbfwOrderCJLX">
+        SELECT
+            *
+        FROM de_tbfw_order_cjlxConfig
+        WHERE id = #{id}
+    </select>
+</mapper>
