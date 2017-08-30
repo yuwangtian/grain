@@ -21,6 +21,14 @@ public interface UserDao extends BaseDao {
      */
      List<UserBo> getSaitsUserBoByGroupId(String groupId);
 
+    /**
+     *  已立约的人员
+     * 通过部门ID获取人员
+     * @return
+     */
+    List<UserBo> getLiYueUserBosByGroupId(String groupId,String meetingId);
+
+
 
     /**
      * 福音朋友

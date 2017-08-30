@@ -62,6 +62,15 @@ public class MeetingBo extends BaseBo{
      * 聚会的人员
      */
     private List<UserBo> userBoList=new ArrayList<>();
+
+    /**
+     * 立约的人员
+     */
+    private List<UserBo> liYueUserBoList=new ArrayList<>();
+    /**
+     * 立约的人数
+     */
+    private int liYue_num;
     /**
      * 聚会的人数
      */
@@ -71,7 +80,21 @@ public class MeetingBo extends BaseBo{
      */
     private int meeting_percent;
 
+    public List<UserBo> getLiYueUserBoList() {
+        return liYueUserBoList;
+    }
 
+    public void setLiYueUserBoList(List<UserBo> liYueUserBoList) {
+        this.liYueUserBoList = liYueUserBoList;
+    }
+
+    public int getLiYue_num() {
+        return liYue_num;
+    }
+
+    public void setLiYue_num(int liYue_num) {
+        this.liYue_num = liYue_num;
+    }
 
     public List<UserBo> getUserBoList() {
         return userBoList;

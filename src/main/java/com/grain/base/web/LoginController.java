@@ -122,6 +122,11 @@ public class LoginController extends BaseAction {
             }
             meetingBo.setMeeting_num(meeting_num);
             meetingBo.setUserBoList(userList);
+            if ("1".equals(meetingBo.getLiyue_flag())) {
+                List<UserBo> liYueList=userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(),meetingBo.getMeeting_id());
+                meetingBo.setLiYueUserBoList(liYueList);
+                meetingBo.setLiYue_num(liYueList.size());
+            }
             int meeting_percent = 0;
             if (saits_total_num != 0) {
                 meeting_percent = 100 * meeting_num / saits_total_num;

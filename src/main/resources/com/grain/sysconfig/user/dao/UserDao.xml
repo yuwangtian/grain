@@ -18,6 +18,35 @@
           and shoujin_flag=1
     </select>
 
+    <!--立约人员-->
+    <select id="getLiYueUserBosByGroupId" resultType="UserBo">
+        SELECT
+            uu.*
+        FROM
+            grain_user uu join grain_li_yue yy  on uu.user_id=yy.user_id
+        WHERE
+            yy.li_yue_id IN (
+                SELECT
+                    a.id
+                FROM
+                    (
+                        SELECT
+                            y.li_yue_id id
+                        FROM
+                            grain_li_yue y
+                        JOIN grain_user u ON y.user_id = u.user_id
+                        WHERE
+                            FIND_IN_SET(
+                                u.group_id,
+                                queryChildrenGroup (#{param1})
+                            )
+                    ) a
+            )
+            and yy.meeting_id=#{param2}
+            ORDER BY yy.li_yue_id
+    </select>
+
+
     <!--福音朋友-->
     <select id="getFriendsUserBoByGroupId" resultType="UserBo">
 
@@ -169,14 +198,13 @@
     </insert>
     <!--聚会-->
     <select id="getMeetings" resultType="MeetingBo">
-        SELECT  * from grain_meeting;
+        SELECT  * from grain_meeting where valid_flag=1;
     </select>
 
     <!--聚会-->
     <select id="getMeetingByMeeting_id" resultType="MeetingBo">
-        SELECT  * from grain_meeting where meeting_id=#{param1};
+        SELECT  * from grain_meeting where meeting_id=#{param1} and valid_flag=1;
     </select>
-
 
 
     <!--增加立约-->

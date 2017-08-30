@@ -30,6 +30,15 @@ public class UserService {
       return   userDao.getSaitsUserBoByGroupId(groupId);
     }
     /**
+     * 通过部门ID获取人员(已受浸)
+     * @param groupId
+     * @return
+     */
+    public List<UserBo> getLiYueUserBosByGroupId(String groupId,String meetingId){
+        return   userDao.getLiYueUserBosByGroupId(groupId, meetingId);
+    }
+
+    /**
      * 通过部门ID获取人员(福音朋友)
      * @param groupId
      * @return

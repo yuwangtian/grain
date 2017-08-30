@@ -159,16 +159,36 @@ public class UserAction extends BaseAction {
             returnPate = "/meetingUserList";
             MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
             typeName = meetingBo.getMeeting_name();
+
             List<UserBo> allBoList = userService.getSaitsUserBoByGroupId(groupBo.getGroup_id());
-            List<UserBo> lordList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
+            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
             userBoList = new ArrayList<>();
             for (UserBo allUserBo : allBoList) {
-                if (!lordList.contains(allUserBo)) {
+                if (!meetingList.contains(allUserBo)) {
                     allUserBo.setLord_flag("0");
                     userBoList.add(allUserBo);
                 }
             }
-            for (UserBo userBo : lordList) {
+            for (UserBo userBo : meetingList) {
+                userBo.setLord_flag("1");
+                userBoList.add(userBo);
+            }
+        }else if ("meeting_liyue".equals(type)) {
+            returnPate = "/meetingUserList";
+            MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
+            typeName = meetingBo.getMeeting_name();
+
+//            meeting_liyue
+            List<UserBo> liyueBoList = userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(),meeting_id);
+            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
+            userBoList = new ArrayList<>();
+            for (UserBo allUserBo : liyueBoList) {
+                if (!meetingList.contains(allUserBo)) {
+                    allUserBo.setLord_flag("0");
+                    userBoList.add(allUserBo);
+                }
+            }
+            for (UserBo userBo : meetingList) {
                 userBo.setLord_flag("1");
                 userBoList.add(userBo);
             }
@@ -225,7 +245,11 @@ public class UserAction extends BaseAction {
 
         Date date = null;
         MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
-        date = DateUtils.getSunday(Integer.parseInt(meetingBo.getDay_of_week()));
+        if(StringUtils.isEmpty(meetingBo.getDay_of_week())){
+            date = DateUtils.currentDate();
+        }else{
+            date = DateUtils.getSunday(Integer.parseInt(meetingBo.getDay_of_week()));
+        }
         if ("true".equals(isAttended)) {
             userService.attendMeeting(user_id, Integer.parseInt(meeting_id), date);
             //add;

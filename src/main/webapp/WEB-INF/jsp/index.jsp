@@ -40,10 +40,20 @@
         <c:forEach items="${meetingBoList}" var="meetingBo" varStatus="stat">
             <tr>
                 <td>${meetingBo.meeting_name}</td>
-                <td><a href="/userList.do?groupId=${groupId}&type=meeting&meeting_id=${meetingBo.meeting_id}">${meetingBo.meeting_num}人</a></td>
-                <td>
+                <td><a href="/userList.do?groupId=${groupId}&type=meeting&meeting_id=${meetingBo.meeting_id}">${meetingBo.meeting_num}人</a>
+                    <c:if test="${meetingBo.liyue_flag==1}">
+                        /<a href="/userList.do?groupId=${groupId}&type=meeting&meeting_id=${meetingBo.meeting_id}">${meetingBo.liYue_num}人</a>
+                    </c:if>
 
-                    <a href="/operate.do?groupId=${groupId}&type=meeting&meeting_id=${meetingBo.meeting_id}">签到</a>
+                </td>
+                <td>
+                    <c:if test="${meetingBo.liyue_flag==1}">
+                        <a href="/operate.do?groupId=${groupId}&type=meeting_liyue&meeting_id=${meetingBo.meeting_id}">签到</a>
+                    </c:if>
+                    <c:if test="${meetingBo.liyue_flag!=1}">
+                        <a href="/operate.do?groupId=${groupId}&type=meeting&meeting_id=${meetingBo.meeting_id}">签到</a>
+                    </c:if>
+
                 </td>
             </tr>
             <tr>
@@ -90,17 +100,17 @@
                 <td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=saits_total_num">${chindGroupNum.saits_total_num}人</a></td>
                 <td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=saits_total_num">增加</a></td>
             </tr>
-            <c:forEach items="${chindGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">
-                <tr>
-                    <td>${meetingBo1.meeting_name}</td>
-                    <td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a></td>
-                    <td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>
-                </tr>
-                <tr>
-                    <td style="background-color: #f8efc0">${meetingBo1.meeting_name}比例</td>
-                    <td colspan="2" style="background-color: #f8efc0">${meetingBo1.meeting_percent}%</td>
-                </tr>
-            </c:forEach>
+            <%--<c:forEach items="${chindGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">--%>
+                <%--<tr>--%>
+                    <%--<td>${meetingBo1.meeting_name}</td>--%>
+                    <%--<td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a></td>--%>
+                    <%--<td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>--%>
+                <%--</tr>--%>
+                <%--<tr>--%>
+                    <%--<td style="background-color: #f8efc0">${meetingBo1.meeting_name}比例</td>--%>
+                    <%--<td colspan="2" style="background-color: #f8efc0">${meetingBo1.meeting_percent}%</td>--%>
+                <%--</tr>--%>
+            <%--</c:forEach>--%>
 
 
         </table>
