@@ -7,6 +7,7 @@ import com.grain.sysconfig.user.dao.UserDao;
 import com.grain.utils.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -102,11 +103,20 @@ public class UserService {
      * @return
      */
     public void shoujin(String user_id,String shoujin_flag){
-        if("true".equals(shoujin_flag)){
-            userDao.shoujin( user_id);
-        }else{
-            userDao.notShoujin( user_id);
+        UserBo userBo=userDao.getUserBoByUserId(user_id);
+
+        if(userBo!=null){
+            String shoujinTime=userBo.getShoujin_time();
+            if(StringUtils.isEmpty(shoujinTime)){
+                userBo.setShoujin_time(DateUtils.getCurrentDate());
+            }
         }
+        if("true".equals(shoujin_flag)){
+            userBo.setShoujin_flag("1");
+        }else{
+            userBo.setShoujin_flag("0");
+        }
+        userDao.updateUser(userBo);
     }
     /**
      * 增加人员

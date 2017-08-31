@@ -127,7 +127,7 @@
                 "                        <option value=\"4\">新得救</option>\n" +
                 "                        <option value=\"5\">久不聚会</option>\n" +
                 "                        <option value=\"6\">新迁入</option>\n" +
-                "                        <option value=\"7\">亲人</option>\n" +
+                "                        <option value=\"7\">公会寻求者</option>\n" +
                 "                        <option value=\"8\">其他</option>\n" +
                 "                    </select>\n" +
                 "                    <div style=\"height: 10px\"></div>\n" +

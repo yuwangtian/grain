@@ -461,7 +461,7 @@ public class UserAction extends BaseAction {
 
         }
         userService.addLiYue(liYueBoList);
-        return null;
+        return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + this.groupBo.getGroup_id() + "&type=meeting_liyue&meeting_id="+meeting_id;
     }
 
 }

@@ -74,19 +74,7 @@ public interface UserDao extends BaseDao {
      */
      void notAttendMeeting(String user_id,int meeting_id);
 
-    /**
-     * 受浸
-     * @param user_id
-     * @return
-     */
-     void shoujin(String user_id);
 
-    /**
-     * 没有受浸
-     * @param user_id
-     * @return
-     */
-    void notShoujin(String user_id);
     /**
      * 增加人员
      * @param userBo
