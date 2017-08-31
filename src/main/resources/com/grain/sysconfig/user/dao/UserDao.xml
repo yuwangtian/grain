@@ -139,28 +139,7 @@
        AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
    </delete>
 
-    <!--受浸-->
-    <update id="shoujin">
-        UPDATE grain_user
-         set
-         shoujin_flag=1,
-         shoujin_local_flag=1,
-         shoujin_time=now()
-        where
-        user_id=#{param1}
 
-    </update>
-    <!--受浸-->
-    <update id="notShoujin">
-        UPDATE grain_user
-        set
-        shoujin_flag=0,
-        shoujin_local_flag=0,
-        shoujin_time=null
-        where
-        user_id=#{param1}
-
-    </update>
 
 
     <!--增加人员-->
