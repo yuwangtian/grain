@@ -72,11 +72,11 @@
     </table>
     <br/>
 
-    <c:forEach items="${childGroupNumBoList}" var="chindGroupNum" varStatus="stat">
+    <c:forEach items="${childGroupNumBoList}" var="childGroupNum" varStatus="stat">
         <table class="grain_table" border="1">
             <tr>
                 <td colspan="3" style="background-color: darkorange"><a
-                        href="/index.do?groupId=${chindGroupNum.group_id}">${chindGroupNum.group_name}</a></td>
+                        href="/index.do?groupId=${childGroupNum.group_id}">${childGroupNum.group_name}</a></td>
             </tr>
             <tr style="background-color: #f8efc0">
                 <td>名称</td>
@@ -86,25 +86,25 @@
             <tr style="background-color: #f8efc0">
                 <td>受浸</td>
                 <td>
-                    <a href="/userList.do?groupId=${chindGroupNum.group_id}&type=new_saits_total_num">${chindGroupNum.new_saits_total_num}人</a>
+                    <a href="/userList.do?groupId=${childGroupNum.group_id}&type=new_saits_total_num">${childGroupNum.new_saits_total_num}人</a>
                 </td>
-                <td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=new_saits_total_num">增加</a></td>
+                <td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=new_saits_total_num">增加</a></td>
             </tr>
             <tr style="background-color: #f8efc0">
                 <td>福音朋友</td>
-                <td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=friends_num">${chindGroupNum.friends_num}人</a></td>
-                <td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=friends_num">增加</a></td>
+                <td><a href="/userList.do?groupId=${childGroupNum.group_id}&type=friends_num">${childGroupNum.friends_num}人</a></td>
+                <td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=friends_num">增加</a></td>
             </tr>
             <tr style="background-color: #f8efc0">
                 <td>总圣徒</td>
-                <td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=saits_total_num">${chindGroupNum.saits_total_num}人</a></td>
-                <td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=saits_total_num">增加</a></td>
+                <td><a href="/userList.do?groupId=${childGroupNum.group_id}&type=saits_total_num">${childGroupNum.saits_total_num}人</a></td>
+                <td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=saits_total_num">增加</a></td>
             </tr>
-            <%--<c:forEach items="${chindGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">--%>
+            <%--<c:forEach items="${childGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">--%>
                 <%--<tr>--%>
                     <%--<td>${meetingBo1.meeting_name}</td>--%>
-                    <%--<td><a href="/userList.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a></td>--%>
-                    <%--<td><a href="/operate.do?groupId=${chindGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>--%>
+                    <%--<td><a href="/userList.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a></td>--%>
+                    <%--<td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>--%>
                 <%--</tr>--%>
                 <%--<tr>--%>
                     <%--<td style="background-color: #f8efc0">${meetingBo1.meeting_name}比例</td>--%>
@@ -112,7 +112,7 @@
                 <%--</tr>--%>
             <%--</c:forEach>--%>
 
-            
+
 
 
         </table>
