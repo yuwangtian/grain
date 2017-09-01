@@ -206,7 +206,7 @@ public class CacheClearService {
         // CacheService.get("ddd");
         //CacheService.get("ddd");
         //
-        CacheClearService.cleanAll();
+       // CacheClearService.cleanAll();
 
     }
 

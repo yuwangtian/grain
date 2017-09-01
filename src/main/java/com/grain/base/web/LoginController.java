@@ -277,9 +277,6 @@ public class LoginController extends BaseAction {
             session.setAttribute(CachePara.CACHE_PARA_USER_NAME, null);
             session.removeAttribute(CachePara.CACHE_PARA_LOGIN_NAME);
             session.setAttribute(CachePara.CACHE_PARA_LOGIN_NAME, null);
-            new CacheService().clearCache(CachePara.CACHE_PARA_LOGIN_USER);
-            new CacheService().clearCache(CachePara.CACHE_PARA_USER_NAME);
-            new CacheService().clearCache(CachePara.CACHE_PARA_LOGIN_NAME);
         }
         return "redirect:"+REDIRECT_URL+"/login.do";
     }

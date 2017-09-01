@@ -92,35 +92,9 @@ public class CacheService {
      * @param key
      * @return
      */
-    public static Object get(String key) {
-        Object value = null;
+    public static Object get(String key,HttpServletRequest request) {
 
-        JedisPool pool = null;
-        Jedis jedis = null;
-        try {
-
-            pool = getPool();
-            jedis = pool.getResource();
-            // ////logger.debug("jedis=" + jedis);
-            // value = jedis.get(key);
-
-            byte[] obj = jedis.get(key.getBytes());
-            value = SerializeUtil.unserialize(obj);
-
-
-            ////logger.debug("Redis--set");
-            ////logger.debug("key=======" + key);
-            ////logger.debug("value=====" + value);
-        } catch (Exception e) {
-            //释放redis对象
-            pool.returnBrokenResource(jedis);
-            e.printStackTrace();
-        } finally {
-            //返还到连接池
-            returnResource(pool, jedis);
-        }
-
-        return value;
+        return request.getSession().getAttribute(key);
     }
 
     /**
@@ -129,25 +103,8 @@ public class CacheService {
      * @param key
      * @return
      */
-    public static void set(String key, Object value) {
-
-        JedisPool pool = null;
-        Jedis jedis = null;
-        try {
-            pool = getPool();
-            jedis = pool.getResource();
-            jedis.set(key.getBytes(), SerializeUtil.serialize(value));
-            //   ////logger.debug("Redis--set");
-            ////logger.debug("key=======" + key);
-            ////logger.debug("value=====" + value);
-        } catch (Exception e) {
-            //释放redis对象
-            pool.returnBrokenResource(jedis);
-            e.printStackTrace();
-        } finally {
-            //返还到连接池
-            returnResource(pool, jedis);
-        }
+    public static void set(String key, Object value,HttpServletRequest request) {
+         request.getSession().setAttribute(key,value);
     }
 
     /**
@@ -156,23 +113,8 @@ public class CacheService {
      * @param key
      * @return
      */
-    public static void del(String key) {
-
-        JedisPool pool = null;
-        Jedis jedis = null;
-        try {
-            pool = getPool();
-            jedis = pool.getResource();
-            jedis.del(key.getBytes());
-            ////logger.debug("key=======" + key);
-        } catch (Exception e) {
-            //释放redis对象
-            pool.returnBrokenResource(jedis);
-            e.printStackTrace();
-        } finally {
-            //返还到连接池
-            returnResource(pool, jedis);
-        }
+    public static void del(String key,HttpServletRequest request) {
+        request.getSession().removeAttribute(key);
     }
 
     /**
@@ -182,21 +124,7 @@ public class CacheService {
      */
     public static void cleanAll() {
 
-        JedisPool pool = null;
-        Jedis jedis = null;
-        try {
 
-            pool = getPool();
-            jedis = pool.getResource();
-            jedis.flushAll();
-        } catch (Exception e) {
-            //释放redis对象
-            pool.returnBrokenResource(jedis);
-            e.printStackTrace();
-        } finally {
-            //返还到连接池
-            returnResource(pool, jedis);
-        }
     }
 
     /**
@@ -210,7 +138,7 @@ public class CacheService {
         // CacheService.get("ddd");
         //CacheService.get("ddd");
         //
-        CacheService.cleanAll();
+//        CacheService.cleanAll();
 
     }
 
@@ -219,8 +147,8 @@ public class CacheService {
      * @param name
      * @return
      */
-    public void clearCache(String name) {
-        CacheService.del(name);
+    public void clearCache(String name,HttpServletRequest request) {
+        CacheService.del(name,request);
     }
 
     /**
@@ -243,7 +171,7 @@ public class CacheService {
             Object sessionObj = session.getAttribute(name);
             if (!"".equals(name) && obj != null) {
                 session.setAttribute(name, obj);
-                CacheService.set(newKey, obj);
+                CacheService.set(newKey, obj,request);
                 sessionObj = obj;
             }
             //logger.debug("------1-----key-------------------------setSession2Cache:"+key);
@@ -251,7 +179,7 @@ public class CacheService {
             //logger.debug("-------3----name-------------------------setSession2Cache:"+name);
             //logger.debug("-------3----sessionObj-------------------------setSession2Cache:"+sessionObj);
             //处理超时时间
-            String startT = (String) CacheService.get(session.getId());
+            String startT = (String) CacheService.get(session.getId(),request);
             ////logger.debug("-------4----startT-------------------------setSession2Cache:"+startT);
             if (startT != null) {
                 Date date1 = DateUtils.getDateByString(startT, "yyyy-MM-dd HH:mm:ss");
@@ -263,22 +191,22 @@ public class CacheService {
                 //logger.debug("------6-----t2-------------------------setSession2Cache:"+t2);
                 //logger.debug("------7-----t-------------------------setSession2Cache:"+t);
                 if (t > 5400 && sessionObj == null) {
-                    CacheService.del(key);
+                    CacheService.del(key,request);
                     //logger.debug("------8-----del------------------------setSession2Cache:"+(t > 3600));
                     return null;
                 }
             }
             //记录用户操作开始时间
             String currentTime = DateUtils.getCurrentDateTime();
-            CacheService.set(session.getId(), currentTime);
+            CacheService.set(session.getId(), currentTime,request);
             //logger.debug("---------9--currentTime------------------------setSession2Cache:"+currentTime);
             //第一次登陆时候obj不为空 放在session和缓存中
             if (!"".equals(name) && obj != null) {
                 session.setAttribute(name, obj);
-                CacheService.set(newKey, obj);
+                CacheService.set(newKey, obj,request);
                 //当宕机以后重新登录，删除以前的session
                 if (!key.equals(newKey))
-                    CacheService.del(key);
+                    CacheService.del(key,request);
             }
             //logger.debug("--------10---sessionObj------------------------setSession2Cache:"+sessionObj);
             if (obj == null && sessionObj != null) {
@@ -291,9 +219,9 @@ public class CacheService {
                 //logger.debug("----11-------obj------------------------setSession2Cache:"+obj);
                 //宕机的情况下，并且是新用户登录另外一台机器，把当前登录信息存储到新机器的session中
                 session.setAttribute(name, obj);
-                CacheService.set(newKey, obj);
+                CacheService.set(newKey, obj,request);
             } else {
-                Object cacheObj = CacheService.get(key);
+                Object cacheObj = CacheService.get(key,request);
                 //logger.debug("------12-----cacheObj------------------------setSession2Cache:"+cacheObj);
                 if (cacheObj != null) {
                     obj = cacheObj;
