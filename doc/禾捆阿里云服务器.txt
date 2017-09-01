@@ -1,0 +1,57 @@
+grain_mysql
+https://promotion.aliyun.com/ntms/campus2017.html?spm=5176.100241.0.0.TuTgqO
+
+ÕËºÅ£º
+melody820305515
+
+ÃÜÂë£º
+qq820305515
+
+ÕËºÅID
+1914903385872706
+
+°²È«×é
+ros_SecurityGroup_stack_rospromotionlink388400d9-550a-45e8-84a1-ba03cea5d967
+
+i-2ze6sg0z1mbbryg72ob0
+
+
+994795
+
+47.94.220.128
+192.168.1.140
+root
+~!@#$%^&*()QAZqaz
+
+jdbc.url = jdbc:mysql://47.94.220.128:3306/grain?allowMultiQueries=true&useUnicode=true&characterEncoding=UTF-8
+jdbc.username = root
+jdbc.password = ~!@#$%^&*()QAZqaz
+
+
+
+
+
+
+grain_web:80
+https://promotion.aliyun.com/ntms/campus2017.html?spm=5176.100241.0.0.TuTgqO
+ÕËºÅ£º
+ÄôÓÂ»Ô19001
+
+ÃÜÂë£º
+uu2017
+
+ÕËºÅID
+1067703222870205
+
+°²È«×é
+ros_SecurityGroup_stack_rospromotionlinkbc19be97-4dc5-4914-8c5a-2b651909f86c
+
+ i-2ze4dhkm7u476m6qzhkj
+
+986938
+
+47.94.231.254
+root
+~!@#$%^&*()QAZqaz
+
+/home/
