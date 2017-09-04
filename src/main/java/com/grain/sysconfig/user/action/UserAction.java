@@ -378,6 +378,10 @@ public class UserAction extends BaseAction {
             if (StringUtils.isEmpty(shoujin_time)) {
                 shoujin_time = DateUtils.getCurrentDate();
             }
+            if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
+                shoujin_time+="-01-01";
+                userBo.setShoujin_time(shoujin_time);
+            }
 
             userBo.setShoujin_time(shoujin_time);
             userService.addUser(userBo);

@@ -20,7 +20,7 @@
                 <input class="form-control" name="shoujin_time" maxlength="10" id="shoujin_time"
                        type="text" placeholder="受浸日期" onClick="WdatePicker({el:this,dateFmt:'yyyy'})">
                 <div style="height: 10px"></div>
-                <input class="form-control" placeholder="昵称"   autofocus id="name" name="name">
+                <input class="form-control" placeholder="昵称" autofocus id="name" name="name">
                 <div style="height: 10px"></div>
                 <select name="age" id="age" class="form-control" style="height:40px">
                     <option value="">年龄阶段</option>
@@ -88,14 +88,16 @@
      * 删除用户
      */
     function delUser() {
-        var url = "/delUser.do?user_id=${userBo.user_id}&groupId=${groupId}";
-        $.ajax({
-            url: url,
-            success: function (data) {
-            }
-        });
-        alert("已删除");
-        location.href= "/userList.do?groupId=${groupId}&type=saits_total_num";
+        if (confirm("真的要删除吗？")) {
+            var url = "/delUser.do?user_id=${userBo.user_id}&groupId=${groupId}";
+            $.ajax({
+                url: url,
+                success: function (data) {
+                }
+            });
+            alert("已删除");
+            location.href = "/userList.do?groupId=${groupId}&type=saits_total_num";
+        }
     }
 
     function submitForm() {

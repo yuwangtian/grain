@@ -75,7 +75,7 @@
     <c:forEach items="${childGroupNumBoList}" var="childGroupNum" varStatus="stat">
         <table class="grain_table" border="1">
             <tr>
-                <td colspan="3" style="background-color: darkorange"><a
+                <td colspan="3" style="background-color: #e38d13"><a
                         href="/index.do?groupId=${childGroupNum.group_id}">${childGroupNum.group_name}</a></td>
             </tr>
             <tr style="background-color: #f8efc0">
