@@ -34,6 +34,7 @@ public class UserBo extends BaseBo {
     private String email1;//替换email
     private String age;//
     private String  shoujin_time;
+    private String  shoujin_time_page;
     private String  shoujin_local_flag;
     private String  remark ;
     private String  shoujin_flag ;
@@ -86,7 +87,20 @@ public class UserBo extends BaseBo {
         return getUser_id().hashCode();
     }
 
+    public String getShoujin_time_page() {
+
+        if(!org.springframework.util.StringUtils.isEmpty(shoujin_time)){
+            return shoujin_time.substring(0,4);
+        }
+        return shoujin_time_page;
+    }
+
+    public void setShoujin_time_page(String shoujin_time_page) {
+        this.shoujin_time_page = shoujin_time_page;
+    }
+
     public String getShoujin_time() {
+
         return shoujin_time;
     }
 

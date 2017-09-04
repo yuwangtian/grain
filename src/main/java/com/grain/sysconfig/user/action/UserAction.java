@@ -358,10 +358,9 @@ public class UserAction extends BaseAction {
         String sex = request.getParameter("sex");
         userBo.setSex(Integer.parseInt(sex));
         String shoujin_time = request.getParameter("shoujin_time");
-        if (StringUtils.isEmpty(shoujin_time)) {
-            shoujin_time = DateUtils.getCurrentDate();
-        }
-        userBo.setShoujin_time(shoujin_time);
+
+
+
         String shoujin_local_flag = request.getParameter("shoujin_local_flag");
         userBo.setShoujin_local_flag(shoujin_local_flag);
         String group_id = request.getParameter("group_id");
@@ -376,8 +375,18 @@ public class UserAction extends BaseAction {
         userBo.setGroup_code(groupBo.getCode());
 
         if (StringUtils.isEmpty(user_id)) {
+            if (StringUtils.isEmpty(shoujin_time)) {
+                shoujin_time = DateUtils.getCurrentDate();
+            }
+
+            userBo.setShoujin_time(shoujin_time);
             userService.addUser(userBo);
         } else {
+            if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
+                shoujin_time+="-01-01";
+                userBo.setShoujin_time(shoujin_time);
+            }
+
             userService.updateUser(userBo);
         }
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + this.groupBo.getGroup_id() + "&type=saits_total_num";

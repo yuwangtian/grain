@@ -18,7 +18,7 @@
                 <input hidden id="type" value="saits">
                 <input hidden id="user_id" value="${userBo.user_id}">
                 <input class="form-control" name="shoujin_time" maxlength="10" id="shoujin_time"
-                       type="text" placeholder="受浸日期" onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd'})">
+                       type="text" placeholder="受浸日期" onClick="WdatePicker({el:this,dateFmt:'yyyy'})">
                 <div style="height: 10px"></div>
                 <input class="form-control" placeholder="昵称"   autofocus id="name" name="name">
                 <div style="height: 10px"></div>
@@ -77,7 +77,7 @@
 <script>
     $("#user_id").val("${userBo.user_id}");
     $("#sex").val("${userBo.sex}");
-    $("#shoujin_time").val("${userBo.shoujin_time}");
+    $("#shoujin_time").val("${userBo.shoujin_time_page}");
     $("#age").val("${userBo.age}");
     $("#shoujin_local_flag").val("${userBo.shoujin_local_flag}");
     $("#group_id").val("${userBo.group_id}");
