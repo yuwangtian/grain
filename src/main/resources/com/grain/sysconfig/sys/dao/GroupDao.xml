@@ -31,17 +31,27 @@
         order by sort_num,name
     </select>
 
+
     <select id="getChildsGroupBoByGroupId" resultType="GroupBo" parameterType="GroupBo">
         SELECT
         *
         FROM grain_group
         where
-         group_level='40'
+        group_level='40'
         and  FIND_IN_SET(
-                    group_id,
-                    queryChildrenGroup (#{param1})
-                )
+        group_id,
+        queryChildrenGroup (#{param1})
+        )
     </select>
+
+    <select id="getAllSmallGroups" resultType="GroupBo" parameterType="GroupBo">
+        SELECT
+        *
+        FROM grain_group
+        where
+        group_level='40'
+    </select>
+
 
 
     <!--父部门-->
@@ -54,7 +64,6 @@
         SELECT  parent_id from grain_group where group_id=#{param1}
         )
     </select>
-
 
 
 </mapper>

@@ -47,6 +47,13 @@
                     <div class="col-sm-4 col-xs-8">
                         <button class="btn btn-warning btn-block" onclick="submitForm()" type="button">保存</button>
                     </div>
+                    <c:if test="${userBo.user_id!=null}">
+                        <br/>
+                        <br/>
+                        <div class="col-sm-4 col-xs-8">
+                            <button class="btn btn-warning btn-block" onclick="delUser()" type="button">删除</button>
+                        </div>
+                    </c:if>
                 </div>
             </form>
 
@@ -62,6 +69,19 @@
     $("#group_id").val("${userBo.group_id}");
     $("#remark").val("${userBo.remark}");
     $("#name").val("${userBo.name}");
+    /**
+     * 删除用户
+     */
+    function delUser() {
+        var url = "/delUser.do?user_id=${userBo.user_id}&groupId=${groupId}";
+        $.ajax({
+            url: url,
+            success: function (data) {
+            }
+        });
+        alert("已删除");
+        location.href= "/userList.do?groupId=${groupId}&type=friends_num";
+    }
 function submitForm(){
     var name=$("#name").val();
     var group_id=$("#group_id").val();

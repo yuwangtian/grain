@@ -56,5 +56,10 @@ public interface GroupDao extends BaseDao {
      */
     List<GroupBo> getChildsGroupBoByGroupId(String groupId);
 
+    /**
+     * 所有的小排
+     */
+    List<GroupBo> getAllSmallGroups();
+
 
 }

@@ -56,7 +56,7 @@ public interface UserDao extends BaseDao {
      * @param groupId
      * @return
      */
-    List<UserBo>  getMeetingUserBoByGroupId(String groupId,String meetingId);
+    List<UserBo>  getMeetingUserBoByGroupId(String groupId,String meetingId, Date beginDate, Date endDate);
     /**
      * 参加聚会
      * @param user_id
@@ -65,6 +65,13 @@ public interface UserDao extends BaseDao {
      * @return
      */
      void attendMeeting(String user_id,int meeting_id,Date attendtime);
+
+    /**
+     * 删除人员
+     * @param user_id
+     * @return
+     */
+    void delUser(String user_id);
 
     /**
      * 未参加聚会

@@ -9,11 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 public class UserService {
@@ -57,6 +54,15 @@ public class UserService {
         return   userDao.getSaitsUserBoByTimeAndGroupId(groupId);
     }
 
+
+    /**
+     * 删除人员
+     * @param user_id
+     * @return
+     */
+    public void delUser(String user_id){
+        userDao.delUser(user_id);
+    }
     /**
      * 通过ID获取人员
      * @param user_id
@@ -72,8 +78,26 @@ public class UserService {
      * @return
      */
     public List<UserBo> getMeetingUserBoByGroupId(String groupId,String meetingId){
-        return   userDao.getMeetingUserBoByGroupId(groupId,meetingId);
+        Date beginDate;
+        Date endDate;
+        Date date=new Date();
+
+        int dayOfWeek=DateUtils.dayOfWeek(date);
+        if(dayOfWeek<3){
+            int lastWeek=7-dayOfWeek;
+            //周日，周一，
+            //获取上周的数据
+            beginDate= DateUtils.getPastDate(date,lastWeek);
+        }else{
+            int thisWeek=dayOfWeek-3;
+            //周二、周三、周四、周五、周六 获取本周数据
+            beginDate=DateUtils.getPastDate(date,thisWeek);
+        }
+        //结束日期为开始日期的后7天
+        endDate=DateUtils.getFetureDate(beginDate,7);
+        return   userDao.getMeetingUserBoByGroupId(groupId,meetingId,beginDate,endDate);
     }
+
 
     /**
      * 参加聚会

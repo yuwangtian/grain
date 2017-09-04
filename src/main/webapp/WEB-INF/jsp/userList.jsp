@@ -29,10 +29,16 @@
             <td>${ stat.index + 1}</td>
             <td>${user.name}</td>
             <c:if test="${user.shoujin_flag==1}">
-                <td><a href="/gotoAddUser.do?user_id=${user.user_id}&groupId=${groupId}&type=addSait">修改</a></td>
+                <td>
+                    <a href="/gotoAddUser.do?user_id=${user.user_id}&groupId=${groupId}&type=addSait">详细</a>
+
+                </td>
             </c:if>
             <c:if test="${user.shoujin_flag!=1}">
-                <td><a href="/gotoAddUser.do?user_id=${user.user_id}&groupId=${groupId}&type=addFriend">修改</a></td>
+                <td>
+                    <a href="/gotoAddUser.do?user_id=${user.user_id}&groupId=${groupId}&type=addFriend">详细</a>
+
+                </td>
             </c:if>
         </tr>
         </c:forEach>

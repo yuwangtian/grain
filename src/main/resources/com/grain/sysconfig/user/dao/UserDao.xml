@@ -84,24 +84,7 @@
     </select>
 
 
-    <!--主日聚会-->
-    <select id="getLordDayMeetingByGroupId" resultType="UserBo">
 
-            SELECT
-                u.*
-            FROM
-                grain_user u
-            JOIN grain_meeting_attend m ON m.user_id = u.user_id
-            WHERE
-                FIND_IN_SET(
-                    u.group_id,
-                    queryChildrenGroup (#{param1})
-                )
-            AND u.shoujin_flag = 1
-            AND m.meeting_id = 3
-            and attend_time >= (CurDate() - 7)
-            AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
-    </select>
 
     <!--聚会-->
     <select id="getMeetingUserBoByGroupId" resultType="UserBo">
@@ -118,8 +101,8 @@
         )
         AND u.shoujin_flag = 1
          AND m.meeting_id = #{param2}
-        and attend_time >= (CurDate() - 7)
-        AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
+        and attend_time >=  #{param3}
+        AND attend_time &lt; #{param4}
     </select>
 
 
@@ -139,8 +122,12 @@
        AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
    </delete>
 
-
-
+    <!--删除人员-->
+    <delete id="delUser">
+        DELETE from grain_user
+        where
+        user_id=#{param1}
+    </delete>
 
     <!--增加人员-->
     <insert id="addUser" parameterType="UserBo">

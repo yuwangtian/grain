@@ -491,13 +491,7 @@ public class DateUtils {
     }
 
 
-    public static void main(String[] args) throws ParseException {
-        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
-        String str = "2015-04-03";
-        Date d = sf.parse(str);
-        //System.out.println(d.getTime());
 
-    }
 
     /**
      * 获得指定日期上周的周五日期
@@ -634,13 +628,71 @@ public class DateUtils {
      * 获取本周周几
      * @return
      */
-    public static Date getSunday(int dayOfWeek) {
+    public static Date getDayOfWeek(int dayOfWeek) {
         SimpleDateFormat simpleDateFormat=new SimpleDateFormat("YYYY-MM-dd", Locale.CHINA);
         Calendar calendar= Calendar.getInstance(Locale.CHINA);
         calendar.setFirstDayOfWeek(Calendar.SUNDAY);
         calendar.setTimeInMillis(System.currentTimeMillis());
         calendar.set(Calendar.DAY_OF_WEEK, dayOfWeek);
-        String sunday=simpleDateFormat.format(calendar.getTime());
-        return string2DateTime(sunday);
+        String day=simpleDateFormat.format(calendar.getTime());
+        return string2DateTime(day);
     }
+
+
+
+
+
+    /**
+     * 获取过去第几天的日期
+     *
+     * @param past
+     * @return
+     */
+    public static Date getPastDate(Date date,int past) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_YEAR, calendar.get(Calendar.DAY_OF_YEAR) - past);
+         date = calendar.getTime();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String result = format.format(date);
+        return string2DateTime(result);
+
+    }
+
+    /**
+     * 获取未来 第 past 天的日期
+     * @param past
+     * @return
+     */
+    public static Date getFetureDate(Date date,int past) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.DAY_OF_YEAR, calendar.get(Calendar.DAY_OF_YEAR) + past);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        date = calendar.getTime();
+        String result = format.format(date);
+        return string2DateTime(result);
+    }
+
+    /**
+     * 星期几
+     * @param day
+     * @return
+     */
+    public static int getDayOfWeek(Date day){
+        Calendar c=Calendar.getInstance();
+        c.setTime(day);
+        int weekday=c.get(Calendar.DAY_OF_WEEK);
+        System.out.println(weekday);
+        return weekday;
+    }
+    public static void main(String[] args) throws ParseException {
+//        SimpleDateFormat sf = new SimpleDateFormat("yyyy-MM-dd", Locale.CHINA);
+//        String str = "2015-04-03";
+//        Date d = sf.parse(str);
+        //System.out.println(d.getTime());.
+        System.out.println(getFetureDate(new Date(),0));
+
+    }
+
 }

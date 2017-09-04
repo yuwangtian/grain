@@ -55,4 +55,11 @@ public class GroupService {
     public List<GroupBo> getChildsGroupBoByGroupId(String groupId){
         return groupDao.getChildsGroupBoByGroupId(groupId);
     }
+    /**
+     * 找所有子集部门（递归）
+     * @return
+     */
+    public List<GroupBo> getAllSmallGroups(){
+        return groupDao.getAllSmallGroups();
+    }
 }

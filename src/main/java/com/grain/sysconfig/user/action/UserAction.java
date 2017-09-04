@@ -11,7 +11,6 @@ import com.grain.sysconfig.user.service.UserService;
 import com.grain.utils.DateUtils;
 import com.grain.utils.cache.CachePara;
 import com.grain.utils.cache.CacheService;
-import com.grain.utils.pageutils.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +21,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -225,6 +223,22 @@ public class UserAction extends BaseAction {
     }
 
 
+
+    /**
+     * 删除人
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping(value = "delUser", produces = {"application/json;charset=UTF-8"})
+    @ResponseBody
+    public String delUser(HttpServletRequest request, HttpServletResponse response){
+        this.common(request, response);
+        String user_id = request.getParameter("user_id");
+        userService.delUser(user_id);
+        return "success";
+    }
     /**
      * 聚会签到
      *
@@ -248,7 +262,7 @@ public class UserAction extends BaseAction {
         if(StringUtils.isEmpty(meetingBo.getDay_of_week())){
             date = DateUtils.currentDate();
         }else{
-            date = DateUtils.getSunday(Integer.parseInt(meetingBo.getDay_of_week()));
+            date = DateUtils.getDayOfWeek(Integer.parseInt(meetingBo.getDay_of_week()));
         }
         if ("true".equals(isAttended)) {
             userService.attendMeeting(user_id, Integer.parseInt(meeting_id), date);
@@ -386,7 +400,7 @@ public class UserAction extends BaseAction {
         } else if ("addFriend".equals(type)) {
             returnPage = "/addFriend";
         }
-        List<GroupBo> groupBos = groupService.getChildsGroupBoByGroupId(groupBo.getGroup_id());
+        List<GroupBo> groupBos =  groupService.getAllSmallGroups();
         request.setAttribute("groupBos", groupBos);
         String user_id = request.getParameter("user_id");
         UserBo userBo = userService.getUserBoByUserId(user_id);
@@ -421,7 +435,7 @@ public class UserAction extends BaseAction {
     @ResponseBody
     public String getAllSmallGroups(HttpServletRequest request, HttpServletResponse response) {
         this.common(request, response);
-        List<GroupBo> groupBos = groupService.getChildsGroupBoByGroupId(groupBo.getGroup_id());
+        List<GroupBo> groupBos = groupService.getAllSmallGroups();
         String json=JSON.toJSONString(groupBos);
         return json;
     }
