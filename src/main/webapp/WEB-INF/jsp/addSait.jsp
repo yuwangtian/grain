@@ -18,7 +18,7 @@
                 <input hidden id="type" value="saits">
                 <input hidden id="user_id" value="${userBo.user_id}">
                 <input class="form-control" name="shoujin_time" maxlength="10" id="shoujin_time"
-                       type="text" placeholder="受浸日期" onClick="WdatePicker({el:this,dateFmt:'yyyy'})">
+                       type="text" placeholder="受浸日期" onClick="WdatePicker({el:this,dateFmt:'yyyy-MM-dd'})">
                 <div style="height: 10px"></div>
                 <input class="form-control" placeholder="昵称" autofocus id="name" name="name">
                 <div style="height: 10px"></div>
@@ -38,6 +38,9 @@
                         <option value="${group.group_id}">${group.name}</option>
                     </c:forEach>
                 </select>
+                <c:forEach items="${groupBos}" var="group" varStatus="stat">
+                    <input type="hidden"  id="oneGroupid" value="${group.group_id}">
+                </c:forEach>
                 <div style="height: 10px"></div>
                 <select name="shoujin_local_flag" id="shoujin_local_flag" class="form-control" style="height:40px">
                     <option value="">受浸地点(默认为本地,可不填)</option>
@@ -81,6 +84,9 @@
     $("#age").val("${userBo.age}");
     $("#shoujin_local_flag").val("${userBo.shoujin_local_flag}");
     $("#group_id").val("${userBo.group_id}");
+    if("${userBo.group_id}"==""&&"${groupBos.size()}"==1){
+        $("#group_id").val($("#oneGroupid").val())
+    }
     $("#remark").val("${userBo.remark}");
     $("#name").val("${userBo.name}");
 

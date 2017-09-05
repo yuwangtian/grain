@@ -30,12 +30,18 @@
                 </select>
                 <div style="height: 10px"></div>
                 <%--<input name="shoujin_time" class="form-control" id="shoujin_time" placeholder="受浸日期,默认为今天，可不填" type="text"  id="datetimepicker" data-date-format="yyyy-mm-dd">--%>
+
+
                 <select name="group_id" id="group_id" class="form-control" style="height:40px">
                     <option value="">小排</option>
                     <c:forEach items="${groupBos}" var="group" varStatus="stat">
                         <option value="${group.group_id}">${group.name}</option>
                     </c:forEach>
                 </select>
+                <c:forEach items="${groupBos}" var="group" varStatus="stat">
+                    <input type="hidden"  id="oneGroupid" value="${group.group_id}">
+                </c:forEach>
+
                 <div style="height: 10px"></div>
                 <select name="sex" id="sex" class="form-control" style="height:40px">
                     <option value="">性别</option>
@@ -69,6 +75,9 @@
     $("#sex").val("${userBo.sex}");
     $("#age").val("${userBo.age}");
     $("#group_id").val("${userBo.group_id}");
+    if("${userBo.group_id}"==""&&"${groupBos.size()}"==1){
+        $("#group_id").val($("#oneGroupid").val())
+    }
     $("#remark").val("${userBo.remark}");
     $("#name").val("${userBo.name}");
     /**

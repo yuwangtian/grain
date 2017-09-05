@@ -78,7 +78,7 @@ public class MeetingBo extends BaseBo{
     /**
      * 聚会比例
      */
-    private int meeting_percent;
+    private float meeting_percent;
 
     public List<UserBo> getLiYueUserBoList() {
         return liYueUserBoList;
@@ -112,11 +112,11 @@ public class MeetingBo extends BaseBo{
         this.meeting_num = meeting_num;
     }
 
-    public int getMeeting_percent() {
+    public float getMeeting_percent() {
         return meeting_percent;
     }
 
-    public void setMeeting_percent(int meeting_percent) {
+    public void setMeeting_percent(float meeting_percent) {
         this.meeting_percent = meeting_percent;
     }
 

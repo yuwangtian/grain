@@ -109,7 +109,7 @@
     <!--参加聚会-->
     <insert id="attendMeeting">
         insert into grain_meeting_attend(user_id,meeting_id,attend_time)
-        VALUES (#{param1},#{param2},subdate(curdate(),date_format(curdate(),'%w')) )
+        VALUES (#{param1},#{param2},#{param3})
     </insert>
 
     <!--删除聚会-->
@@ -131,8 +131,32 @@
 
     <!--增加人员-->
     <insert id="addUser" parameterType="UserBo">
-        insert into grain_user(name,group_id,group_code,age,sex,shoujin_flag,shoujin_local_flag,shoujin_time,remark)
-        VALUES ('${name}','${group_id}','${group_code}' ,'${age}' ,'${sex}' ,'${shoujin_flag}','${shoujin_local_flag}','${shoujin_time}','${remark}')
+        insert into grain_user(
+        name,
+        group_id,
+        group_code,
+        age,
+        sex ,
+        shoujin_flag,
+        shoujin_local_flag,
+        <if test="shoujin_time != null and shoujin_time != ''">
+        shoujin_time,
+        </if>
+        remark
+        )
+        VALUES (
+        '${name}',
+        '${group_id}',
+        '${group_code}' ,
+        '${age}' ,
+        '${sex}' ,
+        '${shoujin_flag}',
+        '${shoujin_local_flag}',
+        <if test="shoujin_time != null and shoujin_time != ''">
+        '${shoujin_time}',
+        </if>
+        '${remark}'
+        )
     </insert>
 
     <update id="updateUser" parameterType="UserBo">

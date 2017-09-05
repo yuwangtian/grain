@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -70,20 +71,24 @@ public class LoginController extends BaseAction {
                 groupShuoMing=parentGroupBo.getName()+"-";
             }
 
-            if(groupBo.getGroup_id().equals(session.getGroup_id())){
-                parentGroupBo=session;
-            }
+//            if(groupBo.getGroup_id().equals(session.getGroup_id())){
+//                parentGroupBo=session;
+//            }
             request.setAttribute("groupShuoMing", groupShuoMing);
             request.setAttribute("groupId", groupBo.getGroup_id());
-            if(parentGroupBo!=null){
-                request.setAttribute("sessionName", parentGroupBo.getName());
-                request.setAttribute("sessionGroupId", parentGroupBo.getGroup_id());
-            }else {
+            request.setAttribute("seesionGroupBo", groupBo);
+//            if(parentGroupBo!=null){
+//                request.setAttribute("sessionName", parentGroupBo.getName());
+//                request.setAttribute("sessionGroupId", parentGroupBo.getGroup_id());
+//            }else {
                 request.setAttribute("sessionName", groupBo.getName());
                 request.setAttribute("sessionGroupId", groupBo.getGroup_id());
+//            }
+            if("40".equals(groupBo.getGroup_level()+"")){
+                return "/index_xiao_pai";
+            }else{
+                return "/index";
             }
-
-            return "/index";
         }
         return "redirect:"+REDIRECT_URL+"/login.do";
     }
@@ -127,9 +132,11 @@ public class LoginController extends BaseAction {
                 meetingBo.setLiYueUserBoList(liYueList);
                 meetingBo.setLiYue_num(liYueList.size());
             }
-            int meeting_percent = 0;
+            float meeting_percent = 0;
             if (saits_total_num != 0) {
-                meeting_percent = 100 * meeting_num / saits_total_num;
+//                meeting_percent = 100 * meeting_num / saits_total_num;
+                DecimalFormat df=new DecimalFormat("0.00");
+                meeting_percent=Float.parseFloat(df.format((float)meeting_num/(float)saits_total_num));
             }
             meetingBo.setMeeting_percent(meeting_percent);
         }

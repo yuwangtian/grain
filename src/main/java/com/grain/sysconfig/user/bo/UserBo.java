@@ -90,7 +90,7 @@ public class UserBo extends BaseBo {
     public String getShoujin_time_page() {
 
         if(!org.springframework.util.StringUtils.isEmpty(shoujin_time)){
-            return shoujin_time.substring(0,4);
+            return shoujin_time;
         }
         return shoujin_time_page;
     }

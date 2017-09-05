@@ -353,4 +353,14 @@ a {
     height: 50px;
 }
 
+.index_table {
+    position: relative;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.index_table td {
+    width: 200px;
+    height: 50px;
+}
 

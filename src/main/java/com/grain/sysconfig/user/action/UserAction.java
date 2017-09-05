@@ -262,7 +262,19 @@ public class UserAction extends BaseAction {
         if(StringUtils.isEmpty(meetingBo.getDay_of_week())){
             date = DateUtils.currentDate();
         }else{
-            date = DateUtils.getDayOfWeek(Integer.parseInt(meetingBo.getDay_of_week()));
+            date=new Date();
+            int dayOfWeek = DateUtils.dayOfWeek(date);
+            if (dayOfWeek < 3) {
+                int lastWeek = Integer.parseInt(meetingBo.getDay_of_week())-dayOfWeek;//上周
+                //周日，周一，
+                //获取上周的数据
+                date = DateUtils.getPastDate(date, lastWeek);
+            } else {
+                int thisWeek = Integer.parseInt(meetingBo.getDay_of_week())-dayOfWeek;//本周
+                //周二、周三、周四、周五、周六 获取本周数据
+                date = DateUtils.getFetureDate(date, thisWeek);
+            }
+//            date = DateUtils.getDayOfWeek(Integer.parseInt(meetingBo.getDay_of_week()));
         }
         if ("true".equals(isAttended)) {
             userService.attendMeeting(user_id, Integer.parseInt(meeting_id), date);
@@ -373,24 +385,13 @@ public class UserAction extends BaseAction {
         userBo.setShoujin_flag("1");
         GroupBo groupBo = groupService.getGroupBoByGroupId(group_id);
         userBo.setGroup_code(groupBo.getCode());
-
-        if (StringUtils.isEmpty(user_id)) {
-            if (StringUtils.isEmpty(shoujin_time)) {
-                shoujin_time = DateUtils.getCurrentDate();
-            }
-            if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
-                shoujin_time+="-01-01";
-                userBo.setShoujin_time(shoujin_time);
-            }
-
+        if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
+            shoujin_time+="-01-01";
             userBo.setShoujin_time(shoujin_time);
+        }
+        if (StringUtils.isEmpty(user_id)) {
             userService.addUser(userBo);
         } else {
-            if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
-                shoujin_time+="-01-01";
-                userBo.setShoujin_time(shoujin_time);
-            }
-
             userService.updateUser(userBo);
         }
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + this.groupBo.getGroup_id() + "&type=saits_total_num";
