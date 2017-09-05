@@ -385,8 +385,7 @@ public class UserAction extends BaseAction {
         userBo.setShoujin_flag("1");
         GroupBo groupBo = groupService.getGroupBoByGroupId(group_id);
         userBo.setGroup_code(groupBo.getCode());
-        if(!StringUtils.isEmpty(shoujin_time)&&shoujin_time.length()==4){
-            shoujin_time+="-01-01";
+        if(!StringUtils.isEmpty(shoujin_time)){
             userBo.setShoujin_time(shoujin_time);
         }
         if (StringUtils.isEmpty(user_id)) {
