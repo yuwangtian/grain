@@ -78,7 +78,8 @@
     if("${userBo.group_id}"==""&&"${groupBos.size()}"==1){
         $("#group_id").val($("#oneGroupid").val())
     }
-    $("#remark").val("${userBo.remark}");
+    var remark = decodeURI("${userBo.remark}");
+    $("#remark").val(remark);
     $("#name").val("${userBo.name}");
     /**
      * 删除用户

@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -417,6 +418,13 @@ public class UserAction extends BaseAction {
         request.setAttribute("groupBos", groupBos);
         String user_id = request.getParameter("user_id");
         UserBo userBo = userService.getUserBoByUserId(user_id);
+        try {
+            if(!StringUtils.isEmpty(userBo.getRemark())){
+                userBo.setRemark(java.net.URLEncoder.encode(userBo.getRemark(), "UTF-8"));
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
         request.setAttribute("userBo", userBo);
         return returnPage;
     }
