@@ -5,23 +5,20 @@
 <mapper namespace="com.grain.base.log.dao.AppLogDao">
     <insert id="insert" parameterType="OperateLogBo"
 		useGeneratedKeys="true" keyProperty="id">
-    	
-       INSERT INTO base_operate_log (
-       
-       page_id,operate_user_id,operate_time,operate_content,
-       
-       operate_ip,sys_url_port,operate_type,
-       
-       order_id
-       
+       INSERT INTO grain_operate_log (
+       operate_group_id,
+        operate_group_name,
+       operate_time,
+       operate_ip,
+       sys_url_port,
+       operate_type
        )VALUES(
-       
-       #{page_id},#{operate_user_id},#{operate_time}, #{operate_content},
-       
-       #{operate_ip},#{sys_url_port},#{operate_type},
-       
-       #{order_id}
-       
+       #{operate_group_id},
+        #{operate_group_name},
+       #{operate_time},
+       #{operate_ip},
+       #{sys_url_port},
+       #{operate_type}
        )
     </insert>
 </mapper>

@@ -1,12 +1,15 @@
 package com.grain.base.web;
 
 import com.grain.base.action.BaseAction;
+import com.grain.base.log.AppLogService;
+import com.grain.base.log.bo.OperateLogBo;
 import com.grain.sysconfig.sys.bo.GroupBo;
 import com.grain.sysconfig.sys.service.GroupService;
 import com.grain.sysconfig.user.bo.ChildGroupNumBo;
 import com.grain.sysconfig.user.bo.MeetingBo;
 import com.grain.sysconfig.user.bo.UserBo;
 import com.grain.sysconfig.user.service.UserService;
+import com.grain.utils.DateUtils;
 import com.grain.utils.PropertiesUtil;
 import com.grain.utils.cache.CachePara;
 import com.grain.utils.cache.CacheService;
@@ -33,7 +36,8 @@ public class LoginController extends BaseAction {
 
     @Autowired
     UserService userService;
-
+    @Autowired
+    AppLogService appLogService;
 
     /**
      * 首页
@@ -46,29 +50,35 @@ public class LoginController extends BaseAction {
     public String login(
             HttpServletRequest request, HttpServletResponse response) {
 
-        String groupId=request.getParameter("groupId");
-        GroupBo groupBo=null;
-        if(groupId!=null){
-             groupBo =groupService.getGroupBoByGroupId(groupId);
+        String groupId = request.getParameter("groupId");
+        GroupBo groupBo = null;
+        if (groupId != null) {
+            groupBo = groupService.getGroupBoByGroupId(groupId);
         }
-        GroupBo  session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
-        if(groupBo==null){
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
+        if (groupBo == null) {
             groupBo = session;
         }
         if (groupBo != null) {
+            OperateLogBo operateLogBo=new OperateLogBo();
+            operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+            operateLogBo.setOperate_group_id(groupBo.getGroup_id());
+            operateLogBo.setOperate_group_name(groupBo.getName());
+            operateLogBo.setOperate_type("访问首页");
+            appLogService.insertLog(operateLogBo);
             this.queryNum(request, groupBo);
             request.setAttribute("loginName", groupBo.getName());
-            GroupBo parentGroupBo=null;
-            String groupShuoMing="";
-            parentGroupBo= groupService.getParentGroupBoByGroupId(groupBo.getGroup_id());
+            GroupBo parentGroupBo = null;
+            String groupShuoMing = "";
+            parentGroupBo = groupService.getParentGroupBoByGroupId(groupBo.getGroup_id());
 
-            if("40".equals(groupBo.getGroup_level()+"")){
-                groupShuoMing=parentGroupBo.getName()+"-";
-                GroupBo grandparentGroupBo= groupService.getParentGroupBoByGroupId(parentGroupBo.getGroup_id());
-                groupShuoMing=grandparentGroupBo.getName()+"-"+groupShuoMing;
+            if ("40".equals(groupBo.getGroup_level() + "")) {
+                groupShuoMing = parentGroupBo.getName() + "-";
+                GroupBo grandparentGroupBo = groupService.getParentGroupBoByGroupId(parentGroupBo.getGroup_id());
+                groupShuoMing = grandparentGroupBo.getName() + "-" + groupShuoMing;
             }
-            if("30".equals(groupBo.getGroup_level()+"")){
-                groupShuoMing=parentGroupBo.getName()+"-";
+            if ("30".equals(groupBo.getGroup_level() + "")) {
+                groupShuoMing = parentGroupBo.getName() + "-";
             }
 
 //            if(groupBo.getGroup_id().equals(session.getGroup_id())){
@@ -81,16 +91,17 @@ public class LoginController extends BaseAction {
 //                request.setAttribute("sessionName", parentGroupBo.getName());
 //                request.setAttribute("sessionGroupId", parentGroupBo.getGroup_id());
 //            }else {
-                request.setAttribute("sessionName", groupBo.getName());
-                request.setAttribute("sessionGroupId", groupBo.getGroup_id());
+            request.setAttribute("sessionName", groupBo.getName());
+            request.setAttribute("sessionGroupId", groupBo.getGroup_id());
 //            }
-            if("40".equals(groupBo.getGroup_level()+"")){
+            if ("40".equals(groupBo.getGroup_level() + "")) {
                 return "/index_xiao_pai";
-            }else{
+            } else {
                 return "/index";
             }
         }
-        return "redirect:"+REDIRECT_URL+"/login.do";
+
+        return "redirect:" + REDIRECT_URL + "/login.do";
     }
 
     /**
@@ -118,9 +129,9 @@ public class LoginController extends BaseAction {
             new_saits_total_num = newSaitsUserBoList.size();
         }
         request.setAttribute("new_saits_total_num", new_saits_total_num);
-        List<MeetingBo> meetingBoList=userService.getMeetings();
-        for(MeetingBo meetingBo:meetingBoList){
-            List<UserBo> userList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(),meetingBo.getMeeting_id());
+        List<MeetingBo> meetingBoList = userService.getMeetings();
+        for (MeetingBo meetingBo : meetingBoList) {
+            List<UserBo> userList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meetingBo.getMeeting_id());
             int meeting_num = 0;
             if (userList != null && !userList.isEmpty()) {
                 meeting_num = userList.size();
@@ -128,16 +139,16 @@ public class LoginController extends BaseAction {
             meetingBo.setMeeting_num(meeting_num);
             meetingBo.setUserBoList(userList);
             if ("1".equals(meetingBo.getLiyue_flag())) {
-                List<UserBo> liYueList=userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(),meetingBo.getMeeting_id());
+                List<UserBo> liYueList = userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(), meetingBo.getMeeting_id());
                 meetingBo.setLiYueUserBoList(liYueList);
                 meetingBo.setLiYue_num(liYueList.size());
             }
             float meeting_percent = 0;
             if (saits_total_num != 0) {
 //                meeting_percent = 100 * meeting_num / saits_total_num;
-                DecimalFormat df=new DecimalFormat("0.00");
-                meeting_percent=100*(float)meeting_num/(float)saits_total_num;
-                meeting_percent=Float.parseFloat(df.format(meeting_percent));
+                DecimalFormat df = new DecimalFormat("0.00");
+                meeting_percent = 100 * (float) meeting_num / (float) saits_total_num;
+                meeting_percent = Float.parseFloat(df.format(meeting_percent));
             }
             meetingBo.setMeeting_percent(meeting_percent);
         }
@@ -147,6 +158,7 @@ public class LoginController extends BaseAction {
 
     /**
      * 下一级
+     *
      * @param request
      * @param groupBo
      */
@@ -167,51 +179,51 @@ public class LoginController extends BaseAction {
                 indexNumBo.setGroup_code(groupBo1.getCode());
                 for (UserBo userBo : saitsUserBoList) {
                     if (userBo.getGroup_code().contains(code)) {
-                        indexNumBo.setSaits_total_num(indexNumBo.getSaits_total_num()+1);
+                        indexNumBo.setSaits_total_num(indexNumBo.getSaits_total_num() + 1);
                     }
                 }
                 for (UserBo userBo : friendsUserBoList) {
                     if (userBo.getGroup_code().contains(code)) {
-                        indexNumBo.setFriends_num(indexNumBo.getFriends_num()+1);
+                        indexNumBo.setFriends_num(indexNumBo.getFriends_num() + 1);
                     }
                 }
                 for (UserBo userBo : newSaitsUserBoList) {
                     if (userBo.getGroup_code().contains(code)) {
-                        indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num()+1);
+                        indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
                     }
                 }
-                List<MeetingBo> chindMeetingBos=new ArrayList<>();
-                for(MeetingBo meetingBo:meetingBos){
-                    List<UserBo> userBos=meetingBo.getUserBoList();
-                    MeetingBo chindMeetingBo=new MeetingBo();
-                    chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
-                    chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
-                    for(UserBo userBo : userBos){
-                        if(userBo.getGroup_code().contains(code)){
-                            chindMeetingBo.getUserBoList().add(userBo);
-                        }
-                    }
-                    chindMeetingBos.add(chindMeetingBo);
-                }
-                for(MeetingBo meetingBo:chindMeetingBos){
-                    List<UserBo> userList=meetingBo.getUserBoList();
-                    int meeting_num = 0;
-                    if (userList != null && !userList.isEmpty()) {
-                        meeting_num = userList.size();
-                    }
-                    meetingBo.setMeeting_num(meeting_num);
-                    meetingBo.setUserBoList(userList);
-                    int meeting_percent = 0;
-                    if (indexNumBo.getSaits_total_num() != 0) {
-                        meeting_percent = 100 * meeting_num / indexNumBo.getSaits_total_num();
-                    }
-                    meetingBo.setMeeting_percent(meeting_percent);
-
-                }
-                indexNumBo.setMeetingBoList(chindMeetingBos);
+//                List<MeetingBo> chindMeetingBos=new ArrayList<>();
+//                for(MeetingBo meetingBo:meetingBos){
+//                    List<UserBo> userBos=meetingBo.getUserBoList();
+//                    MeetingBo chindMeetingBo=new MeetingBo();
+//                    chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
+//                    chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
+//                    for(UserBo userBo : userBos){
+//                        if(userBo.getGroup_code().contains(code)){
+//                            chindMeetingBo.getUserBoList().add(userBo);
+//                        }
+//                    }
+//                    chindMeetingBos.add(chindMeetingBo);
+//                }
+//                for(MeetingBo meetingBo:chindMeetingBos){
+//                    List<UserBo> userList=meetingBo.getUserBoList();
+//                    int meeting_num = 0;
+//                    if (userList != null && !userList.isEmpty()) {
+//                        meeting_num = userList.size();
+//                    }
+//                    meetingBo.setMeeting_num(meeting_num);
+//                    meetingBo.setUserBoList(userList);
+//                    int meeting_percent = 0;
+//                    if (indexNumBo.getSaits_total_num() != 0) {
+//                        meeting_percent = 100 * meeting_num / indexNumBo.getSaits_total_num();
+//                    }
+//                    meetingBo.setMeeting_percent(meeting_percent);
+//
+//                }
+//                indexNumBo.setMeetingBoList(chindMeetingBos);
                 childGroupNumBoList.add(indexNumBo);
             }
-            request.setAttribute("childGroupNumBoList",childGroupNumBoList);
+            request.setAttribute("childGroupNumBoList", childGroupNumBoList);
         }
     }
 
@@ -257,12 +269,19 @@ public class LoginController extends BaseAction {
             modelMap.addAttribute("userName", userName);
             return "/login";
         } else {
+
+            OperateLogBo operateLogBo=new OperateLogBo();
+            operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+            operateLogBo.setOperate_group_id(groupBo.getGroup_id());
+            operateLogBo.setOperate_group_name(groupBo.getName());
+            operateLogBo.setOperate_type("登录");
+            appLogService.insertLog(operateLogBo);
             HttpSession session = request.getSession();
             new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, groupBo);
             new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_NAME, groupBo.getName());
             new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_USER_NAME, groupBo.getName());
             request.setAttribute("loginName", groupBo.getName());
-            return "redirect:"+REDIRECT_URL+"/index.do";
+            return "redirect:" + REDIRECT_URL + "/index.do";
         }
     }
 
@@ -286,10 +305,8 @@ public class LoginController extends BaseAction {
             session.removeAttribute(CachePara.CACHE_PARA_LOGIN_NAME);
             session.setAttribute(CachePara.CACHE_PARA_LOGIN_NAME, null);
         }
-        return "redirect:"+REDIRECT_URL+"/login.do";
+        return "redirect:" + REDIRECT_URL + "/login.do";
     }
-
-
 
 
 }

@@ -196,20 +196,5 @@ public class BaseAction<T> {
 
 
 
-    /**
-     * 出使化logbo
-     *
-     * @param loginUser
-     * @param orderId
-     * @param content
-     * @param operateType
-     * @return
-     */
-    protected OperateLogBo initOperateLogBo(GroupBo loginUser, String orderId, String content, Integer operateType) {
-        OperateLogBo logBo = new OperateLogBo();
-        logBo.setOperate_type(operateType);//类型
-        logBo.setOrder_id(orderId);//操作订单号
-        logBo.setOperate_content(content);//内容
-        return logBo;
-    }
+
 }

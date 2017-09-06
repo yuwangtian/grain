@@ -3,6 +3,8 @@ package com.grain.sysconfig.user.action;
 import com.alibaba.fastjson.JSON;
 import com.grain.base.GroupAndTypeBo;
 import com.grain.base.action.BaseAction;
+import com.grain.base.log.AppLogService;
+import com.grain.base.log.bo.OperateLogBo;
 import com.grain.sysconfig.sys.bo.GroupBo;
 import com.grain.sysconfig.sys.service.GroupService;
 import com.grain.sysconfig.user.bo.LiYueBo;
@@ -36,6 +38,8 @@ public class UserAction extends BaseAction {
     @Autowired
     UserService userService;
 
+    @Autowired
+    AppLogService appLogService;
 
     /**
      * 用户列表
@@ -47,7 +51,7 @@ public class UserAction extends BaseAction {
     @RequestMapping("/userList")
     public String userList(
             HttpServletRequest request, HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         this.queryUserBoList(request, groupAndTypeBo.getGroupBo(), groupAndTypeBo.getType());
         return "/userList";
     }
@@ -88,7 +92,7 @@ public class UserAction extends BaseAction {
     @RequestMapping("/operate")
     public String operate(
             HttpServletRequest request, HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         return this.returnOperate(request, groupAndTypeBo.getGroupBo(), groupAndTypeBo.getType());
     }
 
@@ -102,7 +106,7 @@ public class UserAction extends BaseAction {
     @RequestMapping("/gotoLiyue")
     public String gotoLiyue(
             HttpServletRequest request, HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo=this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         String meeting_id = request.getParameter("meeting_id");
         List<GroupBo> groupBos = groupService.getChildsGroupBoByGroupId(groupAndTypeBo.getGroupBo().getGroup_id());
         request.setAttribute("groupBos", groupBos);
@@ -165,13 +169,13 @@ public class UserAction extends BaseAction {
                 userBo.setLord_flag("1");
                 userBoList.add(userBo);
             }
-        }else if ("meeting_liyue".equals(type)) {
+        } else if ("meeting_liyue".equals(type)) {
             returnPate = "/meetingUserList";
             MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
             typeName = meetingBo.getMeeting_name();
 
 //            meeting_liyue
-            List<UserBo> liyueBoList = userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(),meeting_id);
+            List<UserBo> liyueBoList = userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(), meeting_id);
             List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
             userBoList = new ArrayList<>();
             for (UserBo allUserBo : liyueBoList) {
@@ -199,9 +203,9 @@ public class UserAction extends BaseAction {
      */
     private GroupAndTypeBo common(
             HttpServletRequest request, HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo=new GroupAndTypeBo();
-        GroupBo groupBo=null;
-        String type=null;
+        GroupAndTypeBo groupAndTypeBo = new GroupAndTypeBo();
+        GroupBo groupBo = null;
+        String type = null;
         String groupId = request.getParameter("groupId");
         type = request.getParameter("type");
         if (groupId != null) {
@@ -222,7 +226,6 @@ public class UserAction extends BaseAction {
     }
 
 
-
     /**
      * 删除人
      *
@@ -232,12 +235,19 @@ public class UserAction extends BaseAction {
      */
     @RequestMapping(value = "delUser", produces = {"application/json;charset=UTF-8"})
     @ResponseBody
-    public String delUser(HttpServletRequest request, HttpServletResponse response){
-        this.common(request, response);
+    public String delUser(HttpServletRequest request, HttpServletResponse response) {
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("删除用户");
+        appLogService.insertLog(operateLogBo);
         String user_id = request.getParameter("user_id");
         userService.delUser(user_id);
         return "success";
     }
+
     /**
      * 聚会签到
      *
@@ -248,7 +258,7 @@ public class UserAction extends BaseAction {
     @RequestMapping(value = "operateMeeting", produces = {"application/json;charset=UTF-8"})
     @ResponseBody
     public String operateMeeting(HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         String user_id = request.getParameter("user_id");
         String isAttended = request.getParameter("isAttended");
         String meeting_id = request.getParameter("meeting_id");
@@ -258,23 +268,31 @@ public class UserAction extends BaseAction {
 
         Date date = null;
         MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
-        if(StringUtils.isEmpty(meetingBo.getDay_of_week())){
+        if (StringUtils.isEmpty(meetingBo.getDay_of_week())) {
             date = DateUtils.currentDate();
-        }else{
-            date=new Date();
+        } else {
+            date = new Date();
             int dayOfWeek = DateUtils.dayOfWeek(date);
             if (dayOfWeek < 3) {
-                int lastWeek = Integer.parseInt(meetingBo.getDay_of_week())-dayOfWeek;//上周
+                int lastWeek = Integer.parseInt(meetingBo.getDay_of_week()) - dayOfWeek;//上周
                 //周日，周一，
                 //获取上周的数据
                 date = DateUtils.getPastDate(date, lastWeek);
             } else {
-                int thisWeek = Integer.parseInt(meetingBo.getDay_of_week())-dayOfWeek;//本周
+                int thisWeek = Integer.parseInt(meetingBo.getDay_of_week()) - dayOfWeek;//本周
                 //周二、周三、周四、周五、周六 获取本周数据
                 date = DateUtils.getFetureDate(date, thisWeek);
             }
 //            date = DateUtils.getDayOfWeek(Integer.parseInt(meetingBo.getDay_of_week()));
         }
+
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("聚会签到");
+        appLogService.insertLog(operateLogBo);
+
         if ("true".equals(isAttended)) {
             userService.attendMeeting(user_id, Integer.parseInt(meeting_id), date);
             //add;
@@ -296,12 +314,18 @@ public class UserAction extends BaseAction {
     @RequestMapping(value = "shoujin", produces = {"application/json;charset=UTF-8"})
     @ResponseBody
     public String shoujin(HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo =this.common(request, response);
         String user_id = request.getParameter("user_id");
         String isShoujin = request.getParameter("isShoujin");
         if (user_id == null || isShoujin == null) {
             return "fail";
         }
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("受浸或取消受浸"+isShoujin);
+        appLogService.insertLog(operateLogBo);
         userService.shoujin(user_id, isShoujin);
         return "success";
     }
@@ -315,7 +339,7 @@ public class UserAction extends BaseAction {
      */
     @RequestMapping("addFriend")
     public String addFriend(HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo =this.common(request, response);
         UserBo userBo = new UserBo();
         String name = request.getParameter("name");
         userBo.setName(name);
@@ -344,6 +368,12 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("增加或修改福音朋友");
+        appLogService.insertLog(operateLogBo);
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=friends_num";
     }
 
@@ -356,7 +386,7 @@ public class UserAction extends BaseAction {
      */
     @RequestMapping("addSait")
     public String addSait(HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo =this.common(request, response);
         UserBo userBo = new UserBo();
         String name = request.getParameter("name");
         userBo.setName(name);
@@ -371,7 +401,6 @@ public class UserAction extends BaseAction {
         String shoujin_time = request.getParameter("shoujin_time");
 
 
-
         String shoujin_local_flag = request.getParameter("shoujin_local_flag");
         userBo.setShoujin_local_flag(shoujin_local_flag);
         String group_id = request.getParameter("group_id");
@@ -384,7 +413,7 @@ public class UserAction extends BaseAction {
         userBo.setShoujin_flag("1");
         GroupBo groupBo = groupService.getGroupBoByGroupId(group_id);
         userBo.setGroup_code(groupBo.getCode());
-        if(!StringUtils.isEmpty(shoujin_time)){
+        if (!StringUtils.isEmpty(shoujin_time)) {
             userBo.setShoujin_time(shoujin_time);
         }
         if (StringUtils.isEmpty(user_id)) {
@@ -392,6 +421,13 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
+
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("增加或修改弟兄姊妹");
+        appLogService.insertLog(operateLogBo);
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=saits_total_num";
     }
 
@@ -405,25 +441,32 @@ public class UserAction extends BaseAction {
     @RequestMapping("/gotoAddUser")
     public String logout(HttpServletRequest request,
                          HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo=this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         String returnPage = "";
         if ("addSait".equals(groupAndTypeBo.getType())) {
             returnPage = "/addSait";
         } else if ("addFriend".equals(groupAndTypeBo.getType())) {
             returnPage = "/addFriend";
         }
-        List<GroupBo> groupBos =  groupService.getAllSmallGroups();
+        List<GroupBo> groupBos = groupService.getAllSmallGroups();
         request.setAttribute("groupBos", groupBos);
         String user_id = request.getParameter("user_id");
         UserBo userBo = userService.getUserBoByUserId(user_id);
         try {
-            if(!StringUtils.isEmpty(userBo.getRemark())){
+            if (!StringUtils.isEmpty(userBo.getRemark())) {
                 userBo.setRemark(java.net.URLEncoder.encode(userBo.getRemark(), "UTF-8"));
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
         request.setAttribute("userBo", userBo);
+
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("准备修改用户");
+        appLogService.insertLog(operateLogBo);
         return returnPage;
     }
 
@@ -439,10 +482,11 @@ public class UserAction extends BaseAction {
     public String getUsersByGroupId(HttpServletRequest request, HttpServletResponse response) {
         this.common(request, response);
         String group_id = request.getParameter("group_id");
-        List<UserBo> list=userService.getSaitsUserBoByGroupId(group_id);
-        String json=JSON.toJSONString(list);
+        List<UserBo> list = userService.getSaitsUserBoByGroupId(group_id);
+        String json = JSON.toJSONString(list);
         return json;
     }
+
     /**
      * 通过部门ID获取用户
      *
@@ -455,10 +499,9 @@ public class UserAction extends BaseAction {
     public String getAllSmallGroups(HttpServletRequest request, HttpServletResponse response) {
         this.common(request, response);
         List<GroupBo> groupBos = groupService.getAllSmallGroups();
-        String json=JSON.toJSONString(groupBos);
+        String json = JSON.toJSONString(groupBos);
         return json;
     }
-
 
 
     /**
@@ -470,19 +513,19 @@ public class UserAction extends BaseAction {
      */
     @RequestMapping("/liyue")
     public String liyue(HttpServletRequest request,
-                         HttpServletResponse response) {
-        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
+                        HttpServletResponse response) {
+        GroupAndTypeBo groupAndTypeBo = this.common(request, response);
         String meeting_id = request.getParameter("meeting_id");
-        long time=System.currentTimeMillis();
-        String li_yue_id=time+"";
-        List<LiYueBo> liYueBoList=new ArrayList<>();
-        for(int i=1;i<5;i++){
-            String user_id=request.getParameter("users"+i);
-            String user_li_yue_type=request.getParameter("user_li_yue_type"+i);
-            String remark=request.getParameter("remark"+i);
+        long time = System.currentTimeMillis();
+        String li_yue_id = time + "";
+        List<LiYueBo> liYueBoList = new ArrayList<>();
+        for (int i = 1; i < 5; i++) {
+            String user_id = request.getParameter("users" + i);
+            String user_li_yue_type = request.getParameter("user_li_yue_type" + i);
+            String remark = request.getParameter("remark" + i);
             System.out.println();
-            if(StringUtils.isNotEmpty(user_id)&&StringUtils.isNotEmpty(user_li_yue_type)){
-                LiYueBo liYueBo=new LiYueBo();
+            if (StringUtils.isNotEmpty(user_id) && StringUtils.isNotEmpty(user_li_yue_type)) {
+                LiYueBo liYueBo = new LiYueBo();
                 liYueBo.setLi_yue_id(li_yue_id);
                 liYueBo.setMeeting_id(Integer.parseInt(meeting_id));
                 liYueBo.setUser_li_yue_type(Integer.parseInt(user_li_yue_type));
@@ -494,7 +537,13 @@ public class UserAction extends BaseAction {
 
         }
         userService.addLiYue(liYueBoList);
-        return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + groupAndTypeBo.getGroupBo().getGroup_id() + "&type=meeting_liyue&meeting_id="+meeting_id;
+        OperateLogBo operateLogBo = new OperateLogBo();
+        operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
+        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_type("立约");
+        appLogService.insertLog(operateLogBo);
+        return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + groupAndTypeBo.getGroupBo().getGroup_id() + "&type=meeting_liyue&meeting_id=" + meeting_id;
     }
 
 }
