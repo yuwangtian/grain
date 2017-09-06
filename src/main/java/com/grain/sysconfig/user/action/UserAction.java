@@ -1,6 +1,7 @@
 package com.grain.sysconfig.user.action;
 
 import com.alibaba.fastjson.JSON;
+import com.grain.base.GroupAndTypeBo;
 import com.grain.base.action.BaseAction;
 import com.grain.sysconfig.sys.bo.GroupBo;
 import com.grain.sysconfig.sys.service.GroupService;
@@ -34,14 +35,7 @@ public class UserAction extends BaseAction {
 
     @Autowired
     UserService userService;
-    /**
-     *
-     */
-    private GroupBo groupBo;
-    /**
-     *
-     */
-    private String type;
+
 
     /**
      * 用户列表
@@ -53,9 +47,8 @@ public class UserAction extends BaseAction {
     @RequestMapping("/userList")
     public String userList(
             HttpServletRequest request, HttpServletResponse response) {
-
-        this.common(request, response);
-        this.queryUserBoList(request, groupBo, type);
+        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
+        this.queryUserBoList(request, groupAndTypeBo.getGroupBo(), groupAndTypeBo.getType());
         return "/userList";
     }
 
@@ -95,8 +88,8 @@ public class UserAction extends BaseAction {
     @RequestMapping("/operate")
     public String operate(
             HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
-        return this.returnOperate(request, groupBo, type);
+        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
+        return this.returnOperate(request, groupAndTypeBo.getGroupBo(), groupAndTypeBo.getType());
     }
 
     /**
@@ -109,9 +102,9 @@ public class UserAction extends BaseAction {
     @RequestMapping("/gotoLiyue")
     public String gotoLiyue(
             HttpServletRequest request, HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo=this.common(request, response);
         String meeting_id = request.getParameter("meeting_id");
-        List<GroupBo> groupBos = groupService.getChildsGroupBoByGroupId(groupBo.getGroup_id());
+        List<GroupBo> groupBos = groupService.getChildsGroupBoByGroupId(groupAndTypeBo.getGroupBo().getGroup_id());
         request.setAttribute("groupBos", groupBos);
         request.setAttribute("meeting_id", meeting_id);
         return "/liyue";
@@ -204,8 +197,11 @@ public class UserAction extends BaseAction {
      * @param request
      * @param response
      */
-    private void common(
+    private GroupAndTypeBo common(
             HttpServletRequest request, HttpServletResponse response) {
+        GroupAndTypeBo groupAndTypeBo=new GroupAndTypeBo();
+        GroupBo groupBo=null;
+        String type=null;
         String groupId = request.getParameter("groupId");
         type = request.getParameter("type");
         if (groupId != null) {
@@ -221,6 +217,9 @@ public class UserAction extends BaseAction {
             request.setAttribute("sessionName", session.getName());
 
         }
+        groupAndTypeBo.setGroupBo(groupBo);
+        groupAndTypeBo.setType(type);
+        return groupAndTypeBo;
     }
 
 
@@ -346,7 +345,7 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
-        return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + this.groupBo.getGroup_id() + "&type=friends_num";
+        return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=friends_num";
     }
 
     /**
@@ -394,7 +393,7 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
-        return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + this.groupBo.getGroup_id() + "&type=saits_total_num";
+        return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=saits_total_num";
     }
 
     /**
@@ -407,11 +406,11 @@ public class UserAction extends BaseAction {
     @RequestMapping("/gotoAddUser")
     public String logout(HttpServletRequest request,
                          HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo=this.common(request, response);
         String returnPage = "";
-        if ("addSait".equals(type)) {
+        if ("addSait".equals(groupAndTypeBo.getType())) {
             returnPage = "/addSait";
-        } else if ("addFriend".equals(type)) {
+        } else if ("addFriend".equals(groupAndTypeBo.getType())) {
             returnPage = "/addFriend";
         }
         List<GroupBo> groupBos =  groupService.getAllSmallGroups();
@@ -473,7 +472,7 @@ public class UserAction extends BaseAction {
     @RequestMapping("/liyue")
     public String liyue(HttpServletRequest request,
                          HttpServletResponse response) {
-        this.common(request, response);
+        GroupAndTypeBo groupAndTypeBo= this.common(request, response);
         String meeting_id = request.getParameter("meeting_id");
         long time=System.currentTimeMillis();
         String li_yue_id=time+"";
@@ -496,7 +495,7 @@ public class UserAction extends BaseAction {
 
         }
         userService.addLiYue(liYueBoList);
-        return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + this.groupBo.getGroup_id() + "&type=meeting_liyue&meeting_id="+meeting_id;
+        return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + groupAndTypeBo.getGroupBo().getGroup_id() + "&type=meeting_liyue&meeting_id="+meeting_id;
     }
 
 }
