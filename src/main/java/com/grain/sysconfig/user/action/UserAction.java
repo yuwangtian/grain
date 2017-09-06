@@ -215,7 +215,6 @@ public class UserAction extends BaseAction {
             request.setAttribute("loginName", groupBo.getName());
             request.setAttribute("groupId", groupBo.getGroup_id());
             request.setAttribute("sessionName", session.getName());
-
         }
         groupAndTypeBo.setGroupBo(groupBo);
         groupAndTypeBo.setType(type);

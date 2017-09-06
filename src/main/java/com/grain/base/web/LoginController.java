@@ -135,8 +135,9 @@ public class LoginController extends BaseAction {
             float meeting_percent = 0;
             if (saits_total_num != 0) {
 //                meeting_percent = 100 * meeting_num / saits_total_num;
-                DecimalFormat df=new DecimalFormat("0.000");
-                meeting_percent=100*Float.parseFloat(df.format((float)meeting_num/(float)saits_total_num));
+                DecimalFormat df=new DecimalFormat("0.00");
+                meeting_percent=100*(float)meeting_num/(float)saits_total_num;
+                meeting_percent=Float.parseFloat(df.format(meeting_percent));
             }
             meetingBo.setMeeting_percent(meeting_percent);
         }
