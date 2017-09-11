@@ -274,7 +274,8 @@ public class UserAction extends BaseAction {
             date = new Date();
             int dayOfWeek = DateUtils.dayOfWeek(date);
             if (dayOfWeek < 3) {
-                int lastWeek = Integer.parseInt(meetingBo.getDay_of_week()) - dayOfWeek;//上周
+                int lastWeek =dayOfWeek+7-Integer.parseInt(meetingBo.getDay_of_week());//上周
+//                int lastWeek = Integer.parseInt(meetingBo.getDay_of_week()) - dayOfWeek;
                 //周日，周一，
                 //获取上周的数据
                 date = DateUtils.getPastDate(date, lastWeek);
@@ -294,11 +295,12 @@ public class UserAction extends BaseAction {
         appLogService.insertLog(operateLogBo);
 
         if ("true".equals(isAttended)) {
+            userService.notAttendMeeting(user_id, Integer.parseInt(meeting_id),date);
             userService.attendMeeting(user_id, Integer.parseInt(meeting_id), date);
             //add;
         }
         if ("false".equals(isAttended)) {
-            userService.notAttendMeeting(user_id, Integer.parseInt(meeting_id));
+            userService.notAttendMeeting(user_id, Integer.parseInt(meeting_id),date);
         }
         return "success";
     }

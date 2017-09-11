@@ -79,7 +79,7 @@ public interface UserDao extends BaseDao {
      * @param meeting_id
      * @return
      */
-     void notAttendMeeting(String user_id,int meeting_id);
+     void notAttendMeeting(String user_id,int meeting_id, Date attendtime);
 
 
     /**

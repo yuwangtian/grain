@@ -93,7 +93,7 @@ public class UserService {
 
         int dayOfWeek = DateUtils.dayOfWeek(date);
         if (dayOfWeek < 3) {
-            int lastWeek = 7 - dayOfWeek;
+            int lastWeek = 8 - dayOfWeek;
             //周日，周一，
             //获取上周的数据
             beginDate = DateUtils.getPastDate(date, lastWeek);
@@ -127,8 +127,8 @@ public class UserService {
      * @param meeting_id
      * @return
      */
-    public void notAttendMeeting(String user_id, int meeting_id) {
-        userDao.notAttendMeeting(user_id, meeting_id);
+    public void notAttendMeeting(String user_id, int meeting_id, Date attendtime) {
+        userDao.notAttendMeeting(user_id, meeting_id,attendtime);
     }
 
     /**

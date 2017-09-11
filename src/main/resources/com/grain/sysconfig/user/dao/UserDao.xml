@@ -118,8 +118,7 @@
        where
        user_id=#{param1}
        and meeting_id=#{param2}
-       and attend_time >= (CurDate() - 7)
-       AND attend_time &lt; 'DATE_SUB(now() , INTERVAL 1 DAY) 00:00:00'
+       and attend_time=#{param3}
    </delete>
 
     <!--删除人员-->
