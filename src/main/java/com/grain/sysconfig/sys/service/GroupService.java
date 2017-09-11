@@ -62,4 +62,5 @@ public class GroupService {
     public List<GroupBo> getAllSmallGroups(){
         return groupDao.getAllSmallGroups();
     }
+
 }

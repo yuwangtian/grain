@@ -38,6 +38,7 @@ public class UserBo extends BaseBo {
     private String  shoujin_local_flag;
     private String  remark ;
     private String  shoujin_flag ;
+    private String meeting_id;
 
     @Override
     public String toString() {
@@ -93,6 +94,15 @@ public class UserBo extends BaseBo {
             return shoujin_time;
         }
         return shoujin_time_page;
+    }
+
+
+    public String getMeeting_id() {
+        return meeting_id;
+    }
+
+    public void setMeeting_id(String meeting_id) {
+        this.meeting_id = meeting_id;
     }
 
     public void setShoujin_time_page(String shoujin_time_page) {

@@ -106,6 +106,31 @@ public class UserService {
         endDate = DateUtils.getFetureDate(beginDate, 7);
         return userDao.getMeetingUserBoByGroupId(groupId, meetingId, beginDate, endDate);
     }
+    /**
+     * 一段时间内的所有聚会人员
+     *
+     * @return
+     */
+    public List<UserBo> getMeetingUserBos() {
+        Date beginDate;
+        Date endDate;
+        Date date = new Date();
+
+        int dayOfWeek = DateUtils.dayOfWeek(date);
+        if (dayOfWeek < 3) {
+            int lastWeek = 8 - dayOfWeek;
+            //周日，周一，
+            //获取上周的数据
+            beginDate = DateUtils.getPastDate(date, lastWeek);
+        } else {
+            int thisWeek = dayOfWeek - 3;
+            //周二、周三、周四、周五、周六 获取本周数据
+            beginDate = DateUtils.getPastDate(date, thisWeek);
+        }
+        //结束日期为开始日期的后7天
+        endDate = DateUtils.getFetureDate(beginDate, 7);
+        return userDao.getMeetingUserBos(beginDate, endDate);
+    }
 
 
     /**

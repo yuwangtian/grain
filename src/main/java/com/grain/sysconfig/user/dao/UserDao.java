@@ -57,6 +57,14 @@ public interface UserDao extends BaseDao {
      * @return
      */
     List<UserBo>  getMeetingUserBoByGroupId(String groupId,String meetingId, Date beginDate, Date endDate);
+
+
+    /**
+     *    一段时间内的所有聚会人员(聚会人数)
+     * @return
+     */
+    List<UserBo>  getMeetingUserBos( Date beginDate, Date endDate);
+
     /**
      * 参加聚会
      * @param user_id

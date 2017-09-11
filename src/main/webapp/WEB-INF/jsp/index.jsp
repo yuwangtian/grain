@@ -14,7 +14,11 @@
 <div class="container-fluid main-content">
     <table class="index_table" border="1">
         <tr>
-            <td colspan="3" style="background-color: #e38d13">${groupShuoMing}${loginName}</td>
+            <td colspan="3" style="background-color: #e38d13">${groupShuoMing}${loginName}
+                <c:if test="${seesionGroupBo.group_level==10}">
+                    <a href="/smallGroups.do?groupId=${groupId}">小排情况</a>
+                </c:if>
+            </td>
         </tr>
         <tr style="background-color: #f8efc0">
             <td>名称</td>
@@ -47,7 +51,7 @@
             </tr>
             <tr>
                 <td style="background-color: #f8efc0">${meetingBo.meeting_name}比例</td>
-                <td  style="background-color: #f8efc0">
+                <td style="background-color: #f8efc0">
                         ${meetingBo.meeting_percent}%
                 </td>
             </tr>

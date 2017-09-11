@@ -47,7 +47,7 @@ public class LoginController extends BaseAction {
      * @return
      */
     @RequestMapping("/index")
-    public String login(
+    public String index(
             HttpServletRequest request, HttpServletResponse response) {
 
         String groupId = request.getParameter("groupId");
@@ -99,6 +99,68 @@ public class LoginController extends BaseAction {
             } else {
                 return "/index";
             }
+        }
+
+        return "redirect:" + REDIRECT_URL + "/login.do";
+    }
+
+    /**
+     * 首页
+     *
+     * @param request
+     * @param response
+     * @return
+     */
+    @RequestMapping("/smallGroups")
+    public String smallGroups(
+            HttpServletRequest request, HttpServletResponse response) {
+
+
+
+        String groupId = request.getParameter("groupId");
+        GroupBo groupBo = null;
+        if (groupId != null) {
+            groupBo = groupService.getGroupBoByGroupId(groupId);
+        }
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
+        if (groupBo == null) {
+            groupBo = session;
+        }
+        if (groupBo != null) {
+            OperateLogBo operateLogBo=new OperateLogBo();
+            operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
+            operateLogBo.setOperate_group_id(groupBo.getGroup_id());
+            operateLogBo.setOperate_group_name(groupBo.getName());
+            operateLogBo.setOperate_type("访问所有小排");
+            appLogService.insertLog(operateLogBo);
+
+            List<UserBo> saitsUserBoList = userService.getSaitsUserBoByGroupId(groupBo.getGroup_id());
+            int saits_total_num = 0;
+            if (saitsUserBoList != null && !saitsUserBoList.isEmpty()) {
+                saits_total_num = saitsUserBoList.size();
+            }
+            request.setAttribute("saits_total_num", saits_total_num);
+            List<UserBo> friendsUserBoList = userService.getFriendsUserBoByGroupId(groupBo.getGroup_id());
+            int friends_num = 0;
+            if (friendsUserBoList != null && !friendsUserBoList.isEmpty()) {
+                friends_num = friendsUserBoList.size();
+            }
+            request.setAttribute("friends_num", friends_num);
+            List<UserBo> newSaitsUserBoList = userService.getSaitsUserBoByTimeAndGroupId(groupBo.getGroup_id());
+            int new_saits_total_num = 0;
+            if (newSaitsUserBoList != null && !newSaitsUserBoList.isEmpty()) {
+                new_saits_total_num = newSaitsUserBoList.size();
+            }
+            request.setAttribute("new_saits_total_num", new_saits_total_num);
+            List<MeetingBo> meetingBoList = userService.getMeetings();
+           this.querySmallGroups(request,groupBo,saitsUserBoList,friendsUserBoList,newSaitsUserBoList,meetingBoList);
+            request.setAttribute("loginName", groupBo.getName());
+            request.setAttribute("groupId", groupBo.getGroup_id());
+            request.setAttribute("seesionGroupBo", groupBo);
+            request.setAttribute("sessionName", groupBo.getName());
+            request.setAttribute("sessionGroupId", groupBo.getGroup_id());
+            return "allSmallGroupIndex";
+
         }
 
         return "redirect:" + REDIRECT_URL + "/login.do";
@@ -221,6 +283,84 @@ public class LoginController extends BaseAction {
 //
 //                }
 //                indexNumBo.setMeetingBoList(chindMeetingBos);
+                childGroupNumBoList.add(indexNumBo);
+            }
+            request.setAttribute("childGroupNumBoList", childGroupNumBoList);
+        }
+    }
+
+
+    /**
+     * 下一级
+     *
+     * @param request
+     * @param groupBo
+     */
+    private void querySmallGroups(HttpServletRequest request,
+                               GroupBo groupBo,
+                               List<UserBo> saitsUserBoList,
+                               List<UserBo> friendsUserBoList,
+                               List<UserBo> newSaitsUserBoList,
+                               List<MeetingBo> meetingBos) {
+        List<GroupBo> groupChildBos = groupService.getAllSmallGroups();
+        List<ChildGroupNumBo> childGroupNumBoList = new ArrayList<>();
+        if (groupChildBos != null) {
+            List<UserBo> userBos = userService.getMeetingUserBos();
+            for (GroupBo groupBo1 : groupChildBos) {
+                String code = groupBo1.getCode();
+                ChildGroupNumBo indexNumBo = new ChildGroupNumBo();
+                indexNumBo.setGroup_name(groupBo1.getName());
+                indexNumBo.setGroup_id(groupBo1.getGroup_id());
+                indexNumBo.setGroup_code(groupBo1.getCode());
+                for (UserBo userBo : saitsUserBoList) {
+                    if (userBo.getGroup_code().contains(code)) {
+                        indexNumBo.setSaits_total_num(indexNumBo.getSaits_total_num() + 1);
+                    }
+                }
+                for (UserBo userBo : friendsUserBoList) {
+                    if (userBo.getGroup_code().contains(code)) {
+                        indexNumBo.setFriends_num(indexNumBo.getFriends_num() + 1);
+                    }
+                }
+                for (UserBo userBo : newSaitsUserBoList) {
+                    if (userBo.getGroup_code().contains(code)) {
+                        indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
+                    }
+                }
+                List<MeetingBo> chindMeetingBos=new ArrayList<>();
+                for(MeetingBo meetingBo:meetingBos){
+
+                   // List<UserBo> userBos=meetingBo.getUserBoList();
+                    MeetingBo chindMeetingBo=new MeetingBo();
+                    chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
+                    chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
+                    for(UserBo userBo : userBos){
+                        if(meetingBo.getMeeting_id().equals(userBo.getMeeting_id())){
+                            if(userBo.getGroup_code().contains(code)){
+                                chindMeetingBo.getUserBoList().add(userBo);
+                            }
+                        }
+                    }
+                    chindMeetingBos.add(chindMeetingBo);
+                }
+                for(MeetingBo meetingBo:chindMeetingBos){
+                    List<UserBo> userList=meetingBo.getUserBoList();
+                    int meeting_num = 0;
+                    if (userList != null && !userList.isEmpty()) {
+                        meeting_num = userList.size();
+                    }
+                    meetingBo.setMeeting_num(meeting_num);
+                    meetingBo.setUserBoList(userList);
+                    float meeting_percent = 0;
+                    if (indexNumBo.getSaits_total_num() != 0) {
+//                        meeting_percent = 100 * meeting_num / indexNumBo.getSaits_total_num();
+                        DecimalFormat df = new DecimalFormat("0.00");
+                        meeting_percent = 100 * (float) meeting_num / (float) indexNumBo.getSaits_total_num();
+                        meeting_percent = Float.parseFloat(df.format(meeting_percent));
+                    }
+                    meetingBo.setMeeting_percent(meeting_percent);
+                }
+                indexNumBo.setMeetingBoList(chindMeetingBos);
                 childGroupNumBoList.add(indexNumBo);
             }
             request.setAttribute("childGroupNumBoList", childGroupNumBoList);

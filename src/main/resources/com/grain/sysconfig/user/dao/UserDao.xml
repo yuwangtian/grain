@@ -84,8 +84,6 @@
     </select>
 
 
-
-
     <!--聚会-->
     <select id="getMeetingUserBoByGroupId" resultType="UserBo">
 
@@ -103,6 +101,20 @@
          AND m.meeting_id = #{param2}
         and attend_time >=  #{param3}
         AND attend_time &lt; #{param4}
+    </select>
+
+    <!--聚会-->
+    <select id="getMeetingUserBos" resultType="UserBo">
+
+    SELECT
+	  u.*,m.meeting_id
+    FROM
+	  grain_meeting_attend m
+    LEFT JOIN grain_user u ON m.user_id = u.user_id
+    WHERE
+	    u.shoujin_flag = 1
+    and attend_time >=  #{param1}
+    AND attend_time &lt; #{param2}
     </select>
 
 
@@ -139,7 +151,7 @@
         shoujin_flag,
         shoujin_local_flag,
         <if test="shoujin_time != null and shoujin_time != ''">
-        shoujin_time,
+            shoujin_time,
         </if>
         remark
         )
@@ -152,7 +164,7 @@
         '${shoujin_flag}',
         '${shoujin_local_flag}',
         <if test="shoujin_time != null and shoujin_time != ''">
-        '${shoujin_time}',
+            '${shoujin_time}',
         </if>
         '${remark}'
         )
