@@ -1,0 +1,27 @@
+DELETE
+FROM
+	grain_meeting_attend
+WHERE
+	meeting_attend_id IN (
+		SELECT
+			*
+		FROM
+			(
+				SELECT
+					a.meeting_attend_id
+				FROM
+					grain_meeting_attend a
+				LEFT JOIN (
+					SELECT
+						meeting_attend_id
+					FROM
+						grain_meeting_attend
+					GROUP BY
+						attend_time,
+						user_id,
+						meeting_id
+				) b ON a.meeting_attend_id = b.meeting_attend_id
+				WHERE
+					b.meeting_attend_id IS NULL
+			) c
+	)
