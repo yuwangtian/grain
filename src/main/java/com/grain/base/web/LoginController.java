@@ -60,10 +60,14 @@ public class LoginController extends BaseAction {
             groupBo = session;
         }
         if (groupBo != null) {
+            GroupBo logGroup=groupBo;
+            if(session!=null){
+                logGroup=session;
+            }
             OperateLogBo operateLogBo=new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-            operateLogBo.setOperate_group_id(groupBo.getGroup_id());
-            operateLogBo.setOperate_group_name(groupBo.getName());
+            operateLogBo.setOperate_group_id(logGroup.getGroup_id());
+            operateLogBo.setOperate_group_name(logGroup.getName());
             operateLogBo.setOperate_type("访问首页");
             appLogService.insertLog(operateLogBo);
             this.queryNum(request, groupBo);
@@ -129,8 +133,8 @@ public class LoginController extends BaseAction {
         if (groupBo != null) {
             OperateLogBo operateLogBo=new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-            operateLogBo.setOperate_group_id(groupBo.getGroup_id());
-            operateLogBo.setOperate_group_name(groupBo.getName());
+            operateLogBo.setOperate_group_id(session.getGroup_id());
+            operateLogBo.setOperate_group_name(session.getName());
             operateLogBo.setOperate_type("访问所有小排");
             appLogService.insertLog(operateLogBo);
 
@@ -409,7 +413,7 @@ public class LoginController extends BaseAction {
             modelMap.addAttribute("userName", userName);
             return "/login";
         } else {
-
+            GroupBo sessionGroup = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
             OperateLogBo operateLogBo=new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
             operateLogBo.setOperate_group_id(groupBo.getGroup_id());

@@ -289,8 +289,9 @@ public class UserAction extends BaseAction {
 
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("聚会签到");
         appLogService.insertLog(operateLogBo);
 
@@ -322,10 +323,11 @@ public class UserAction extends BaseAction {
         if (user_id == null || isShoujin == null) {
             return "fail";
         }
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("受浸或取消受浸"+isShoujin);
         appLogService.insertLog(operateLogBo);
         userService.shoujin(user_id, isShoujin);
@@ -370,10 +372,11 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("增加或修改福音朋友");
         appLogService.insertLog(operateLogBo);
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=friends_num";
@@ -423,11 +426,11 @@ public class UserAction extends BaseAction {
         } else {
             userService.updateUser(userBo);
         }
-
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("增加或修改弟兄姊妹");
         appLogService.insertLog(operateLogBo);
         return "redirect:" + REDIRECT_URL + "/userList.do?groupId=" + groupBo.getGroup_id() + "&type=saits_total_num";
@@ -462,11 +465,11 @@ public class UserAction extends BaseAction {
             e.printStackTrace();
         }
         request.setAttribute("userBo", userBo);
-
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("准备修改用户");
         appLogService.insertLog(operateLogBo);
         return returnPage;
@@ -539,10 +542,11 @@ public class UserAction extends BaseAction {
 
         }
         userService.addLiYue(liYueBoList);
+        GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         OperateLogBo operateLogBo = new OperateLogBo();
         operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
-        operateLogBo.setOperate_group_id(groupAndTypeBo.getGroupBo().getGroup_id());
-        operateLogBo.setOperate_group_name(groupAndTypeBo.getGroupBo().getName());
+        operateLogBo.setOperate_group_id(session.getGroup_id());
+        operateLogBo.setOperate_group_name(session.getName());
         operateLogBo.setOperate_type("立约");
         appLogService.insertLog(operateLogBo);
         return "redirect:" + REDIRECT_URL + "/operate.do?groupId=" + groupAndTypeBo.getGroupBo().getGroup_id() + "&type=meeting_liyue&meeting_id=" + meeting_id;

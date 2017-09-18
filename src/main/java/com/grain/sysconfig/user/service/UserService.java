@@ -90,15 +90,15 @@ public class UserService {
         Date beginDate;
         Date endDate;
         Date date = new Date();
-
+        MeetingBo meetingBo = this.getMeetingByMeeting_id(meetingId);
         int dayOfWeek = DateUtils.dayOfWeek(date);
         if (dayOfWeek < 3) {
-            int lastWeek = 8 - dayOfWeek;
+            int lastWeek =dayOfWeek+7-Integer.parseInt(meetingBo.getDay_of_week());//上周
             //周日，周一，
             //获取上周的数据
             beginDate = DateUtils.getPastDate(date, lastWeek);
         } else {
-            int thisWeek = dayOfWeek - 3;
+            int thisWeek = dayOfWeek-3;//本周
             //周二、周三、周四、周五、周六 获取本周数据
             beginDate = DateUtils.getPastDate(date, thisWeek);
         }
@@ -118,7 +118,7 @@ public class UserService {
 
         int dayOfWeek = DateUtils.dayOfWeek(date);
         if (dayOfWeek < 3) {
-            int lastWeek = 8 - dayOfWeek;
+            int lastWeek = 6;
             //周日，周一，
             //获取上周的数据
             beginDate = DateUtils.getPastDate(date, lastWeek);
