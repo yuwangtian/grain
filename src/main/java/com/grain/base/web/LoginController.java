@@ -67,7 +67,7 @@ public class LoginController extends BaseAction {
             OperateLogBo operateLogBo=new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
             operateLogBo.setOperate_group_id(logGroup.getGroup_id());
-            operateLogBo.setOperate_group_name(logGroup.getName());
+            operateLogBo.setOperate_group_name(logGroup.getName()+"，访问：【"+groupBo.getName()+"】");
             operateLogBo.setOperate_type("访问首页");
             appLogService.insertLog(operateLogBo);
             this.queryNum(request, groupBo);
@@ -118,9 +118,6 @@ public class LoginController extends BaseAction {
     @RequestMapping("/smallGroups")
     public String smallGroups(
             HttpServletRequest request, HttpServletResponse response) {
-
-
-
         String groupId = request.getParameter("groupId");
         GroupBo groupBo = null;
         if (groupId != null) {
