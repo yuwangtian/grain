@@ -49,7 +49,7 @@
         *
         FROM grain_group
         where
-        group_level='40'
+        group_level='40' order by code
     </select>
 
 
