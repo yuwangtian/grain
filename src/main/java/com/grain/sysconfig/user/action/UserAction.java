@@ -78,7 +78,7 @@ public class UserAction extends BaseAction {
             String meeting_id = request.getParameter("meeting_id");
             MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);
             typeName = meetingBo.getMeeting_name();
-            userBoList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
+            userBoList = userService.getMeetingUserBoByGroupId(request,groupBo.getGroup_id(), meeting_id);
         }
         request.setAttribute("userBoList", userBoList);
         request.setAttribute("typeName", typeName);
@@ -157,7 +157,7 @@ public class UserAction extends BaseAction {
             typeName = meetingBo.getMeeting_name();
 
             List<UserBo> allBoList = userService.getSaitsUserBoByGroupId(groupBo.getGroup_id());
-            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
+            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(request,groupBo.getGroup_id(), meeting_id);
             userBoList = new ArrayList<>();
             for (UserBo allUserBo : allBoList) {
                 if (!meetingList.contains(allUserBo)) {
@@ -176,7 +176,7 @@ public class UserAction extends BaseAction {
 
 //            meeting_liyue
             List<UserBo> liyueBoList = userService.getLiYueUserBosByGroupId(groupBo.getGroup_id(), meeting_id);
-            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meeting_id);
+            List<UserBo> meetingList = userService.getMeetingUserBoByGroupId(request,groupBo.getGroup_id(), meeting_id);
             userBoList = new ArrayList<>();
             for (UserBo allUserBo : liyueBoList) {
                 if (!meetingList.contains(allUserBo)) {

@@ -52,8 +52,6 @@
         group_level='40' order by code
     </select>
 
-
-
     <!--父部门-->
     <select id="getParentGroupBoByGroupId" resultType="GroupBo" parameterType="GroupBo">
         SELECT
@@ -64,6 +62,4 @@
         SELECT  parent_id from grain_group where group_id=#{param1}
         )
     </select>
-
-
 </mapper>

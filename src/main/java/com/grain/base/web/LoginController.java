@@ -1,6 +1,7 @@
 package com.grain.base.web;
 
 import com.grain.base.action.BaseAction;
+import com.grain.base.bo.QueryTimeBo;
 import com.grain.base.log.AppLogService;
 import com.grain.base.log.bo.OperateLogBo;
 import com.grain.sysconfig.sys.bo.GroupBo;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Properties;
 
@@ -51,23 +53,28 @@ public class LoginController extends BaseAction {
             HttpServletRequest request, HttpServletResponse response) {
 
         String groupId = request.getParameter("groupId");
+
         GroupBo groupBo = null;
         if (groupId != null) {
             groupBo = groupService.getGroupBoByGroupId(groupId);
         }
+        String time_add_flag = request.getParameter("time_add_flag");
+        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 3,time_add_flag);
+        new CacheService().setSession2Cache(request, "beginDate",DateUtils.getDateString(queryTimeBo.getBeginDate()) );
+        new CacheService().setSession2Cache(request, "endDate", DateUtils.getDateString(queryTimeBo.getEndDate()));
         GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         if (groupBo == null) {
             groupBo = session;
         }
         if (groupBo != null) {
-            GroupBo logGroup=groupBo;
-            if(session!=null){
-                logGroup=session;
+            GroupBo logGroup = groupBo;
+            if (session != null) {
+                logGroup = session;
             }
-            OperateLogBo operateLogBo=new OperateLogBo();
+            OperateLogBo operateLogBo = new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
             operateLogBo.setOperate_group_id(logGroup.getGroup_id());
-            operateLogBo.setOperate_group_name(logGroup.getName()+"，访问：【"+groupBo.getName()+"】");
+            operateLogBo.setOperate_group_name(logGroup.getName() + "，访问：【" + groupBo.getName() + "】");
             operateLogBo.setOperate_type("访问首页");
             appLogService.insertLog(operateLogBo);
             this.queryNum(request, groupBo);
@@ -123,12 +130,16 @@ public class LoginController extends BaseAction {
         if (groupId != null) {
             groupBo = groupService.getGroupBoByGroupId(groupId);
         }
+        String time_add_flag = request.getParameter("time_add_flag");
+        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 3,time_add_flag);
+        new CacheService().setSession2Cache(request, "beginDate",DateUtils.getDateString(queryTimeBo.getBeginDate()) );
+        new CacheService().setSession2Cache(request, "endDate", DateUtils.getDateString(queryTimeBo.getEndDate()));
         GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
         if (groupBo == null) {
             groupBo = session;
         }
         if (groupBo != null) {
-            OperateLogBo operateLogBo=new OperateLogBo();
+            OperateLogBo operateLogBo = new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
             operateLogBo.setOperate_group_id(session.getGroup_id());
             operateLogBo.setOperate_group_name(session.getName());
@@ -154,7 +165,7 @@ public class LoginController extends BaseAction {
             }
             request.setAttribute("new_saits_total_num", new_saits_total_num);
             List<MeetingBo> meetingBoList = userService.getMeetings();
-           this.querySmallGroups(request,groupBo,saitsUserBoList,friendsUserBoList,newSaitsUserBoList,meetingBoList);
+            this.querySmallGroups(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList);
             request.setAttribute("loginName", groupBo.getName());
             request.setAttribute("groupId", groupBo.getGroup_id());
             request.setAttribute("seesionGroupBo", groupBo);
@@ -194,7 +205,7 @@ public class LoginController extends BaseAction {
         request.setAttribute("new_saits_total_num", new_saits_total_num);
         List<MeetingBo> meetingBoList = userService.getMeetings();
         for (MeetingBo meetingBo : meetingBoList) {
-            List<UserBo> userList = userService.getMeetingUserBoByGroupId(groupBo.getGroup_id(), meetingBo.getMeeting_id());
+            List<UserBo> userList = userService.getMeetingUserBoByGroupId(request,groupBo.getGroup_id(), meetingBo.getMeeting_id());
             int meeting_num = 0;
             if (userList != null && !userList.isEmpty()) {
                 meeting_num = userList.size();
@@ -218,6 +229,8 @@ public class LoginController extends BaseAction {
         request.setAttribute("meetingBoList", meetingBoList);
         this.queryChildNum(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList);
     }
+
+
 
     /**
      * 下一级
@@ -255,35 +268,41 @@ public class LoginController extends BaseAction {
                         indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
                     }
                 }
-//                List<MeetingBo> chindMeetingBos=new ArrayList<>();
-//                for(MeetingBo meetingBo:meetingBos){
-//                    List<UserBo> userBos=meetingBo.getUserBoList();
-//                    MeetingBo chindMeetingBo=new MeetingBo();
-//                    chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
-//                    chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
-//                    for(UserBo userBo : userBos){
-//                        if(userBo.getGroup_code().contains(code)){
-//                            chindMeetingBo.getUserBoList().add(userBo);
-//                        }
-//                    }
-//                    chindMeetingBos.add(chindMeetingBo);
-//                }
-//                for(MeetingBo meetingBo:chindMeetingBos){
-//                    List<UserBo> userList=meetingBo.getUserBoList();
-//                    int meeting_num = 0;
-//                    if (userList != null && !userList.isEmpty()) {
-//                        meeting_num = userList.size();
-//                    }
-//                    meetingBo.setMeeting_num(meeting_num);
-//                    meetingBo.setUserBoList(userList);
+                List<MeetingBo> chindMeetingBos = new ArrayList<>();
+                for (MeetingBo meetingBo : meetingBos) {
+                    List<UserBo> userBos = meetingBo.getUserBoList();
+                    MeetingBo chindMeetingBo = new MeetingBo();
+                    chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
+                    chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
+                    for (UserBo userBo : userBos) {
+                        if (userBo.getGroup_code().contains(code)) {
+                            chindMeetingBo.getUserBoList().add(userBo);
+                        }
+                    }
+                    chindMeetingBos.add(chindMeetingBo);
+                }
+                for (MeetingBo meetingBo : chindMeetingBos) {
+                    List<UserBo> userList = meetingBo.getUserBoList();
+                    int meeting_num = 0;
+                    if (userList != null && !userList.isEmpty()) {
+                        meeting_num = userList.size();
+                    }
+                    meetingBo.setMeeting_num(meeting_num);
+                    meetingBo.setUserBoList(userList);
 //                    int meeting_percent = 0;
 //                    if (indexNumBo.getSaits_total_num() != 0) {
 //                        meeting_percent = 100 * meeting_num / indexNumBo.getSaits_total_num();
 //                    }
-//                    meetingBo.setMeeting_percent(meeting_percent);
-//
-//                }
-//                indexNumBo.setMeetingBoList(chindMeetingBos);
+                    float meeting_percent = 0;
+                    if (indexNumBo.getSaits_total_num() != 0) {
+//                        meeting_percent = 100 * meeting_num / indexNumBo.getSaits_total_num();
+                        DecimalFormat df = new DecimalFormat("0.00");
+                        meeting_percent = 100 * (float) meeting_num / (float) indexNumBo.getSaits_total_num();
+                        meeting_percent = Float.parseFloat(df.format(meeting_percent));
+                    }
+                    meetingBo.setMeeting_percent(meeting_percent);
+                }
+                indexNumBo.setMeetingBoList(chindMeetingBos);
                 childGroupNumBoList.add(indexNumBo);
             }
             request.setAttribute("childGroupNumBoList", childGroupNumBoList);
@@ -298,15 +317,15 @@ public class LoginController extends BaseAction {
      * @param groupBo
      */
     private void querySmallGroups(HttpServletRequest request,
-                               GroupBo groupBo,
-                               List<UserBo> saitsUserBoList,
-                               List<UserBo> friendsUserBoList,
-                               List<UserBo> newSaitsUserBoList,
-                               List<MeetingBo> meetingBos) {
+                                  GroupBo groupBo,
+                                  List<UserBo> saitsUserBoList,
+                                  List<UserBo> friendsUserBoList,
+                                  List<UserBo> newSaitsUserBoList,
+                                  List<MeetingBo> meetingBos) {
         List<GroupBo> groupChildBos = groupService.getAllSmallGroups();
         List<ChildGroupNumBo> childGroupNumBoList = new ArrayList<>();
         if (groupChildBos != null) {
-            List<UserBo> userBos = userService.getMeetingUserBos();
+            List<UserBo> userBos = userService.getMeetingUserBos(request);
             for (GroupBo groupBo1 : groupChildBos) {
                 String code = groupBo1.getCode();
                 ChildGroupNumBo indexNumBo = new ChildGroupNumBo();
@@ -328,24 +347,24 @@ public class LoginController extends BaseAction {
                         indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
                     }
                 }
-                List<MeetingBo> chindMeetingBos=new ArrayList<>();
-                for(MeetingBo meetingBo:meetingBos){
+                List<MeetingBo> chindMeetingBos = new ArrayList<>();
+                for (MeetingBo meetingBo : meetingBos) {
 
-                   // List<UserBo> userBos=meetingBo.getUserBoList();
-                    MeetingBo chindMeetingBo=new MeetingBo();
+                    // List<UserBo> userBos=meetingBo.getUserBoList();
+                    MeetingBo chindMeetingBo = new MeetingBo();
                     chindMeetingBo.setMeeting_id(meetingBo.getMeeting_id());
                     chindMeetingBo.setMeeting_name(meetingBo.getMeeting_name());
-                    for(UserBo userBo : userBos){
-                        if(meetingBo.getMeeting_id().equals(userBo.getMeeting_id())){
-                            if(userBo.getGroup_code().contains(code)){
+                    for (UserBo userBo : userBos) {
+                        if (meetingBo.getMeeting_id().equals(userBo.getMeeting_id())) {
+                            if (userBo.getGroup_code().contains(code)) {
                                 chindMeetingBo.getUserBoList().add(userBo);
                             }
                         }
                     }
                     chindMeetingBos.add(chindMeetingBo);
                 }
-                for(MeetingBo meetingBo:chindMeetingBos){
-                    List<UserBo> userList=meetingBo.getUserBoList();
+                for (MeetingBo meetingBo : chindMeetingBos) {
+                    List<UserBo> userList = meetingBo.getUserBoList();
                     int meeting_num = 0;
                     if (userList != null && !userList.isEmpty()) {
                         meeting_num = userList.size();
@@ -411,7 +430,7 @@ public class LoginController extends BaseAction {
             return "/login";
         } else {
             GroupBo sessionGroup = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
-            OperateLogBo operateLogBo=new OperateLogBo();
+            OperateLogBo operateLogBo = new OperateLogBo();
             operateLogBo.setOperate_time(DateUtils.getCurrentDateTime());
             operateLogBo.setOperate_group_id(groupBo.getGroup_id());
             operateLogBo.setOperate_group_name(groupBo.getName());

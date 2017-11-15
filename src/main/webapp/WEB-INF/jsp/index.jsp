@@ -20,6 +20,17 @@
                 </c:if>
             </td>
         </tr>
+        <c:if test="${seesionGroupBo.group_level==10}">
+            <tr style="background-color: #f8efc0">
+                <td><a href="/index.do?time_add_flag=-1"><--上周</a></td>
+                <td><a href="/index.do?time_add_flag=1">下周--></a></td>
+            </tr>
+            <tr style="background-color: #f8efc0">
+                <td>${beginDate}</td>
+                <td>${endDate}</td>
+            </tr>
+        </c:if>
+
         <tr style="background-color: #f8efc0">
             <td>名称</td>
             <td>人数</td>
@@ -93,17 +104,19 @@
                 </td>
 
             </tr>
-                <%--<c:forEach items="${childGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">--%>
-                <%--<tr>--%>
-                <%--<td>${meetingBo1.meeting_name}</td>--%>
-                <%--<td><a href="/userList.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a></td>--%>
-                <%--<td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>--%>
-                <%--</tr>--%>
-                <%--<tr>--%>
-                <%--<td style="background-color: #f8efc0">${meetingBo1.meeting_name}比例</td>--%>
-                <%--<td colspan="2" style="background-color: #f8efc0">${meetingBo1.meeting_percent}%</td>--%>
-                <%--</tr>--%>
-                <%--</c:forEach>--%>
+            <c:forEach items="${childGroupNum.meetingBoList}" var="meetingBo1" varStatus="stat">
+                <tr>
+                    <td>${meetingBo1.meeting_name}</td>
+                    <td>
+                        <a href="/userList.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">${meetingBo1.meeting_num}人</a>
+                    </td>
+                        <%--<td><a href="/operate.do?groupId=${childGroupNum.group_id}&type=meeting&meeting_id=${meetingBo1.meeting_id}">签到</a></td>--%>
+                </tr>
+                <tr>
+                    <td style="background-color: #f8efc0">${meetingBo1.meeting_name}比例</td>
+                    <td style="background-color: #f8efc0">${meetingBo1.meeting_percent}%</td>
+                </tr>
+            </c:forEach>
 
 
         </table>

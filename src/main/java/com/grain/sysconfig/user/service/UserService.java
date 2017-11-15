@@ -1,14 +1,17 @@
 package com.grain.sysconfig.user.service;
 
+import com.grain.base.bo.QueryTimeBo;
 import com.grain.sysconfig.user.bo.LiYueBo;
 import com.grain.sysconfig.user.bo.MeetingBo;
 import com.grain.sysconfig.user.bo.UserBo;
 import com.grain.sysconfig.user.dao.UserDao;
 import com.grain.utils.DateUtils;
+import com.grain.utils.cache.CacheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.List;
 
@@ -86,50 +89,57 @@ public class UserService {
      * @param groupId
      * @return
      */
-    public List<UserBo> getMeetingUserBoByGroupId(String groupId, String meetingId) {
-        Date beginDate;
-        Date endDate;
-        Date date = new Date();
+    public List<UserBo> getMeetingUserBoByGroupId(HttpServletRequest request,String groupId, String meetingId) {
+
         MeetingBo meetingBo = this.getMeetingByMeeting_id(meetingId);
-        int dayOfWeek = DateUtils.dayOfWeek(date);
+        int day_Of_Week_meeting=Integer.parseInt(meetingBo.getDay_of_week());
+        QueryTimeBo queryTimeBo= this.getQueryTimeByTime( request, day_Of_Week_meeting,"0");
+        return userDao.getMeetingUserBoByGroupId(groupId, meetingId, queryTimeBo.getBeginDate(), queryTimeBo.getEndDate());
+    }
+
+    /**
+     * 通过当前时间来获取查询时间
+     * @param day_Of_Week_meeting
+     */
+    public QueryTimeBo getQueryTimeByTime(HttpServletRequest request, int day_Of_Week_meeting, String time_add_flag){
+        Date beginDate=null;
+        Date endDate=null;
+        String  now_str = (String) new CacheService().setSession2Cache( request, "beginDate", null);
+        Date now=DateUtils.getDateByString(now_str,"yyyy-MM-dd");
+        if(now ==null){
+            now = new Date();
+        }
+        int dayOfWeek = DateUtils.dayOfWeek(now);
         if (dayOfWeek < 3) {
-            int lastWeek =dayOfWeek+7-Integer.parseInt(meetingBo.getDay_of_week());//上周
+            int lastWeek =dayOfWeek+7-day_Of_Week_meeting;//上周
             //周日，周一，
             //获取上周的数据
-            beginDate = DateUtils.getPastDate(date, lastWeek);
+            beginDate = DateUtils.getPastDate(now, lastWeek);
         } else {
             int thisWeek = dayOfWeek-3;//本周
             //周二、周三、周四、周五、周六 获取本周数据
-            beginDate = DateUtils.getPastDate(date, thisWeek);
+            beginDate = DateUtils.getPastDate(now, thisWeek);
+        }
+        if("1".equals(time_add_flag)){
+            beginDate = DateUtils.getFetureDate(beginDate, 7);
+        }else if("-1".equals(time_add_flag)){
+            beginDate=DateUtils.getPastDate(beginDate, 7);
         }
         //结束日期为开始日期的后7天
+        QueryTimeBo queryTimeBo=new QueryTimeBo();
         endDate = DateUtils.getFetureDate(beginDate, 7);
-        return userDao.getMeetingUserBoByGroupId(groupId, meetingId, beginDate, endDate);
+        queryTimeBo.setBeginDate(beginDate);
+        queryTimeBo.setEndDate(endDate);
+        return queryTimeBo;
     }
     /**
      * 一段时间内的所有聚会人员
      *
      * @return
      */
-    public List<UserBo> getMeetingUserBos() {
-        Date beginDate;
-        Date endDate;
-        Date date = new Date();
-
-        int dayOfWeek = DateUtils.dayOfWeek(date);
-        if (dayOfWeek < 3) {
-            int lastWeek = 6;
-            //周日，周一，
-            //获取上周的数据
-            beginDate = DateUtils.getPastDate(date, lastWeek);
-        } else {
-            int thisWeek = dayOfWeek - 3;
-            //周二、周三、周四、周五、周六 获取本周数据
-            beginDate = DateUtils.getPastDate(date, thisWeek);
-        }
-        //结束日期为开始日期的后7天
-        endDate = DateUtils.getFetureDate(beginDate, 7);
-        return userDao.getMeetingUserBos(beginDate, endDate);
+    public List<UserBo> getMeetingUserBos(HttpServletRequest request) {
+        QueryTimeBo queryTimeBo= this.getQueryTimeByTime( request, 3,"0");
+        return userDao.getMeetingUserBos(queryTimeBo.getBeginDate(), queryTimeBo.getEndDate());
     }
 
 

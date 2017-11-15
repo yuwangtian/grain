@@ -12,7 +12,16 @@
 <%--查询框--%>
 
 <div class="container-fluid main-content">
-
+    <table class="index_table" border="1">
+        <tr style="background-color: #f8efc0">
+            <td><a href="/smallGroups.do?time_add_flag=-1"><--上周</a></td>
+            <td><a href="/smallGroups.do?time_add_flag=1">下周--></a></td>
+        </tr>
+        <tr style="background-color: #f8efc0">
+            <td>${beginDate}</td>
+            <td>${endDate}</td>
+        </tr>
+    </table>
 
     <c:forEach items="${childGroupNumBoList}" var="childGroupNum" varStatus="stat">
         <table class="index_table" border="1">

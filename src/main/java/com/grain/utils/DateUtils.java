@@ -467,6 +467,15 @@ public class DateUtils {
     }
 
     /**
+     * @return 数据格式:2014-14-19
+     */
+    public static String getDateString(Date date) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat(
+                "yyyy-MM-dd");
+        return dateFormat.format(date);
+    }
+
+    /**
      * 获取指定日期的季节
      *
      * @param date
