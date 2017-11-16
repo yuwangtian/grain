@@ -59,7 +59,7 @@ public interface GroupDao extends BaseDao {
     /**
      * 所有的小排
      */
-    List<GroupBo> getAllSmallGroups();
+    List<GroupBo> getAllSmallGroups(String groupCode);
 
 
 }

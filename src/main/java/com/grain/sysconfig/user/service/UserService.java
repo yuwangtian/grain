@@ -138,7 +138,7 @@ public class UserService {
      * @return
      */
     public List<UserBo> getMeetingUserBos(HttpServletRequest request) {
-        QueryTimeBo queryTimeBo= this.getQueryTimeByTime( request, 3,"0");
+        QueryTimeBo queryTimeBo= this.getQueryTimeByTime( request, 2,"0");
         return userDao.getMeetingUserBos(queryTimeBo.getBeginDate(), queryTimeBo.getEndDate());
     }
 

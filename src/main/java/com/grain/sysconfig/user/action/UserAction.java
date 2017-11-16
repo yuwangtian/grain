@@ -453,7 +453,7 @@ public class UserAction extends BaseAction {
         } else if ("addFriend".equals(groupAndTypeBo.getType())) {
             returnPage = "/addFriend";
         }
-        List<GroupBo> groupBos = groupService.getAllSmallGroups();
+        List<GroupBo> groupBos = groupService.getAllSmallGroups(request);
         request.setAttribute("groupBos", groupBos);
         String user_id = request.getParameter("user_id");
         UserBo userBo = userService.getUserBoByUserId(user_id);
@@ -503,7 +503,7 @@ public class UserAction extends BaseAction {
     @ResponseBody
     public String getAllSmallGroups(HttpServletRequest request, HttpServletResponse response) {
         this.common(request, response);
-        List<GroupBo> groupBos = groupService.getAllSmallGroups();
+        List<GroupBo> groupBos = groupService.getAllSmallGroups(request);
         String json = JSON.toJSONString(groupBos);
         return json;
     }

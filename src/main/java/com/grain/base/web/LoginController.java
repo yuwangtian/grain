@@ -59,7 +59,7 @@ public class LoginController extends BaseAction {
             groupBo = groupService.getGroupBoByGroupId(groupId);
         }
         String time_add_flag = request.getParameter("time_add_flag");
-        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 3,time_add_flag);
+        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 2,time_add_flag);
         new CacheService().setSession2Cache(request, "beginDate",DateUtils.getDateString(queryTimeBo.getBeginDate()) );
         new CacheService().setSession2Cache(request, "endDate", DateUtils.getDateString(queryTimeBo.getEndDate()));
         GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
@@ -131,7 +131,7 @@ public class LoginController extends BaseAction {
             groupBo = groupService.getGroupBoByGroupId(groupId);
         }
         String time_add_flag = request.getParameter("time_add_flag");
-        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 3,time_add_flag);
+        QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request, 2,time_add_flag);
         new CacheService().setSession2Cache(request, "beginDate",DateUtils.getDateString(queryTimeBo.getBeginDate()) );
         new CacheService().setSession2Cache(request, "endDate", DateUtils.getDateString(queryTimeBo.getEndDate()));
         GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
@@ -322,7 +322,8 @@ public class LoginController extends BaseAction {
                                   List<UserBo> friendsUserBoList,
                                   List<UserBo> newSaitsUserBoList,
                                   List<MeetingBo> meetingBos) {
-        List<GroupBo> groupChildBos = groupService.getAllSmallGroups();
+
+        List<GroupBo> groupChildBos = groupService.getAllSmallGroups(request);
         List<ChildGroupNumBo> childGroupNumBoList = new ArrayList<>();
         if (groupChildBos != null) {
             List<UserBo> userBos = userService.getMeetingUserBos(request);
