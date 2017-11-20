@@ -64,6 +64,18 @@ public class UserService {
         return userDao.getSaitsUserBoByTimeAndGroupId(groupId);
     }
 
+    /**
+     * 获取久不聚会的弟兄姊妹
+     *
+     * @param groupId
+     * @return
+     */
+    public List<UserBo> getJiuBuJuHuiSaitsUserBoByGroupId(String groupId) {
+        Date beginDate = DateUtils.getPastDate(new Date(), 14);
+        Date endDate = new Date();
+        return userDao.getJiuBuJuHuiSaitsUserBoByGroupId(groupId,beginDate,endDate);
+    }
+
 
     /**
      * 删除人员
@@ -143,7 +155,7 @@ public class UserService {
      * @return
      */
     public List<UserBo> getMeetingUserBos(HttpServletRequest request) {
-        QueryTimeBo queryTimeBo= this.getQueryTimeByTime(request,"0");
+        QueryTimeBo queryTimeBo = this.getQueryTimeByTime(request, "0");
         return userDao.getMeetingUserBos(queryTimeBo.getBeginDate(), queryTimeBo.getEndDate());
     }
 

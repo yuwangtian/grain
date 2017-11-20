@@ -116,6 +116,28 @@
     and attend_time >=  #{param1}
     AND attend_time &lt; #{param2}
     </select>
+    <!--久不聚会-->
+    <select id="getJiuBuJuHuiSaitsUserBoByGroupId" resultType="UserBo">
+        SELECT
+        u.*
+        FROM
+        grain_user u
+        where
+
+         FIND_IN_SET (
+                group_id,
+                queryChildrenGroup (#{param1})
+            )
+        and u.user_id not in(
+        SELECT m.user_id from grain_meeting_attend m
+        where
+        attend_time >= #{param2}
+        AND attend_time &lt; #{param3}
+        )
+         and shoujin_flag=1
+    </select>
+
+
 
 
     <!--参加聚会-->

@@ -166,8 +166,17 @@ public class LoginController extends BaseAction {
                 new_saits_total_num = newSaitsUserBoList.size();
             }
             request.setAttribute("new_saits_total_num", new_saits_total_num);
+
+            List<UserBo> jiuBuJuHuiSaitsUserBoList = userService.getJiuBuJuHuiSaitsUserBoByGroupId(groupBo.getGroup_id());
+            int jbjh_saits_num = 0;
+            if (jiuBuJuHuiSaitsUserBoList != null && !jiuBuJuHuiSaitsUserBoList.isEmpty()) {
+                jbjh_saits_num = jiuBuJuHuiSaitsUserBoList.size();
+            }
+
+            request.setAttribute("jbjh_saits_num", jbjh_saits_num);
+
             List<MeetingBo> meetingBoList = userService.getMeetings();
-            this.querySmallGroups(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList);
+            this.querySmallGroups(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList,jiuBuJuHuiSaitsUserBoList);
             request.setAttribute("loginName", groupBo.getName());
             request.setAttribute("groupId", groupBo.getGroup_id());
             request.setAttribute("seesionGroupBo", groupBo);
@@ -193,6 +202,13 @@ public class LoginController extends BaseAction {
             saits_total_num = saitsUserBoList.size();
         }
         request.setAttribute("saits_total_num", saits_total_num);
+        List<UserBo> jiuBuJuHuiSaitsUserBoList = userService.getJiuBuJuHuiSaitsUserBoByGroupId(groupBo.getGroup_id());
+        int jbjh_saits_num = 0;
+        if (jiuBuJuHuiSaitsUserBoList != null && !jiuBuJuHuiSaitsUserBoList.isEmpty()) {
+            jbjh_saits_num = jiuBuJuHuiSaitsUserBoList.size();
+        }
+
+        request.setAttribute("jbjh_saits_num", jbjh_saits_num);
         List<UserBo> friendsUserBoList = userService.getFriendsUserBoByGroupId(groupBo.getGroup_id());
         int friends_num = 0;
         if (friendsUserBoList != null && !friendsUserBoList.isEmpty()) {
@@ -229,7 +245,7 @@ public class LoginController extends BaseAction {
             meetingBo.setMeeting_percent(meeting_percent);
         }
         request.setAttribute("meetingBoList", meetingBoList);
-        this.queryChildNum(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList);
+        this.queryChildNum(request, groupBo, saitsUserBoList, friendsUserBoList, newSaitsUserBoList, meetingBoList,jiuBuJuHuiSaitsUserBoList);
     }
 
 
@@ -245,7 +261,8 @@ public class LoginController extends BaseAction {
                                List<UserBo> saitsUserBoList,
                                List<UserBo> friendsUserBoList,
                                List<UserBo> newSaitsUserBoList,
-                               List<MeetingBo> meetingBos) {
+                               List<MeetingBo> meetingBos,
+                               List<UserBo> jiuBuJuHuiSaitsUserBoList) {
         List<GroupBo> groupChildBos = groupService.getOneLevelChildGroupBoByGroupId(groupBo.getGroup_id());
         List<ChildGroupNumBo> childGroupNumBoList = new ArrayList<>();
         if (groupChildBos != null) {
@@ -268,6 +285,11 @@ public class LoginController extends BaseAction {
                 for (UserBo userBo : newSaitsUserBoList) {
                     if (userBo.getGroup_code().contains(code)) {
                         indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
+                    }
+                }
+                for (UserBo userBo : jiuBuJuHuiSaitsUserBoList) {
+                    if (userBo.getGroup_code().contains(code)) {
+                        indexNumBo.setJbjh_saits_num(indexNumBo.getJbjh_saits_num() + 1);
                     }
                 }
                 List<MeetingBo> chindMeetingBos = new ArrayList<>();
@@ -323,7 +345,8 @@ public class LoginController extends BaseAction {
                                   List<UserBo> saitsUserBoList,
                                   List<UserBo> friendsUserBoList,
                                   List<UserBo> newSaitsUserBoList,
-                                  List<MeetingBo> meetingBos) {
+                                  List<MeetingBo> meetingBos,
+                                  List<UserBo> jiuBuJuHuiSaitsUserBoList) {
 
         List<GroupBo> groupChildBos = groupService.getAllSmallGroups(request);
         List<ChildGroupNumBo> childGroupNumBoList = new ArrayList<>();
@@ -348,6 +371,11 @@ public class LoginController extends BaseAction {
                 for (UserBo userBo : newSaitsUserBoList) {
                     if (userBo.getGroup_code().contains(code)) {
                         indexNumBo.setNew_saits_total_num(indexNumBo.getNew_saits_total_num() + 1);
+                    }
+                }
+                for (UserBo userBo : jiuBuJuHuiSaitsUserBoList) {
+                    if (userBo.getGroup_code().contains(code)) {
+                        indexNumBo.setJbjh_saits_num(indexNumBo.getJbjh_saits_num() + 1);
                     }
                 }
                 List<MeetingBo> chindMeetingBos = new ArrayList<>();

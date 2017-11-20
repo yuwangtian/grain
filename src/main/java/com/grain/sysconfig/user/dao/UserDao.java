@@ -44,6 +44,15 @@ public interface UserDao extends BaseDao {
      */
      List<UserBo> getSaitsUserBoByTimeAndGroupId(String groupId);
 
+
+    /**
+     * 获取久不聚会的弟兄姊妹
+     *
+     * @param groupId
+     * @return
+     */
+     List<UserBo> getJiuBuJuHuiSaitsUserBoByGroupId(String groupId,Date beginDate,Date endDate);
+
     /**
      * 通过Id找用户
      * @param groupId

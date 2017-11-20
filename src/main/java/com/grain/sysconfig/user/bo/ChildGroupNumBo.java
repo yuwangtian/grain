@@ -34,6 +34,20 @@ public class ChildGroupNumBo extends BaseBo {
      * 新受浸的圣徒
      */
     private int new_saits_total_num;
+
+    /**
+     * 久不聚会的圣徒
+     */
+    private int jbjh_saits_num;
+
+    public int getJbjh_saits_num() {
+        return jbjh_saits_num;
+    }
+
+    public void setJbjh_saits_num(int jbjh_saits_num) {
+        this.jbjh_saits_num = jbjh_saits_num;
+    }
+
     /**
      * 聚会情况
      */

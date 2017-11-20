@@ -74,6 +74,9 @@ public class UserAction extends BaseAction {
         } else if ("new_saits_total_num".equals(type)) {
             userBoList = userService.getSaitsUserBoByTimeAndGroupId(groupBo.getGroup_id());
             typeName = "受浸名单";
+        } else if ("jbjh_saits_num".equals(type)) {
+            userBoList = userService.getJiuBuJuHuiSaitsUserBoByGroupId(groupBo.getGroup_id());
+            typeName = "久不聚会名单";
         } else if ("meeting".equals(type)) {
             String meeting_id = request.getParameter("meeting_id");
             MeetingBo meetingBo = userService.getMeetingByMeeting_id(meeting_id);

@@ -48,6 +48,11 @@
             <td>总圣徒</td>
             <td><a href="/userList.do?groupId=${groupId}&type=saits_total_num">${saits_total_num}人</a></td>
         </tr>
+        <tr style="background-color: #f8efc0">
+            <td>久不聚会</td>
+            <td><a href="/userList.do?groupId=${groupId}&type=jbjh_saits_num">${jbjh_saits_num}人</a></td>
+        </tr>
+
         <c:forEach items="${meetingBoList}" var="meetingBo" varStatus="stat">
             <tr>
                 <td>${meetingBo.meeting_name}</td>
@@ -90,6 +95,8 @@
                 </td>
 
             </tr>
+
+
             <tr style="background-color: #f8efc0">
                 <td>福音朋友</td>
                 <td>
@@ -101,6 +108,13 @@
                 <td>总圣徒</td>
                 <td>
                     <a href="/userList.do?groupId=${childGroupNum.group_id}&type=saits_total_num">${childGroupNum.saits_total_num}人</a>
+                </td>
+
+            </tr>
+            <tr style="background-color: #f8efc0">
+                <td>久不聚会</td>
+                <td>
+                    <a href="/userList.do?groupId=${childGroupNum.group_id}&type=jbjh_saits_num">${childGroupNum.jbjh_saits_num}人</a>
                 </td>
 
             </tr>
