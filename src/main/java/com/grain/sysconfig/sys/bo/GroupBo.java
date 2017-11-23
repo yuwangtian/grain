@@ -29,9 +29,16 @@ public class GroupBo extends BaseBo {
     private String comIds;//查询用 查询所在公司的所有部门
     private String groupIds;//查询用 查询显示部门
     private String allFlag;//是否查询所有部门,参数为notAll为不查询所有部门参数为空为查询所有部门(包括已删除的部门)
+    private String time_zone;//时区
 
 
+    public String getTime_zone() {
+        return time_zone;
+    }
 
+    public void setTime_zone(String time_zone) {
+        this.time_zone = time_zone;
+    }
 
     public String getCode() {
         return code;

@@ -22,6 +22,10 @@
         </tr>
         <c:if test="${seesionGroupBo.group_level==10}">
             <tr style="background-color: #f8efc0">
+                <td>本地当前时间</td>
+                <td>${local_date_time}</td>
+            </tr>
+            <tr style="background-color: #f8efc0">
                 <td><a href="/index.do?time_add_flag=-1"><--上周</a></td>
                 <td><a href="/index.do?time_add_flag=1">下周--></a></td>
             </tr>

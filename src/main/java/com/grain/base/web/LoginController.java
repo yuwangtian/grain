@@ -14,6 +14,7 @@ import com.grain.utils.DateUtils;
 import com.grain.utils.PropertiesUtil;
 import com.grain.utils.cache.CachePara;
 import com.grain.utils.cache.CacheService;
+import com.grain.utils.pageutils.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +26,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 @Controller
 public class LoginController extends BaseAction {
@@ -59,6 +57,10 @@ public class LoginController extends BaseAction {
             groupBo = groupService.getGroupBoByGroupId(groupId);
         }
         GroupBo session = (GroupBo) new CacheService().setSession2Cache(request, CachePara.CACHE_PARA_LOGIN_USER, null);
+        if(session!=null&& StringUtils.isNotEmpty(session.getTime_zone())){
+            TimeZone.setDefault(TimeZone.getTimeZone(session.getTime_zone()));
+        }
+         new CacheService().setSession2Cache(request, "local_date_time", DateUtils.getCurrentDateTime());
         if(!"40".equals(session.getGroup_level()+"")){
             String time_add_flag = request.getParameter("time_add_flag");
             QueryTimeBo queryTimeBo= userService.getQueryTimeByTime(request,time_add_flag);

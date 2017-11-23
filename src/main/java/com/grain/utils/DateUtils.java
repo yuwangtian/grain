@@ -702,6 +702,14 @@ public class DateUtils {
         //System.out.println(d.getTime());.
         System.out.println(getFetureDate(new Date(),0));
 
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Shanghai"));
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"));
+        DateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date date = new Date();
+        System.out.println(date);
+        System.out.println(sdf.format(date));
+        System.out.println("============================================================");
+
     }
 
 }
