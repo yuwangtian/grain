@@ -497,7 +497,12 @@ public class LoginController extends BaseAction {
             session.setAttribute(CachePara.CACHE_PARA_USER_NAME, null);
             session.removeAttribute(CachePara.CACHE_PARA_LOGIN_NAME);
             session.setAttribute(CachePara.CACHE_PARA_LOGIN_NAME, null);
+            session.setAttribute("beginDate",null);
+            session.removeAttribute("beginDate");
         }
+        session.setAttribute("beginDate",null);
+        session.removeAttribute("beginDate");
+
         return "redirect:" + REDIRECT_URL + "/login.do";
     }
 
