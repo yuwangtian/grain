@@ -166,12 +166,8 @@ public class CacheService {
             String sessionId = request.getRequestedSessionId();
             HttpSession session = request.getSession(true);
 
-            String key = sessionId + "_" + name;
-            String newKey = session.getId() + "_" + name;
-            if("beginDate".equals(name)){
-                newKey =  name;
-                key=name;
-            }
+            String key = name;
+            String newKey = name;
             Object sessionObj = session.getAttribute(name);
             if (!"".equals(name) && obj != null) {
                 session.setAttribute(name, obj);
